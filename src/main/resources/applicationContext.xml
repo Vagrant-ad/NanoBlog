@@ -21,7 +21,7 @@
     <bean class="com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource"></property>
         <property name="configLocation" value="classpath:mybatis-config.xml"></property>
-        <property name="mapperLocations" value="com/vagrant/nanoblog/mapper/*.xml"></property>
+        <property name="mapperLocations" value="classpath:com/vagrant/nanoblog/mapper/*.xml"></property>
         <property name="typeAliasesPackage" value="com.vagrant.nanoblog.pojo"></property>
     </bean>
     <!--配置spring扫描mapper，给mabitis-plus生成代码-->
