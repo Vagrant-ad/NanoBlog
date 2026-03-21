@@ -223,6 +223,13 @@
       <version>1.18.12</version>
       <scope>provided</scope>
     </dependency>
+
+    <!--markdown解析-->
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark</artifactId>
+      <version>0.21.0</version>
+    </dependency>
   </dependencies>
   <build>
     <finalName>NanoBlog</finalName>
