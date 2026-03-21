@@ -2,6 +2,70 @@
  "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
  "http://java.sun.com/dtd/web-app_2_3.dtd" >
 
-<web-app>
-  <display-name>Archetype Created Web Application</display-name>
+<web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+	http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+
+  <welcome-file-list>
+    <welcome-file>pages/front/index.html</welcome-file>
+  </welcome-file-list>
+
+  <!--Web应该配置初始化参数-->
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>classpath:applicationContext.xml</param-value>
+  </context-param>
+
+  <!-- 配置POST请求乱码解决方案  -->
+  <filter>
+    <filter-name>encoding</filter-name>
+    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+    <init-param>
+      <param-name>encoding</param-name>
+      <param-value>utf-8</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>encoding</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!--
+      Web项目一旦启动，Spring框架启动
+     ContextLoaderListener:Web项目是借助了监听器启动Spring框架
+  -->
+  <listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+
+  <!--配置SpringMvc核心控制器-->
+  <servlet>
+    <servlet-name>DispatcherServlet</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <!--加载配置文件-->
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>classpath:springmvc.xml</param-value>
+    </init-param>
+    <!--
+       Servlet 第一次发送请求， 请求Servlet对象创建，创建一次，以后新的请求过来，公用Servlet对象，也就是说Servlet本质是单例的！
+       load-on-startup：调整Servlet创建对象的时机，服务器启动的时候就创建对象！
+    -->
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>DispatcherServlet</servlet-name>
+    <!-- 拦截所有带有/的路径请求(所有请求)
+      /index.jsp
+      公共资源：js/css/images 无需要拦截 在spring-mvc的第四步设置静态资源访问
+      /js/index.js
+      /css/index.css
+      /images/1.png
+    -->
+    <url-pattern>/</url-pattern>
+  </servlet-mapping>
+
+
+
 </web-app>

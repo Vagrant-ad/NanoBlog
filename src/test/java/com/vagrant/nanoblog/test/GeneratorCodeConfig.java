@@ -1,4 +1,4 @@
-package com.warehouse.test;
+package com.vagrant.nanoblog.test;
 
 import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -34,32 +34,29 @@ public class GeneratorCodeConfig {
 
         // 全局配置
         GlobalConfig gc = new GlobalConfig();
-        String projectPath = System.getProperty("user.dir"); // E:\WorkspaceFolder\LiaoNing\WareHouseSystem
+        String projectPath = System.getProperty("user.dir");
         System.out.println(projectPath);
 
-        // 代码生成的地址： // E:\WorkspaceFolder\LiaoNing\WareHouseSystem/src/main/java
+        // 代码生成的地址： // path/src/main/java
         System.out.println(projectPath + "/src/main/java");
 
         gc.setOutputDir(projectPath + "/src/main/java");
-        //gc.setOutputDir("E:\\123");
-        gc.setAuthor("wht"); //作者信息
-        gc.setOpen(false);//打开注解开发吗？
 
-        //实体属性 Swagger2 注解
+        gc.setAuthor("vagrant");
+        gc.setOpen(false);
+
         gc.setSwagger2(false);
         mpg.setGlobalConfig(gc);
-
-        // 配置自己数据源-----------数据源配置
         DataSourceConfig dsc = new DataSourceConfig();
-        dsc.setUrl("jdbc:mysql://127.0.0.1:3306/warehouse?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true");
+        dsc.setUrl("jdbc:mysql://127.0.0.1:3306/nanoblog?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true");
         dsc.setDriverName("com.mysql.cj.jdbc.Driver");
         dsc.setUsername("root");
-        dsc.setPassword("root");
+        dsc.setPassword("679067");
         mpg.setDataSource(dsc);
 
-        // 配置自己包配置
+
         PackageConfig pc = new PackageConfig();
-        pc.setParent("com.warehouse");
+        pc.setParent("com.vagrant.nanoblog");
         pc.setEntity("pojo");
         pc.setMapper("mapper");
         pc.setService("service");
@@ -80,7 +77,7 @@ public class GeneratorCodeConfig {
         strategy.setInclude(scanner("表名，多个英文逗号分割").split(","));
         strategy.setControllerMappingHyphenStyle(true);
         //数据库表的前缀
-        strategy.setTablePrefix("sys_");
+        strategy.setTablePrefix("");
         mpg.setStrategy(strategy);
         mpg.setTemplateEngine(new FreemarkerTemplateEngine());
         mpg.execute();

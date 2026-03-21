@@ -7,7 +7,7 @@
 
 
     <!-- 1.SpringMVC扫描控制器 -->
-    <context:component-scan base-package="com.warehouse.controller"/>
+    <context:component-scan base-package="com.vagrant.nanoblog.controller"/>
 
     <!--2.模板引擎解析器-->
     <bean id="templateResolver"
