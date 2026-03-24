@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.vagrant.nanoblog.dto.ArticlePublishDTO;
 import com.vagrant.nanoblog.pojo.Article;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.vagrant.nanoblog.vo.ArticleDetailVO;
 import com.vagrant.nanoblog.vo.ArticleListVO;
 
 /**
@@ -18,4 +19,5 @@ public interface IArticleService extends IService<Article> {
     Long publishArticle(ArticlePublishDTO dto, Long userId);
 
     IPage<ArticleListVO> getArticleList(Integer page, Integer size);
+    ArticleDetailVO getArticleDetail(Long id);
 }

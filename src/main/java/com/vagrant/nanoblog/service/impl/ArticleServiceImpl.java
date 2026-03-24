@@ -10,6 +10,7 @@ import com.vagrant.nanoblog.mapper.ArticleMapper;
 import com.vagrant.nanoblog.pojo.ArticleContent;
 import com.vagrant.nanoblog.service.IArticleService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.vagrant.nanoblog.vo.ArticleDetailVO;
 import com.vagrant.nanoblog.vo.ArticleListVO;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -123,7 +124,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             System.out.println("8. 第一条VO数据：" + result.getRecords().get(0));
         }
         System.out.println("======================================");
-// ======== 新增日志：打印VO结果 ========
+        // ======== 新增日志：打印VO结果 ========
         System.out.println("6. VO总记录数：" + result.getTotal());
         System.out.println("7. VO当前页记录数：" + result.getRecords().size());
         if (!result.getRecords().isEmpty()) {
@@ -133,5 +134,23 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
 
         return result;
+    }
+
+    @Override
+    public ArticleDetailVO getArticleDetail(Long id) {
+
+        // 1. 查询文章
+        ArticleDetailVO article = baseMapper.getArticleDetailById(id);
+
+        // 2. 判空
+        if (article == null) {
+            throw new RuntimeException("文章不存在");
+        }
+
+        // 3. 阅读量 +1
+        baseMapper.updateViewCount(id);
+
+        // 4. 返回数据
+        return article;
     }
 }
