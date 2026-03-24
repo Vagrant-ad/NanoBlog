@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * @author vagrant
  * @since 2026-03-21
  */
+
 public interface ArticleContentMapper extends BaseMapper<ArticleContent> {
 
 }

@@ -3,49 +3,70 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:mvc="http://www.springframework.org/schema/mvc"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
-
-    <!-- 1.SpringMVC扫描控制器 -->
+    <!-- 1. SpringMVC扫描控制器 -->
     <context:component-scan base-package="com.vagrant.nanoblog.controller"/>
 
-    <!--2.模板引擎解析器-->
+    <!-- 2. Thymeleaf模板引擎配置（保留页面渲染功能） -->
     <bean id="templateResolver"
           class="org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver">
-        <!--视图前缀-->
         <property name="prefix" value="/WEB-INF/templates/" />
-        <!--视图后缀-->
         <property name="suffix" value=".html" />
-        <!--模板语法模式 HTML5-->
-        <property name="templateMode" value="HTML5" />
-        <!--模板引擎关闭缓存 开发方便 -->
+        <!-- 修复THYMELEAF警告：HTML5已废弃，改用HTML -->
+        <property name="templateMode" value="HTML" />
         <property name="cacheable" value="false" />
-        <!--编码-->
         <property name="characterEncoding" value="UTF-8" />
     </bean>
 
-    <!--模板引擎-->
     <bean id="templateEngine" class="org.thymeleaf.spring5.SpringTemplateEngine">
         <property name="templateResolver" ref="templateResolver" />
-        <!--配置thymeleaf标签库-->
-       <!-- <property name="additionalDialects">
-            <set>
-                <bean class="org.thymeleaf.extras.springsecurity5.dialect.SpringSecurityDialect"/>
-            </set>
-        </property>-->
     </bean>
 
-    <!--Thymeleaf视图解析器-->
     <bean class="org.thymeleaf.spring5.view.ThymeleafViewResolver">
         <property name="templateEngine" ref="templateEngine" />
-        <!-- 中文乱码问题 -->
         <property name="characterEncoding" value="UTF-8"/>
     </bean>
 
-    <!--静态资源放行  方式2：把静态资源放开，直接交个tomcat里面的默认处理器处理！-->
+    <!-- 3. 静态资源放行 -->
     <mvc:default-servlet-handler />
 
-    <!--开启注解启动-->
-    <mvc:annotation-driven/>
+    <!-- 4. Jackson配置 - 用FactoryBean替代手动new ObjectMapper -->
+    <bean id="customObjectMapper"
+          class="org.springframework.http.converter.json.Jackson2ObjectMapperFactoryBean">
+
+        <!-- 自动扫描classpath中的Jackson模块（包括JavaTimeModule） -->
+        <property name="findModulesViaServiceLoader" value="true"/>
+
+        <!-- 全局时间格式（有这个就够了，不需要featuresToDisable） -->
+        <property name="dateFormat">
+            <bean class="java.text.SimpleDateFormat">
+                <constructor-arg value="yyyy-MM-dd HH:mm:ss"/>
+            </bean>
+        </property>
+
+        <!-- 忽略null字段 -->
+        <property name="serializationInclusion" value="NON_NULL"/>
+
+    </bean>
+
+    <!-- 5. 开启注解驱动 + 配置Jackson消息转换器 -->
+    <mvc:annotation-driven>
+        <mvc:message-converters register-defaults="true">
+            <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+                <!-- 引用自定义的ObjectMapper -->
+                <property name="objectMapper" ref="customObjectMapper"/>
+                <!-- 支持JSON媒体类型，确保@RestController返回JSON -->
+                <property name="supportedMediaTypes">
+                    <list>
+                        <value>application/json;charset=UTF-8</value>
+                        <value>text/html;charset=UTF-8</value>
+                    </list>
+                </property>
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
 
 </beans>
