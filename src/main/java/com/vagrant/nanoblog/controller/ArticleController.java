@@ -1,15 +1,14 @@
 package com.vagrant.nanoblog.controller;
 
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.vagrant.nanoblog.dto.ArticlePublishDTO;
 import com.vagrant.nanoblog.service.IArticleService;
+import com.vagrant.nanoblog.vo.ArticleListVO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * <p>
@@ -31,5 +30,12 @@ public class ArticleController {
         Long userId = 2L; // 后面替换成登录用户
 
         return articleService.publishArticle(dto, userId);
+    }
+    @GetMapping("/list")
+    public IPage<ArticleListVO> list(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size
+    ) {
+        return articleService.getArticleList(page, size);
     }
 }
