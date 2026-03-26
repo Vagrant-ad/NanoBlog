@@ -1,5 +1,6 @@
 package com.vagrant.nanoblog.service;
 
+import com.vagrant.nanoblog.dto.UserRegisterDTO;
 import com.vagrant.nanoblog.pojo.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -12,5 +13,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * @since 2026-03-21
  */
 public interface IUserService extends IService<User> {
-
+    String register(User user);
 }
+
+
+
