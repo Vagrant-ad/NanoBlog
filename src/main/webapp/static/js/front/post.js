@@ -13,7 +13,10 @@ layui.use(['layer', 'element'], function () {
         articleId: getQueryParam('id'),
         loadingIndex: null
     };
+    // 获取文章ID
+    const id = new URLSearchParams(window.location.search).get("id");
 
+    console.log("当前文章ID:", id);
     init();
 
     function init() {

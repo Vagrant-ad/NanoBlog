@@ -11,6 +11,7 @@ import com.vagrant.nanoblog.pojo.ArticleContent;
 import com.vagrant.nanoblog.service.IArticleService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.vagrant.nanoblog.vo.ArticleDetailVO;
+import com.vagrant.nanoblog.vo.ArticleHomeVO;
 import com.vagrant.nanoblog.vo.ArticleListVO;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,9 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -33,12 +36,13 @@ import java.util.stream.Collectors;
 @Service
 public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> implements IArticleService {
     private final ArticleContentMapper articleContentMapper;
-
+    private final ArticleMapper articleMapper;
     private static final Parser parser = Parser.builder().build();
     private static final HtmlRenderer renderer = HtmlRenderer.builder().build();
 
-    public ArticleServiceImpl(ArticleContentMapper articleContentMapper) {
+    public ArticleServiceImpl(ArticleContentMapper articleContentMapper, ArticleMapper articleMapper) {
         this.articleContentMapper = articleContentMapper;
+        this.articleMapper = articleMapper;
     }
 
     @Override
@@ -156,5 +160,41 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
 
         return vo;
+    }
+
+    @Override
+    public IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size) {
+        if (page == null || page < 1) page = 1;
+        if (size == null || size < 1 || size > 100) size = 8;
+
+        Page<ArticleHomeVO> pageInfo = new Page<>(page, size);
+
+        // 1. 查首页文章基础数据
+        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo);
+
+        if (records == null || records.isEmpty()) {
+            pageInfo.setRecords(records);
+            return pageInfo;
+        }
+
+        // 2. 收集当前页文章ID
+        List<Long> articleIds = records.stream()
+                .map(ArticleHomeVO::getId)
+                .collect(Collectors.toList());
+
+        // 3. 批量查标签
+        List<Map<String, Object>> tagRows = articleMapper.getTagsByArticleIds(articleIds);
+
+        // 4. 组装 articleId -> tags
+        Map<Long, List<String>> tagMap = tagRows.stream()
+                .collect(Collectors.groupingBy(
+                        row -> ((Number) row.get("articleId")).longValue(),
+                        Collectors.mapping(row -> (String) row.get("tagName"), Collectors.toList())
+                ));
+
+        // 5. 填充 tags
+        records.forEach(vo -> vo.setTags(tagMap.getOrDefault(vo.getId(), Collections.emptyList())));
+        pageInfo.setRecords(records);
+        return pageInfo;
     }
 }

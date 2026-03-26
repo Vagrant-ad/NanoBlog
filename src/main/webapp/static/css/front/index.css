@@ -150,7 +150,13 @@
     font-size: 0.85rem;
     color: var(--text-muted);
 }
-
+.author-avatar {
+    width: 28px ;
+    height: 28px ;
+    border-radius: 50% ;
+    object-fit: cover ;
+    flex-shrink: 0;
+}
 .meta-dot {
     opacity: 0.5;
 }

@@ -176,3 +176,60 @@ a {
     color: var(--text-muted);
     font-size: 0.9rem;
 }
+
+/*覆盖 Layui 默认分页样式  */
+.pagination-wrap {
+    margin: 60px 0 20px;
+    display: flex;
+    justify-content: center;
+}
+
+/* 移除所有默认的边框和背景，设置圆角和间距 */
+.layui-laypage a,
+.layui-laypage span {
+    background-color: transparent !important;
+    border: none !important;
+    color: var(--text-muted) !important;
+    font-weight: 500;
+    padding: 0 16px !important;
+    height: 38px !important;
+    line-height: 38px !important;
+    border-radius: var(--radius-pill) !important;
+    margin: 0 4px !important;
+    transition: var(--transition) !important;
+}
+
+/* 悬浮状态：使用主题的薄荷绿背景和主色蓝文字 */
+.layui-laypage a:hover {
+    background-color: var(--brand-mint-light) !important;
+    color: var(--brand-blue) !important;
+    transform: translateY(-2px);
+}
+
+/* 当前选中页 (当前页的背景色是由里面的 em 标签控制的) */
+.layui-laypage .layui-laypage-curr .layui-laypage-em {
+    background-color: var(--brand-blue) !important;
+    border-radius: var(--radius-pill) !important;
+}
+
+.layui-laypage .layui-laypage-curr em {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+/* 禁用状态 (如在第一页时，悬浮"上一页"不应有效果) */
+.layui-laypage .layui-disabled,
+.layui-laypage .layui-disabled:hover {
+    background-color: transparent !important;
+    color: #cbd5e1 !important; /* 浅灰色 */
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+
+/* 附加信息 (如：共 3 条) */
+.layui-laypage-count,
+.layui-laypage-limits {
+    color: var(--text-muted) !important;
+    font-size: 0.9rem !important;
+    background: transparent !important;
+}
