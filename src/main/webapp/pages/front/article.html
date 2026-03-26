@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章详情 - NanoBlog</title>
+
+    <link rel="icon" href="/favicon.ico">
+
+    <!-- 引入 Layui 和 Highlight.js 样式 -->
+    <link rel="stylesheet" href="../../static/lib/layui/css/layui.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js/styles/github.css">
+
+    <!-- 引入通用样式与文章专属样式 -->
+    <link rel="stylesheet" href="../../static/css/common/common.css">
+    <link rel="stylesheet" href="../../static/css/front/article.css">
+</head>
+<body>
+
+<!-- 顶部导航栏 -->
+<header class="navbar">
+    <div class="navbar-inner">
+        <!-- 左侧：纯图片 Logo + 导航 -->
+        <div class="navbar-left">
+            <a class="logo-link" href="/pages/front/index.html">
+                <img src="/static/images/logo-horizontal.png" alt="NanoBlog Logo" class="logo-image">
+                <span class="sr-only">NanoBlog</span>
+            </a>
+
+            <nav class="navbar-menu">
+                <a href="/pages/front/index.html">首页</a>
+                <a href="#">分类</a>
+                <a href="#">标签</a>
+            </nav>
+        </div>
+
+        <!-- 中间：搜索框 -->
+        <div class="navbar-center">
+            <div class="search-box">
+                <i class="layui-icon layui-icon-search"></i>
+                <input type="text" placeholder="搜索文章标题、标签、作者" aria-label="搜索博客内容">
+            </div>
+        </div>
+
+        <!-- 右侧：用户操作区 -->
+        <div class="navbar-right">
+            <a href="/pages/front/login.html" class="nav-link">登录</a>
+            <a href="/pages/front/register.html" class="nav-button">注册</a>
+        </div>
+    </div>
+</header>
+
+<!-- 2. 页面主体：文章与侧边栏 -->
+<main class="layout-container">
+
+    <!-- 左侧：文章内容区 -->
+    <article class="article-content">
+        <header class="article-header">
+            <h1 id="title" class="article-title"></h1>
+
+            <div class="article-meta">
+                <span class="meta-item"><time id="publishTime"></time></span>
+                <span class="meta-divider"></span>
+                <span class="meta-item" id="category"></span>
+                <span class="meta-divider"></span>
+                <span class="meta-item"><span id="viewCount"></span> 阅读</span>
+            </div>
+
+            <div class="article-tags" id="tags"></div>
+        </header>
+
+        <!-- Markdown 渲染容器 -->
+        <div id="markdown-content" class="markdown-body"></div>
+
+        <!-- 底部：文章导航 -->
+        <footer class="article-footer">
+            <div class="post-navigation">
+                <!-- 注意：修改了 class，避免和 navbar 的 nav-link 冲突 -->
+                <a href="#" id="prev-post" class="post-nav-btn">← 上一篇</a>
+                <a href="#" id="next-post" class="post-nav-btn">下一篇 →</a>
+            </div>
+        </footer>
+    </article>
+
+    <!-- 右侧：固定侧边栏目录 -->
+    <aside class="article-sidebar">
+        <div class="toc-container" id="toc-container">
+            <div class="toc-title">文章目录</div>
+            <nav id="toc" class="toc-list">
+                <!-- JS 动态生成目录 -->
+            </nav>
+        </div>
+    </aside>
+
+</main>
+
+<!-- 通用页脚 -->
+<footer class="page-footer">
+    <p>© 2026 NanoBlog. All rights reserved.</p>
+</footer>
+
+<!-- 返回顶部悬浮按钮 -->
+<button id="back-to-top" class="back-to-top" aria-label="返回顶部">↑</button>
+
+<!-- JS 依赖 -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js/lib/common.min.js"></script>
+<script src="/static/lib/layui/layui.js"></script>
+<!-- 引入文章专属 JS -->
+<script src="/static/js/front/article.js"></script>
+
+</body>
+</html>

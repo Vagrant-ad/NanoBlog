@@ -1,0 +1,258 @@
+/* 整体布局 (双栏结构) */
+.layout-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 32px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 40px;
+    align-items: start; /* 必须加这一行，否则侧边栏高度会撑满全屏导致 sticky 失效 */
+}
+
+/* 响应式：小屏幕下隐藏侧边栏并单列显示 */
+@media (max-width: 992px) {
+    .layout-container {
+        grid-template-columns: 1fr;
+    }
+    .article-sidebar {
+        display: none;
+    }
+}
+
+/* 文章卡片与头部信息 */
+.article-content {
+    background: var(--card-bg);
+    border-radius: var(--radius-xl);
+    padding: 60px 50px;
+    box-shadow: var(--shadow-soft);
+    animation: fadeInUp 0.8s var(--transition);
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(25px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.article-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+/* 顶部脉冲星星保持在正文标题上方 */
+.article-header::before {
+    content: "✦";
+    display: block;
+    color: var(--brand-star);
+    font-size: 1.6rem;
+    margin-bottom: 15px;
+    animation: starPulse 2s infinite ease-in-out;
+}
+
+@keyframes starPulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.25); opacity: 1; }
+}
+
+.article-title {
+    font-size: 2.8rem;
+    font-weight: 850;
+    color: var(--brand-blue);
+    line-height: 1.2;
+    margin-bottom: 24px;
+}
+
+.article-meta {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    background: var(--body-bg);
+    display: inline-flex;
+    padding: 6px 20px;
+    border-radius: var(--radius-pill);
+    gap: 12px;
+    align-items: center;
+}
+
+.meta-divider::after {
+    content: "✧";
+    color: var(--brand-mint);
+}
+
+/* 文章标签 */
+.article-tags {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.article-tag {
+    padding: 4px 14px;
+    background: var(--brand-mint-light);
+    color: var(--brand-blue);
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/*  Markdown 正文定制样式 (覆盖默认) */
+.markdown-body {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--text-main);
+}
+
+.markdown-body h2 {
+    font-size: 1.8rem;
+    color: var(--brand-blue);
+    margin: 2.5em 0 1em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.markdown-body h2::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 1.1em;
+    background: linear-gradient(to bottom, var(--brand-mint), var(--brand-blue));
+    border-radius: 3px;
+}
+
+/* 底部上一篇/下一篇导航 */
+.article-footer {
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 1px dashed var(--brand-mint);
+}
+
+.post-navigation {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.post-nav-btn {
+    padding: 12px 24px;
+    background: var(--brand-mint-light);
+    color: var(--brand-blue) !important;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.post-nav-btn:hover:not(.disabled) {
+    background: var(--brand-mint);
+    color: white !important;
+    transform: translateY(-2px);
+}
+
+.post-nav-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 侧边栏与目录 (修正固定与星星高亮) */
+.article-sidebar {
+    position: sticky;
+    top: 100px; /* 吸附在导航栏下方 */
+}
+
+.toc-container {
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-xl);
+    padding: 24px;
+    box-shadow: var(--shadow-soft);
+}
+
+.toc-title {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--brand-blue);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.toc-link {
+    position: relative;
+    display: block;
+    padding: 8px 0 8px 25px; /* 左侧留出星星的空间 */
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    transition: var(--transition);
+    line-height: 1.4;
+}
+
+/* 为 H3 级别的标题增加缩进 */
+.toc-link.level-h3 {
+    padding-left: 40px;
+    font-size: 0.88rem;
+    opacity: 0.8;
+}
+
+/* 星星高亮：仅在 .active 时出现 */
+.toc-link::before {
+    content: "✦";
+    position: absolute;
+    left: 0;
+    color: var(--brand-star);
+    font-size: 0.8rem;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: var(--transition);
+}
+
+.toc-link.level-h3::before {
+    left: 15px;
+}
+
+.toc-link:hover,
+.toc-link.active {
+    color: var(--brand-blue);
+    font-weight: 700;
+}
+
+.toc-link.active::before {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* 返回顶部悬浮按钮 */
+.back-to-top {
+    position: fixed;
+    right: 40px;
+    bottom: -60px; /* 初始隐藏在屏幕外 */
+    width: 45px;
+    height: 45px;
+    background: var(--brand-blue);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(61, 115, 152, 0.3);
+    transition: var(--transition);
+    opacity: 0;
+    z-index: 1000;
+}
+
+.back-to-top.show {
+    bottom: 40px;
+    opacity: 1;
+}
+
+.back-to-top:hover {
+    background: var(--brand-mint);
+    transform: translateY(-3px);
+}

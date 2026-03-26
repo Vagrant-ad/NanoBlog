@@ -45,6 +45,7 @@ public class ArticleController {
     @GetMapping("/{id}")
     public ResponseResult<ArticleDetailVO> getArticleDetail(@PathVariable Long id) {
         ArticleDetailVO article = articleService.getArticleDetail(id);
+        System.out.println(article);
         return ResponseResult.okResult(article);
     }
 }
