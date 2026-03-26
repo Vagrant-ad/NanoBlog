@@ -42,6 +42,17 @@ public class UserController {
         return userService.register(user);
     }
 
+    // 跳转登录页面
+    @GetMapping("/login")
+    public String toLogin() {
+        return "pages/front/login"; // 对应 login.html
+    }
 
+    // 处理登录请求
+    @PostMapping("/doLogin")
+    @ResponseBody
+    public String doLogin(@RequestParam String username, @RequestParam String password) {
+        return userService.login(username, password);
+    }
 
 }

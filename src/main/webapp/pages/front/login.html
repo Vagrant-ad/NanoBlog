@@ -1,10 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>用户登录</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
-<body>
+<div class="login-box">
+    <h2>NanoBlog 登录</h2>
+    <input type="text" id="username" placeholder="请输入用户名">
+    <input type="password" id="password" placeholder="请输入密码">
+    <button id="loginBtn">登 录</button>
+
+    <div class="links">
+        还没有账号？ <a href="register.html">去注册</a>
+    </div>
+</div>
+
+<script>
+    document.getElementById("loginBtn").onclick = function() {
+        var username = document.getElementById("username").value;
+        var password = document.getElementById("password").value;
+
+        if (!username || !password) {
+            alert("用户名和密码不能为空！");
+            return;
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+
+                    var res = xhr.responseText.trim().replace(/"/g, "");
+
+                    if (res === "success") {
+                        alert("登录成功！");
+
+                        //路径跳转
+                        window.location.href = "/NanoBlog_war/pages/front/index.html";
+                    } else {
+                        // 此时 res 如果是 "密码错误"，也会去掉引号后正常弹出
+                        alert(res);
+                    }
+                } else {
+                    alert("网络请求失败。状态码: " + xhr.status);
+                }
+            }
+        };
+
+        xhr.open("POST", "/NanoBlog_war/user/doLogin", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.send("username=" + username + "&password=" + password);
+    };
+</script>
 
 </body>
 </html>

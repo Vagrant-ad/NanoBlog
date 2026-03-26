@@ -7,6 +7,7 @@ import com.vagrant.nanoblog.mapper.UserMapper;
 import com.vagrant.nanoblog.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -41,4 +42,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         int rows = this.baseMapper.insert(user);
         return rows > 0 ? "success" : "注册失败，请稍后再试";
     }
+
+    @Override
+     public   String login(String username, String password){
+        //  查找用户
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("username", username);
+        User user = this.getOne(wrapper);
+
+        // 1. 先判断用户是否存在
+        if (user == null) {
+            return "用户不存在";
+        }
+        // 2. 若存在，再校验密码
+        if (user.getPasswordHash() != null && BCrypt.checkpw(password, user.getPasswordHash())) {
+            return "success";
+        }
+        // 3. 校验账号状态
+        if (user.getStatus() != null && user.getStatus() == 0) {
+            return "账号已被禁用";
+        }
+        return "密码错误";
+    }
+
 }
