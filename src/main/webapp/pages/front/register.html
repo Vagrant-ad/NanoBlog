@@ -1,10 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>用户注册</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
+<div style="margin: 50px auto; width: 300px;">
+    <h2>账号注册</h2>
+    用户名: <input type="text" id="username"><br>
+    密码: <input type="password" id="passwordHash"><br>
+    昵称: <input type="text" id="nickname"><br>
+    邮箱: <input type="text" id="email"><br>
+    <button id="regBtn">立即注册</button>
+</div>
+
+<script>
+    $("#regBtn").click(function() {
+        $.post("/NanoBlog_war/user/doRegister", {
+            username: $("#username").val(),
+            passwordHash: $("#passwordHash").val(),
+            nickname: $("#nickname").val(),
+            email: $("#email").val()
+        }, function(res) {
+            if(res === "success") {
+                alert("注册成功！");
+                window.location.href = "/NanoBlog_war/pages/front/login.html";
+            } else {
+                alert(res);
+            }
+        });
+    });
+</script>
+
+
 
 </body>
 </html>
