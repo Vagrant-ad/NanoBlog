@@ -47,7 +47,7 @@ public class CategoryController {
     /**
      * 获取树形分类（父分类 + 子分类，供导航栏展示）
      * GET /category/tree
-     * 后续如需要层级展示时使用，现在可以先不实现
+     * 后续如需要层级展示时再实现
      */
     // TODO: getTree()
 }

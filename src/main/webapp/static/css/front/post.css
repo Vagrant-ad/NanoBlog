@@ -118,21 +118,12 @@
     background: linear-gradient(to bottom, var(--brand-mint), var(--brand-blue));
     border-radius: 3px;
 }
-.markdown-body pre.hljs-pre {
-    background: #f6f8fa;          /* GitHub 代码块背景 */
+.markdown-body pre {
+    background: #f6f8fa;
     border: 1px solid #e1e4e8;
     border-radius: 8px;
     padding: 16px 20px;
     overflow-x: auto;
-    margin: 1.5em 0;
-    line-height: 1.6;
-}
-
-.markdown-body pre.hljs-pre code.hljs {
-    background: transparent;      /* 清除 hljs 主题自带的背景，由 pre 统一控制 */
-    padding: 0;
-    font-size: 0.9rem;
-    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
 }
 /* Markdown 表格样式 */
 .markdown-body .table-wrapper {
@@ -196,6 +187,20 @@
 .markdown-body li.todo-item.done {
     color: var(--text-muted);
     text-decoration: line-through;
+}
+
+/* 代码块字体 */
+#markdown-content pre code {
+    font-family: "JetBrains Mono", Consolas, monospace;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* 行内代码 */
+#markdown-content code:not(pre code) {
+    font-family: "JetBrains Mono", Consolas, monospace;
+    font-weight: 500;
 }
 
 /* KaTeX display 公式居中 */
