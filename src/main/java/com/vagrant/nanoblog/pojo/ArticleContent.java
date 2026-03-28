@@ -1,5 +1,6 @@
 package com.vagrant.nanoblog.pojo;
 
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 
@@ -19,6 +20,7 @@ public class ArticleContent implements Serializable {
     /**
      * 文章ID
      */
+    @TableId("article_id")
     private Long articleId;
 
     /**

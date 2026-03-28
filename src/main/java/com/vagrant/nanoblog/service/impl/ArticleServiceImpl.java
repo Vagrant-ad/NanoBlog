@@ -5,21 +5,31 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.vagrant.nanoblog.dto.ArticlePublishDTO;
 import com.vagrant.nanoblog.mapper.ArticleContentMapper;
+import com.vagrant.nanoblog.mapper.ArticleTagMapper;
+import com.vagrant.nanoblog.mapper.TagMapper;
 import com.vagrant.nanoblog.pojo.Article;
 import com.vagrant.nanoblog.mapper.ArticleMapper;
 import com.vagrant.nanoblog.pojo.ArticleContent;
+import com.vagrant.nanoblog.pojo.ArticleTag;
+import com.vagrant.nanoblog.pojo.Tag;
 import com.vagrant.nanoblog.service.IArticleService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.vagrant.nanoblog.vo.ArticleDetailVO;
+import com.vagrant.nanoblog.vo.ArticleHomeVO;
 import com.vagrant.nanoblog.vo.ArticleListVO;
+import lombok.Getter;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -31,22 +41,25 @@ import java.util.stream.Collectors;
  * @since 2026-03-21
  */
 @Service
+@RequiredArgsConstructor
 public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> implements IArticleService {
     private final ArticleContentMapper articleContentMapper;
+    private final ArticleMapper articleMapper;
+    //tag & 关联表
+    @Getter
+    private final TagMapper tagMapper;
+    @Getter
+    private final ArticleTagMapper articleTagMapper;
 
-    private static final Parser parser = Parser.builder().build();
-    private static final HtmlRenderer renderer = HtmlRenderer.builder().build();
-
-    public ArticleServiceImpl(ArticleContentMapper articleContentMapper) {
-        this.articleContentMapper = articleContentMapper;
-    }
+    private static final Parser MD_PARSER = Parser.builder().build();
+    private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().build();
 
     @Override
     @Transactional
     public Long publishArticle(ArticlePublishDTO dto, Long userId) {
 
         // 1. Markdown → HTML
-        String html = renderer.render(parser.parse(dto.getContentMd()));
+        String html = HTML_RENDERER.render(MD_PARSER.parse(dto.getContentMd()));
 
         // 2. 保存 article（用 MyBatis-Plus 内置方法）
         Article article = new Article();
@@ -54,8 +67,21 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         article.setCategoryId(dto.getCategoryId());
         article.setArticleTitle(dto.getArticleTitle());
         article.setArticleSummary(dto.getArticleSummary());
-        article.setStatus(1);
-        article.setPublishTime(LocalDateTime.now());
+
+        // 封面图：前端上传后把URL放进coverUrl
+        if (StringUtils.hasText(dto.getCoverUrl())) {
+            article.setCoverImageUrl(dto.getCoverUrl());
+        }
+
+        // 状态：前端传0(草稿) 1(发布)
+        // 兜底默认发布
+        int status = (dto.getStatus() != null) ? dto.getStatus() : 1;
+        article.setStatus(status);
+
+        // 只有发布状态才设置发布时间
+        if (status == 1) {
+            article.setPublishTime(LocalDateTime.now());
+        }
 
         this.save(article); // MP方法
 
@@ -66,9 +92,39 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         content.setContentHtml(html);
 
         articleContentMapper.insert(content);
-
+        // 处理标签
+        if (!CollectionUtils.isEmpty(dto.getTags())) {
+            saveArticleTags(article.getId(), dto.getTags());
+        }
         return article.getId();
     }
+    @Override
+    public void saveArticleTags(Long articleId, List<String> tagNames) {
+        for (String tagName : tagNames) {
+            if (!StringUtils.hasText(tagName)) continue;
+
+            // 查tag表，有则复用，无则新建
+            Tag tag = tagMapper.selectOne(
+                    new QueryWrapper<Tag>().eq("tag_name", tagName).eq("is_deleted", 0)
+            );
+
+            if (tag == null) {
+                tag = new Tag();
+                tag.setTagName(tagName);
+                // slug简单处理为小写+去空格
+                tag.setTagSlug(tagName.toLowerCase().replaceAll("\\s+", "-"));
+                tag.setStatus(1);
+                tagMapper.insert(tag);
+            }
+
+            // 写 article_tag 关联
+            ArticleTag articleTag = new ArticleTag();
+            articleTag.setArticleId(articleId);
+            articleTag.setTagId(tag.getId());
+            articleTagMapper.insert(articleTag);
+        }
+    }
+
 
     @Override
     public IPage<ArticleListVO> getArticleList(Integer page, Integer size) {
@@ -82,7 +138,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         IPage<Article> articlePage = this.page(pageInfo, queryWrapper);
 
-        // ======== 新增日志：打印核心数据 ========
+        /*// 日志：打印核心数据
         System.out.println("===== 调试日志 =====");
         System.out.println("1. 分页参数：page=" + page + ", size=" + size);
         System.out.println("2. 查询条件：status=1");
@@ -94,7 +150,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             System.out.println("5. 第一条文章数据：id=" + first.getId() +
                     ", title=" + first.getArticleTitle() +
                     ", publishTime=" + first.getPublishTime());
-        }
+        }*/
 
         // 转换成VO
         Page<ArticleListVO> result = new Page<>();
@@ -117,20 +173,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         result.setRecords(voList);
 
-        // ======== 新增日志：打印VO结果 ========
+/*        // 新增日志打印VO结果
         System.out.println("6. VO总记录数：" + result.getTotal());
         System.out.println("7. VO当前页记录数：" + result.getRecords().size());
         if (!result.getRecords().isEmpty()) {
             System.out.println("8. 第一条VO数据：" + result.getRecords().get(0));
         }
-        System.out.println("======================================");
-        // ======== 新增日志：打印VO结果 ========
-        System.out.println("6. VO总记录数：" + result.getTotal());
-        System.out.println("7. VO当前页记录数：" + result.getRecords().size());
-        if (!result.getRecords().isEmpty()) {
-            System.out.println("8. 第一条VO数据：" + result.getRecords().get(0));
-        }
-        System.out.println("======================================");
+        System.out.println("======================================");*/
 
 
         return result;
@@ -139,18 +188,66 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     public ArticleDetailVO getArticleDetail(Long id) {
 
-        // 1. 查询文章
-        ArticleDetailVO article = baseMapper.getArticleDetailById(id);
-
-        // 2. 判空
+        // 1. 查 article
+        Article article = this.getById(id);
         if (article == null) {
-            throw new RuntimeException("文章不存在");
+            return null;
         }
 
-        // 3. 阅读量 +1
-        baseMapper.updateViewCount(id);
+        // 2. 查 content
+        ArticleContent content = articleContentMapper.selectById(id);
 
-        // 4. 返回数据
-        return article;
+
+        // 3. 组装 VO
+        ArticleDetailVO vo = new ArticleDetailVO();
+        vo.setId(article.getId());
+        vo.setTitle(article.getArticleTitle());
+        vo.setCategoryId(article.getCategoryId());
+        vo.setPublishTime(article.getPublishTime());
+        vo.setViewCount(article.getViewCount());
+        vo.setLikeCount(article.getLikeCount());
+        if (content != null) {
+            vo.setContent(content.getContentHtml());
+        }
+
+
+        return vo;
     }
+
+    @Override
+    public IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size) {
+        if (page == null || page < 1) page = 1;
+        if (size == null || size < 1 || size > 100) size = 8;
+
+        Page<ArticleHomeVO> pageInfo = new Page<>(page, size);
+
+        // 1. 查首页文章基础数据
+        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo);
+
+        if (records == null || records.isEmpty()) {
+            pageInfo.setRecords(records);
+            return pageInfo;
+        }
+
+        // 2. 收集当前页文章ID
+        List<Long> articleIds = records.stream()
+                .map(ArticleHomeVO::getId)
+                .collect(Collectors.toList());
+
+        // 3. 批量查标签
+        List<Map<String, Object>> tagRows = articleMapper.getTagsByArticleIds(articleIds);
+
+        // 4. 组装 articleId -> tags
+        Map<Long, List<String>> tagMap = tagRows.stream()
+                .collect(Collectors.groupingBy(
+                        row -> ((Number) row.get("articleId")).longValue(),
+                        Collectors.mapping(row -> (String) row.get("tagName"), Collectors.toList())
+                ));
+
+        // 5. 填充 tags
+        records.forEach(vo -> vo.setTags(tagMap.getOrDefault(vo.getId(), Collections.emptyList())));
+        pageInfo.setRecords(records);
+        return pageInfo;
+    }
+
 }

@@ -1,0 +1,227 @@
+/* ==========================================================================
+   写作中心专属样式 - 已深度美化
+   ========================================================================== */
+
+.editor-page {
+    background-color: #f8fafc;
+}
+
+/* 导航栏写文章按钮高亮 */
+.active-nav-btn {
+    background: var(--brand-mint) !important;
+    color: var(--brand-blue) !important;
+    font-weight: 600;
+}
+
+.editor-container {
+    max-width: 1400px;
+    margin: 30px auto 80px;
+    padding: 0 32px;
+}
+
+/* 彻底重绘 Layui 控件颜色 */
+.layui-input:focus, .layui-textarea:focus {
+    border-color: var(--brand-mint) !important;
+    box-shadow: 0 0 0 3px var(--brand-mint-light) !important;
+}
+
+.layui-form-select dl dd.layui-this {
+    background-color: var(--brand-blue) !important;
+}
+
+/* 1. 标题区域 */
+.editor-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.title-input-wrapper {
+    flex: 1;
+}
+
+.editor-title-input {
+    width: 100%;
+    height: 64px; /* 增加高度 */
+    font-size: 1.6rem; /* 调整字号，保持稳重 */
+    font-weight: 700;
+    color: var(--text-main);
+    background-color: #ffffff;
+    border: 2px solid #e2e8f0; /* 默认浅灰边框 */
+    border-radius: 16px; /* 大圆角 */
+    padding: 0 24px;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+/* 聚焦时的呼吸效果 */
+.editor-title-input:focus {
+    border-color: var(--brand-mint);
+    background-color: #fff;
+    box-shadow: 0 0 0 4px var(--brand-mint-light), 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.editor-title-input::placeholder {
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+/* 按钮组样式优化 */
+.action-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-publish {
+    background: var(--brand-blue) !important;
+    border-radius: var(--radius-pill) !important;
+    height: 44px !important;
+    line-height: 44px !important;
+    padding: 0 35px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    box-shadow: 0 10px 15px -3px rgba(61, 115, 152, 0.2) !important;
+}
+
+.btn-draft {
+    border: 1px solid #e2e8f0 !important;
+    color: var(--text-muted) !important;
+    border-radius: var(--radius-pill) !important;
+}
+
+/* 2. 元数据卡片区域 */
+.editor-meta-card {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    padding: 30px;
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 30px;
+}
+
+.meta-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--brand-blue);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 标签输入框 */
+.tags-input-container {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 15px;
+    min-height: 42px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    background: #fff;
+    transition: var(--transition);
+}
+
+.tags-input-container:focus-within {
+    border-color: var(--brand-mint);
+    box-shadow: 0 0 0 3px var(--brand-mint-light);
+}
+
+.tag-item {
+    background: var(--brand-mint-light);
+    color: var(--brand-blue);
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.tag-item .del-tag {
+    cursor: pointer;
+    font-size: 12px;
+    transition: color 0.2s;
+}
+
+.tag-item .del-tag:hover {
+    color: #ef4444;
+}
+
+.tag-input {
+    border: none;
+    outline: none;
+    flex: 1;
+    min-width: 100px;
+    font-size: 0.9rem;
+}
+
+/* 封面上传 */
+.cover-uploader {
+    border: 2px dashed #e2e8f0;
+    border-radius: var(--radius-lg);
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    background: #f8fafc;
+    color: var(--text-muted);
+}
+
+.cover-uploader:hover {
+    border-color: var(--brand-mint);
+    color: var(--brand-blue);
+}
+
+.cover-uploader img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 3. 编辑器深度重绘 */
+.editor-content-card {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    border: none;
+}
+
+.EasyMDEContainer .CodeMirror {
+    border: none !important;
+    min-height: 600px;
+    padding: 35px !important;
+    font-size: 1.1rem !important;
+    line-height: 1.8 !important;
+    font-family: var(--font-code, "Fira Code", monospace);
+}
+
+.EasyMDEContainer .editor-toolbar {
+    border: none !important;
+    background: #fdfdfd !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 15px 25px !important;
+}
+
+.EasyMDEContainer .editor-toolbar button {
+    border-radius: 8px !important;
+    width: 36px !important;
+    height: 36px !important;
+    margin: 0 3px !important;
+}
+
+.EasyMDEContainer .editor-toolbar button:hover {
+    background: var(--brand-mint-light) !important;
+    color: var(--brand-blue) !important;
+}
