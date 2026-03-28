@@ -1,0 +1,14 @@
+# 数据库驱动类
+jdbc.driverClassName=com.mysql.cj.jdbc.Driver
+# 数据库连接字符串
+jdbc.url=jdbc:mysql://127.0.0.1:3306/nanoblog?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false
+# 数据库账号
+jdbc.username=root
+# 数据库密码（修改）
+jdbc.password=your_password
+
+# 文件上传根目录，每个开发者按自己本机路径修改
+# 示例upload.root=E:/CodeFile_01/JavaCode/NanoBlog/src/main/webapp/static/upload/
+upload.root=your_path
+# 对外暴露的虚拟访问路径前缀
+upload.urlPrefix=/uploads/

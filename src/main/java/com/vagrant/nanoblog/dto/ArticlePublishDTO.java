@@ -2,6 +2,8 @@ package com.vagrant.nanoblog.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class ArticlePublishDTO {
 
@@ -10,4 +12,8 @@ public class ArticlePublishDTO {
     private Long categoryId;
 
     private String contentMd; // Markdown
+
+    private String coverUrl;
+    private List<String> tags;
+    private Integer status;
 }

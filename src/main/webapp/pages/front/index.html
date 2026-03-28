@@ -1,10 +1,155 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页 - NanoBlog</title>
+
+    <!-- 图标 -->
+    <link rel="icon" href="/favicon.ico">
+
+    <!-- Layui -->
+    <link rel="stylesheet" href="../../static/lib/layui/css/layui.css">
+
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="../../static/css/common/common.css">
+    <link rel="stylesheet" href="../../static/css/front/index.css">
+
+
 </head>
 <body>
-<h1>hello world</h1>
+
+<header class="navbar">
+    <div class="navbar-inner">
+        <!-- 左侧：Logo + 导航 -->
+        <div class="navbar-left">
+            <a class="logo-link" href="/pages/front/index.html">
+                <img src="/static/images/logo-horizontal.png" alt="NanoBlog Logo" class="logo-image">
+                <span class="sr-only">NanoBlog</span>
+            </a>
+            <nav class="navbar-menu">
+                <a href="/pages/front/index.html">首页</a>
+                <a href="#">分类</a>
+                <a href="#">标签</a>
+            </nav>
+        </div>
+
+        <!-- 中间：搜索框 -->
+        <div class="navbar-center">
+            <div class="search-box">
+                <i class="layui-icon layui-icon-search"></i>
+                <input type="text" placeholder="搜索文章标题、标签、作者">
+            </div>
+        </div>
+
+        <!-- 右侧：用户操作区 -->
+        <div class="navbar-right">
+            <!-- 在 editor.html 加上 active 类 -->
+            <a href="/pages/front/editor.html" class="nav-button">写文章</a>
+
+            <a href="/pages/front/login.html" class="nav-link">登录</a>
+            <a href="/pages/front/register.html" class="nav-button">注册</a>
+        </div>
+    </div>
+</header>
+
+<!-- 主体 -->
+<main class="page-main">
+    <div class="page-container">
+
+        <!-- 文章列表区域 -->
+        <section class="article-section">
+
+            <!-- 标题栏 -->
+            <div class="section-header">
+                <h1>最新文章</h1>
+                <p>记录学习、开发与思考</p>
+            </div>
+
+            <!-- 双列文章卡片容器(Grid -->
+            <div class="article-grid">
+
+                <!-- 单篇文章卡片 1 -->
+                <article class="article-card">
+                    <div class="card-cover">
+                        <img src="/static/images/demo-cover.jpg" alt="一篇关于 SSM 博客系统前端结构设计的思考 封面" loading="lazy">
+                    </div>
+
+                    <div class="card-body">
+                        <h2 class="card-title">
+                            <!-- 将 <a> 标签移到标题内部，避免全局嵌套陷阱 -->
+                            <a href="/pages/front/post.html?id=1" class="main-link">
+                                一篇关于 SSM 博客系统前端结构设计的思考
+                            </a>
+                        </h2>
+
+                        <p class="card-summary">
+                            这篇文章主要介绍如何为 NanoBlog 设计首页结构，包括导航栏、双列卡片流、分页区域以及基础的页面组织方式。
+                        </p>
+
+                        <div class="card-tags">
+                            <!-- 解除了外层 <a> 的包裹，标签可以安全地做成独立链接 -->
+                            <a href="/tags/ssm" class="tag">SSM</a>
+                            <a href="/tags/frontend" class="tag">前端</a>
+                            <a href="/tags/blog" class="tag">博客</a>
+                        </div>
+
+                        <div class="card-meta">
+                            <span class="meta-author">崔哲超</span>
+                            <span class="meta-dot">·</span>
+                            <!-- 使用 <time> 标签提升 SEO 语义 -->
+                            <time class="meta-time" datetime="2026-03-25">2026-03-25</time>
+                            <span class="meta-dot">·</span>
+                            <span class="meta-view">128 浏览</span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- 单篇文章卡片 2 -->
+                <article class="article-card">
+                    <div class="card-cover">
+                        <img src="/static/images/demo-cover2.jpg" alt="文章标题 封面" loading="lazy">
+                    </div>
+                    <div class="card-body">
+                        <h2 class="card-title">
+                            <a href="/pages/front/post.html?id=2" class="main-link">MyBatis 进阶：动态 SQL 的优雅写法</a>
+                        </h2>
+                        <p class="card-summary">探讨在复杂业务场景下，如何利用 MyBatis 的标签实现高可维护性的动态 SQL 拼接...</p>
+                        <div class="card-tags">
+                            <a href="/tags/java" class="tag">Java</a>
+                            <a href="/tags/mybatis" class="tag">MyBatis</a>
+                        </div>
+                        <div class="card-meta">
+                            <span class="meta-author">崔哲超</span>
+                            <span class="meta-dot">·</span>
+                            <time class="meta-time" datetime="2026-03-24">2026-03-24</time>
+                            <span class="meta-dot">·</span>
+                            <span class="meta-view">356 浏览</span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- 后续文章卡片由 JS 动态渲染 -->
+
+            </div>
+
+            <!-- 底部分页区域 -->
+            <div class="pagination-wrap">
+                <div id="pagination"></div>
+            </div>
+
+        </section>
+    </div>
+</main>
+
+<!-- 页面底部 -->
+<footer class="page-footer">
+    <p>© 2026 NanoBlog. All rights reserved.</p>
+</footer>
+
+<!-- JS -->
+<script src="/static/lib/layui/layui.js"></script>
+<script src="/static/js/common/common.js"></script>
+<script src="/static/js/front/index.js"></script>
 </body>
 </html>

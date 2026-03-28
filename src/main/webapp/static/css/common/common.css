@@ -1,0 +1,283 @@
+/* 全局变量与基础重置 */
+:root {
+    --brand-blue: #3D7398;
+    --brand-mint: #A3D8E0;
+    --brand-mint-light: rgba(163, 216, 224, 0.15);
+    --brand-star: #FFD93D;
+
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --body-bg: #f8fafc;
+    --card-bg: #ffffff;
+
+    --text-main: #2c3e50;
+    --text-muted: #86909c;
+
+    /* 字体栈优化 */
+    --font-heading: "Inter", "-apple-system", "BlinkMacSystemFont", "PingFang SC", sans-serif;
+
+    --radius-xl: 24px;
+    --radius-lg: 16px;
+    --radius-pill: 50px;
+
+    --shadow-soft: 0 10px 40px rgba(61, 115, 152, 0.08);
+    --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background-color: var(--body-bg);
+    color: var(--text-main);
+    font-family: var(--font-heading);
+    line-height: 1.7;
+}
+
+a {
+    text-decoration: none !important;
+    color: inherit;
+    transition: var(--transition);
+}
+
+/* 导航栏样式 (毛玻璃效果) */
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    height: 64px;
+    background: var(--glass-bg);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.navbar-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+}
+
+.navbar-left, .navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.auth-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 20px;
+    border-left: 1px solid #e2e8f0; /* 增加一道极细的分隔线，区分功能按钮与账号按钮 */
+}
+/* 导航栏按钮基础样式 */
+.nav-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 20px;
+    border-radius: var(--radius-pill);
+    background-color: var(--brand-blue); /* 默认深蓝色 */
+    color: #ffffff !important;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.nav-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(61, 115, 152, 0.2);
+    opacity: 0.95;
+}
+
+/*  导航栏按钮高亮状态  */
+.nav-button.active {
+    background-color: var(--brand-mint) !important;
+    color: var(--brand-blue) !important;
+    box-shadow: 0 5px 15px rgba(167, 243, 208, 0.4);
+}
+
+.nav-button.active:hover {
+    background-color: #89e2c2 !important;
+    box-shadow: 0 8px 20px rgba(167, 243, 208, 0.5);
+}
+
+/* Logo 图片样式 */
+.logo-link {
+    display: flex;
+    align-items: center;
+}
+
+.logo-image {
+    height: 42px;
+    width: auto;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.logo-link:hover .logo-image {
+    transform: scale(1.05);
+}
+
+/* 导航菜单 */
+.navbar-menu {
+    display: flex;
+    gap: 20px;
+}
+
+.navbar-menu a {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.navbar-menu a.active,
+.navbar-menu a:hover {
+    color: var(--brand-blue);
+}
+
+/* 搜索框通用设计 */
+.search-box {
+    position: relative;
+    width: 280px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 8px 16px 8px 38px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.03);
+    outline: none;
+    transition: var(--transition);
+}
+
+.search-box input:focus {
+    border-color: var(--brand-mint);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(163, 216, 224, 0.2);
+}
+
+.search-box i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+/* 用户操作按钮 */
+.nav-link {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.nav-link:hover {
+    color: var(--brand-blue);
+}
+
+.nav-button {
+    padding: 8px 20px;
+    background: var(--brand-blue);
+    color: #fff !important;
+    border-radius: var(--radius-pill);
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(61, 115, 152, 0.2);
+}
+
+.nav-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(61, 115, 152, 0.3);
+}
+
+/* 辅助类：SEO 文字隐藏 */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+/* 底部通用 */
+.page-footer {
+    padding: 40px 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/*覆盖 Layui 默认分页样式  */
+.pagination-wrap {
+    margin: 60px 0 20px;
+    display: flex;
+    justify-content: center;
+}
+
+/* 移除所有默认的边框和背景，设置圆角和间距 */
+.layui-laypage a,
+.layui-laypage span {
+    background-color: transparent !important;
+    border: none !important;
+    color: var(--text-muted) !important;
+    font-weight: 500;
+    padding: 0 16px !important;
+    height: 38px !important;
+    line-height: 38px !important;
+    border-radius: var(--radius-pill) !important;
+    margin: 0 4px !important;
+    transition: var(--transition) !important;
+}
+
+/* 悬浮状态：使用主题的薄荷绿背景和主色蓝文字 */
+.layui-laypage a:hover {
+    background-color: var(--brand-mint-light) !important;
+    color: var(--brand-blue) !important;
+    transform: translateY(-2px);
+}
+
+/* 当前选中页 (当前页的背景色是由里面的 em 标签控制的) */
+.layui-laypage .layui-laypage-curr .layui-laypage-em {
+    background-color: var(--brand-blue) !important;
+    border-radius: var(--radius-pill) !important;
+}
+
+.layui-laypage .layui-laypage-curr em {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+/* 禁用状态 (如在第一页时，悬浮"上一页"不应有效果) */
+.layui-laypage .layui-disabled,
+.layui-laypage .layui-disabled:hover {
+    background-color: transparent !important;
+    color: #cbd5e1 !important; /* 浅灰色 */
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+
+/* 附加信息 (如：共 3 条) */
+.layui-laypage-count,
+.layui-laypage-limits {
+    color: var(--text-muted) !important;
+    font-size: 0.9rem !important;
+    background: transparent !important;
+}

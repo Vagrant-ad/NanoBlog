@@ -2,10 +2,15 @@ package com.vagrant.nanoblog.controller;
 
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.vagrant.nanoblog.common.ResponseResult;
 import com.vagrant.nanoblog.dto.ArticlePublishDTO;
 import com.vagrant.nanoblog.service.IArticleService;
+import com.vagrant.nanoblog.service.impl.ArticleServiceImpl;
+import com.vagrant.nanoblog.vo.ArticleDetailVO;
+import com.vagrant.nanoblog.vo.ArticleHomeVO;
 import com.vagrant.nanoblog.vo.ArticleListVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.stereotype.Controller;
@@ -25,11 +30,11 @@ public class ArticleController {
     private final IArticleService articleService;
 
     @PostMapping("/publish")
-    public Long publish(@RequestBody ArticlePublishDTO dto) {
+    public ResponseResult<Long> publish(@RequestBody ArticlePublishDTO dto) {
 
-        Long userId = 2L; // 后面替换成登录用户
-
-        return articleService.publishArticle(dto, userId);
+        Long userId = 2L; // TODO 后面替换成登录用户
+        Long articleId = articleService.publishArticle(dto, userId);
+        return ResponseResult.okResult(articleId);
     }
     @GetMapping("/list")
     public IPage<ArticleListVO> list(
@@ -37,5 +42,19 @@ public class ArticleController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         return articleService.getArticleList(page, size);
+    }
+    @GetMapping("/{id}")
+    public ResponseResult<ArticleDetailVO> getArticleDetail(@PathVariable Long id) {
+        ArticleDetailVO article = articleService.getArticleDetail(id);
+        System.out.println(article);
+        return ResponseResult.okResult(article);
+    }
+
+    @GetMapping("/home")
+    public ResponseResult<IPage<ArticleHomeVO>> homePage(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "8") Integer size
+    ) {
+        return ResponseResult.okResult(articleService.getHomeArticleList(page, size));
     }
 }

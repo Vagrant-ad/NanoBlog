@@ -33,6 +33,10 @@
     <!-- 3. 静态资源放行 -->
     <mvc:default-servlet-handler />
 
+    <context:property-placeholder location="classpath:jdbc.properties" ignore-unresolvable="true"/>
+    <!-- 上传图片的虚拟路径映射到磁盘固定目录 -->
+    <mvc:resources mapping="/uploads/**" location="file:${upload.root}"/><!--这里报错不用管，是正常的-->
+
     <!-- 4. Jackson配置 - 用FactoryBean替代手动new ObjectMapper -->
     <bean id="customObjectMapper"
           class="org.springframework.http.converter.json.Jackson2ObjectMapperFactoryBean">
@@ -50,6 +54,15 @@
         <!-- 忽略null字段 -->
         <property name="serializationInclusion" value="NON_NULL"/>
 
+    </bean>
+
+    <!-- 文件上传解析器，id 为 multipartResolver -->
+    <bean id="multipartResolver"
+          class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!-- 最大上传大小：5MB -->
+        <property name="maxUploadSize" value="5242880"/>
+        <!-- 默认编码 -->
+        <property name="defaultEncoding" value="UTF-8"/>
     </bean>
 
     <!-- 5. 开启注解驱动 + 配置Jackson消息转换器 -->

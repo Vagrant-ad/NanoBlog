@@ -1,7 +1,14 @@
 package com.vagrant.nanoblog.mapper;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.vagrant.nanoblog.pojo.Article;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.vagrant.nanoblog.vo.ArticleDetailVO;
+import com.vagrant.nanoblog.vo.ArticleHomeVO;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -12,5 +19,10 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * @since 2026-03-21
  */
 public interface ArticleMapper extends BaseMapper<Article> {
-
+    ArticleDetailVO getArticleDetailById(Long id);
+    void updateViewCount(Long id);
+    //首页文章分页
+    List<ArticleHomeVO> getHomeArticlePage(Page<ArticleHomeVO> page);
+    //批量查文章标签，返回articleId+tagName
+    List<Map<String, Object>> getTagsByArticleIds(@Param("articleIds") List<Long> articleIds);
 }
