@@ -69,4 +69,8 @@
         </mvc:message-converters>
     </mvc:annotation-driven>
 
+
+    <!-- 6.上传解析器 -->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.support.StandardServletMultipartResolver">
+    </bean>
 </beans>

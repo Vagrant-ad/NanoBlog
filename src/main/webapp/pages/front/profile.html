@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>个人中心 - NanoBlog</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            background-color: #f4f7f6;
+            font-family: "Microsoft YaHei", sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* 左右分栏容器 */
+        .layout-container {
+            display: flex;
+            gap: 25px;
+            max-width: 1200px;
+            margin: 20px auto;
+            align-items: flex-start;
+        }
+
+        /* 左侧：个人资料卡片 */
+        .profile-box {
+            width: 380px;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            flex-shrink: 0;
+        }
+
+        h2, h3 { color: #333; margin-top: 0; }
+        .section-title {
+            font-size: 18px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* 头像样式 */
+        .avatar-section { text-align: center; margin-bottom: 25px; }
+        .avatar-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            border: 4px solid #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .avatar-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-mask {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.6); color: white;
+            font-size: 12px; padding: 5px 0; opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .avatar-wrapper:hover .avatar-mask { opacity: 1; }
+
+        /* 表单样式 */
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 13px; color: #777; margin-bottom: 4px; }
+        .form-group input, .form-group textarea {
+            width: 100%; padding: 9px; border: 1px solid #ddd;
+            border-radius: 6px; box-sizing: border-box; outline: none;
+            font-size: 14px;
+        }
+        .form-group input[readonly] { background-color: #f9f9f9; color: #999; border-color: #eee; }
+        .form-group textarea { resize: vertical; min-height: 60px; }
+
+        .btn-save {
+            width: 100%; padding: 12px; background-color: #007bff;
+            color: white; border: none; border-radius: 6px;
+            font-size: 16px; cursor: pointer; transition: 0.3s; margin-top: 10px;
+        }
+        .btn-save:hover { background-color: #0056b3; }
+
+        /* 右侧：数据展示区 */
+        .content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .data-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .stat-item {
+            background: #f8faff; padding: 15px; text-align: center;
+            border-radius: 8px; border: 1px solid #eef2f6;
+        }
+        .stat-value { display: block; font-size: 22px; font-weight: bold; color: #007bff; }
+        .stat-label { font-size: 12px; color: #888; }
+
+        .article-item { padding: 15px 0; border-bottom: 1px solid #eee; }
+        .article-title { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 5px; }
+        .article-meta { font-size: 12px; color: #aaa; }
+    </style>
+</head>
+<body>
+
+<div class="layout-container">
+    <div class="profile-box">
+        <h3 class="section-title">个人设置</h3>
+        <div class="avatar-section">
+            <div class="avatar-wrapper" id="avatarClickRegion">
+                <img id="avatarPreview" src="/NanoBlog_war/static/images/default-avatar.png">
+                <div class="avatar-mask">修改头像</div>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        </div>
+
+        <input type="hidden" id="userId">
+        <input type="hidden" id="avatarUrl">
+
+        <div class="form-group">
+            <label>用户名</label>
+            <input type="text" id="username" readonly>
+        </div>
+        <div class="form-group">
+            <label>昵称</label>
+            <input type="text" id="nickname">
+        </div>
+        <div class="form-group">
+            <label>邮箱</label>
+            <input type="text" id="email">
+        </div>
+        <div class="form-group">
+            <label>个人简介</label>
+            <textarea id="bio" placeholder="介绍一下你自己..."></textarea>
+        </div>
+
+        <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;">
+
+        <div class="form-group">
+            <label>账号状态</label>
+            <input type="text" id="userStatus" readonly>
+        </div>
+        <div class="form-group">
+            <label>上次登录</label>
+            <input type="text" id="lastLoginTime" readonly>
+        </div>
+        <div class="form-group">
+            <label>资料更新于</label>
+            <input type="text" id="updateTime" readonly>
+        </div>
+        <div class="form-group">
+            <label>注册时间</label>
+            <input type="text" id="createTime" readonly>
+        </div>
+
+        <button class="btn-save" id="saveBtn">保存修改</button>
+    </div>
+
+    <div class="content-area">
+        <div class="data-card">
+            <h3 class="section-title">创作数据</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value" id="stat-articles">--</span>
+                    <span class="stat-label">文章总数</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="stat-likes">--</span>
+                    <span class="stat-label">获得点赞</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="stat-comments">--</span>
+                    <span class="stat-label">收到评论</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-card">
+            <h3 class="section-title">我的文章</h3>
+            <div id="articleListContainer">
+                <div class="article-item">
+                    <div class="article-title">欢迎使用 NanoBlog </div>
+                    <div class="article-meta">2026-3-28 · 0 点赞 · 0 评论</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 增强版时间格式化：支持显示到分钟
+    function formatFullTime(dateData) {
+        if (!dateData) return "暂无记录";
+        let d;
+        if (Array.isArray(dateData)) {
+            // 处理后端传来的数组格式 [2023, 10, 25, 14, 30]
+            let year = dateData[0];
+            let month = ("0" + dateData[1]).slice(-2);
+            let day = ("0" + dateData[2]).slice(-2);
+            let hour = ("0" + (dateData[3] || 0)).slice(-2);
+            let min = ("0" + (dateData[4] || 0)).slice(-2);
+            return `${year}-${month}-${day} ${hour}:${min}`;
+        } else {
+            d = new Date(dateData);
+        }
+        if (isNaN(d.getTime())) return dateData;
+        return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate() +
+            " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+    }
+
+    $(document).ready(function() {
+        // 1. 未登录拦截逻辑优化
+        var loginUser = localStorage.getItem("loginUsername",username);
+
+        if (!loginUser) {
+            alert("检测到您尚未登录，请先登录！");
+            // 用户点击确认弹窗后，才会执行这里的跳转
+            window.location.href = "/NanoBlog_war/pages/front/login.html";
+            return;
+        }
+
+        // 2. 加载个人资料（包含新增的时间字段）
+        $.get("/NanoBlog_war/user/getProfile", { username: loginUser }, function(res) {
+            if (res.code === 200) {
+                var user = res.data;
+                $("#userId").val(user.id);
+                $("#username").val(user.username);
+                $("#nickname").val(user.nickname);
+                $("#email").val(user.email);
+                $("#bio").val(user.bio || "");
+                $("#avatarUrl").val(user.avatarUrl || "");
+                if (user.avatarUrl) $("#avatarPreview").attr("src", user.avatarUrl);
+
+                // 填充时间字段
+                $("#createTime").val(formatFullTime(user.createTime));
+                $("#updateTime").val(formatFullTime(user.updateTime));
+                $("#lastLoginTime").val(formatFullTime(user.lastLoginTime));
+
+                var isNormal = user.status === 1;
+                $("#userStatus").val(isNormal ? "正常" : "禁用").css("color", isNormal ? "#28a745" : "#dc3545");
+            } else {
+                alert("Session已失效，请重新登录");
+                window.location.href = "/NanoBlog_war/pages/front/login.html";
+            }
+        });
+
+        // 3. 上传头像
+        $("#avatarClickRegion").click(function() { $("#fileInput").click(); });
+        $("#fileInput").change(function() {
+            var file = this.files[0];
+            if (!file) return;
+            var formData = new FormData();
+            formData.append("file", file);
+            $.ajax({
+                url: "/NanoBlog_war/user/uploadAvatar",
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(res) {
+                    if (res.code === 200) {
+                        $("#avatarPreview").attr("src", res.data);
+                        $("#avatarUrl").val(res.data);
+                        alert("头像上传成功，请点击下方保存按钮生效！");
+                    }
+                }
+            });
+        });
+
+        // 4. 保存修改
+        $("#saveBtn").click(function() {
+            var data = {
+                id: $("#userId").val(),
+                nickname: $("#nickname").val(),
+                email: $("#email").val(),
+                avatarUrl: $("#avatarUrl").val(),
+                bio: $("#bio").val()
+            };
+            $.ajax({
+                url: "/NanoBlog_war/user/updateProfile",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function(res) {
+                    if (res.code === 200) {
+                        alert("资料已成功更新！");
+                        location.reload();
+                    } else {
+                        alert("保存失败：" + res.msg);
+                    }
+                }
+            });
+        });
+    });
+
+    function loadMockData(username) {
+        console.log("此处预留对接接口");
+        //  获取文章列表并渲染即可
+    }
+
+</script>
+</body>
+</html>

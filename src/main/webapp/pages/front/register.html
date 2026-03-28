@@ -2,38 +2,156 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>用户注册</title>
+    <title>用户注册 - NanoBlog</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* 1. 全局居中布局 (与登录页一致) */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f7f6;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        /* 2. 注册卡片容器 */
+        .register-box {
+            width: 380px; /* 注册字段多，稍微加宽一点点 */
+            padding: 40px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* 字段间的间距 */
+        }
+
+        h2 {
+            margin: 0 0 10px 0;
+            text-align: center;
+            color: #333;
+        }
+
+        /* 3. 输入框统一样式 */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-size: 14px;
+            color: #666;
+            margin-left: 2px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #007bff;
+        }
+
+        /* 4. 注册按钮 */
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745; /* 注册用绿色区分，或者用 #007bff 保持完全一致 */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .links {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .links a {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-<div style="margin: 50px auto; width: 300px;">
+
+<div class="register-box">
     <h2>账号注册</h2>
-    用户名: <input type="text" id="username"><br>
-    密码: <input type="password" id="passwordHash"><br>
-    昵称: <input type="text" id="nickname"><br>
-    邮箱: <input type="text" id="email"><br>
-    <button id="regBtn">立即注册</button>
+
+    <div class="input-group">
+        <label>用户名</label>
+        <input type="text" id="username" placeholder="建议使用英文或数字">
+    </div>
+
+    <div class="input-group">
+        <label>密码</label>
+        <input type="password" id="passwordHash" placeholder="请设置登录密码">
+    </div>
+
+    <div class="input-group">
+        <label>昵称</label>
+        <input type="text" id="nickname" placeholder="想让大家怎么称呼你">
+    </div>
+
+    <div class="input-group">
+        <label>邮箱</label>
+        <input type="text" id="email" placeholder="example@mail.com">
+    </div>
+
+    <button id="regBtn">立 即 注 册</button>
+
+    <div class="links">
+        已有账号？ <a href="login.html">返回登录</a>
+    </div>
 </div>
 
 <script>
     $("#regBtn").click(function() {
+        var username = $("#username").val();
+        var password = $("#passwordHash").val();
+        var nickname = $("#nickname").val();
+        var email = $("#email").val();
+
+        if (!username || !password || !nickname || !email) {
+            alert("请完整填写注册信息！");
+            return;
+        }
+
         $.post("/NanoBlog_war/user/doRegister", {
-            username: $("#username").val(),
-            passwordHash: $("#passwordHash").val(),
-            nickname: $("#nickname").val(),
-            email: $("#email").val()
+            username: username,
+            passwordHash: password,
+            nickname: nickname,
+            email: email
         }, function(res) {
-            if(res === "success") {
+            if(res.code === 200) {
                 alert("注册成功！");
                 window.location.href = "/NanoBlog_war/pages/front/login.html";
             } else {
-                alert(res);
+                alert("注册失败：" + res.msg);
             }
         });
     });
 </script>
-
-
 
 </body>
 </html>

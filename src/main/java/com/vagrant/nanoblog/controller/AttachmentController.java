@@ -1,9 +1,11 @@
 package com.vagrant.nanoblog.controller;
 
 
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-
 import org.springframework.stereotype.Controller;
+
+
 
 /**
  * <p>
@@ -16,5 +18,4 @@ import org.springframework.stereotype.Controller;
 @Controller
 @RequestMapping("/attachment")
 public class AttachmentController {
-
 }
