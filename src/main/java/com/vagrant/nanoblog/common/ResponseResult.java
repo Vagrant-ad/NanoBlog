@@ -25,8 +25,11 @@ public class ResponseResult<T> {
     }
 
     // 失败返回
-    public static <T> ResponseResult<T> errorResult(String msg) {
-        return new ResponseResult<>(500, msg, null);
+    public static <T> ResponseResult<T> errorResult(int code, String msg) {
+        ResponseResult<T> result = new ResponseResult<>();
+        result.setCode(code);
+        result.setMsg(msg);
+        return result;
     }
 
 

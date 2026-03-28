@@ -30,11 +30,11 @@ public class ArticleController {
     private final IArticleService articleService;
 
     @PostMapping("/publish")
-    public Long publish(@RequestBody ArticlePublishDTO dto) {
+    public ResponseResult<Long> publish(@RequestBody ArticlePublishDTO dto) {
 
-        Long userId = 2L; // 后面替换成登录用户
-
-        return articleService.publishArticle(dto, userId);
+        Long userId = 2L; // TODO 后面替换成登录用户
+        Long articleId = articleService.publishArticle(dto, userId);
+        return ResponseResult.okResult(articleId);
     }
     @GetMapping("/list")
     public IPage<ArticleListVO> list(

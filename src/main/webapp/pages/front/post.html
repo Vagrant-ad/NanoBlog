@@ -11,22 +11,23 @@
     <link rel="stylesheet" href="../../static/lib/layui/css/layui.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js/styles/github.css">
 
+    <!-- KaTeX 数学公式样式 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+
     <!-- 引入通用样式与文章专属样式 -->
     <link rel="stylesheet" href="../../static/css/common/common.css">
     <link rel="stylesheet" href="../../static/css/front/post.css">
 </head>
 <body>
 
-<!-- 顶部导航栏 -->
 <header class="navbar">
     <div class="navbar-inner">
-        <!-- 左侧：纯图片 Logo + 导航 -->
+        <!-- 左侧：Logo + 导航 -->
         <div class="navbar-left">
             <a class="logo-link" href="/pages/front/index.html">
                 <img src="/static/images/logo-horizontal.png" alt="NanoBlog Logo" class="logo-image">
                 <span class="sr-only">NanoBlog</span>
             </a>
-
             <nav class="navbar-menu">
                 <a href="/pages/front/index.html">首页</a>
                 <a href="#">分类</a>
@@ -38,12 +39,15 @@
         <div class="navbar-center">
             <div class="search-box">
                 <i class="layui-icon layui-icon-search"></i>
-                <input type="text" placeholder="搜索文章标题、标签、作者" aria-label="搜索博客内容">
+                <input type="text" placeholder="搜索文章标题、标签、作者">
             </div>
         </div>
 
         <!-- 右侧：用户操作区 -->
         <div class="navbar-right">
+            <!-- 在 editor.html 加上 active 类 -->
+            <a href="/pages/front/editor.html" class="nav-button">写文章</a>
+
             <a href="/pages/front/login.html" class="nav-link">登录</a>
             <a href="/pages/front/register.html" class="nav-button">注册</a>
         </div>
@@ -103,10 +107,13 @@
 <button id="back-to-top" class="back-to-top" aria-label="返回顶部">↑</button>
 
 <!-- JS 依赖 -->
+<script src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/highlight.js/lib/common.min.js"></script>
 <script src="/static/lib/layui/layui.js"></script>
 <!-- 引入文章专属 JS -->
+<script src="/static/js/common/common.js"></script>
 <script src="/static/js/front/post.js"></script>
 
 </body>

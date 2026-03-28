@@ -19,19 +19,16 @@
 </head>
 <body>
 
-<!-- 固定顶部导航栏 -->
 <header class="navbar">
     <div class="navbar-inner">
         <!-- 左侧：Logo + 导航 -->
         <div class="navbar-left">
             <a class="logo-link" href="/pages/front/index.html">
-                <!-- 使用纯图片 Logo，设置合适的 class 方便 CSS 控制大小 -->
                 <img src="/static/images/logo-horizontal.png" alt="NanoBlog Logo" class="logo-image">
                 <span class="sr-only">NanoBlog</span>
             </a>
-
             <nav class="navbar-menu">
-                <a href="/pages/front/index.html" class="active">首页</a>
+                <a href="/pages/front/index.html">首页</a>
                 <a href="#">分类</a>
                 <a href="#">标签</a>
             </nav>
@@ -41,23 +38,17 @@
         <div class="navbar-center">
             <div class="search-box">
                 <i class="layui-icon layui-icon-search"></i>
-                <!-- 增加 aria-label 提升无障碍访问 -->
-                <input type="text" placeholder="搜索文章标题、标签、作者" aria-label="搜索博客内容">
+                <input type="text" placeholder="搜索文章标题、标签、作者">
             </div>
         </div>
 
         <!-- 右侧：用户操作区 -->
         <div class="navbar-right">
-            <!-- 未登录状态 -->
+            <!-- 在 editor.html 加上 active 类 -->
+            <a href="/pages/front/editor.html" class="nav-button">写文章</a>
+
             <a href="/pages/front/login.html" class="nav-link">登录</a>
             <a href="/pages/front/register.html" class="nav-button">注册</a>
-
-            <!-- 登录后状态预留 -->
-            <!--
-            <div class="user-avatar">
-                <img src="/static/images/avatar-default.png" alt="头像">
-            </div>
-            -->
         </div>
     </div>
 </header>

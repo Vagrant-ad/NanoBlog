@@ -22,7 +22,7 @@ layui.use(['layer', 'element'], function () {
     function init() {
         bindBackToTop();
         bindNavigation();
-        bindMarkdownEnhance();
+        initMarkdown()
 
         if (!state.articleId) {
             layer.msg('缺少文章 ID');
@@ -31,6 +31,100 @@ layui.use(['layer', 'element'], function () {
         }
 
         loadArticle(state.articleId);
+    }
+    //markdown初始化
+    function initMarkdown() {
+        if (!window.marked) return;
+
+        //  自定义 renderer：代码块交给 hljs，表格加 wrapper
+        const renderer = new marked.Renderer();
+
+        // ── 代码高亮 ──
+        // marked v9+ 的 renderer.code 接收单个 token 对象 {text, lang, escaped}
+        // marked v4-v8 接收 (code, lang) 两个参数
+        renderer.code = function (token) {
+            const codeText = (token && typeof token === 'object' && 'text' in token) ? token.text : String(token);
+            const codeLang = (token && typeof token === 'object' && 'lang' in token) ? token.lang : arguments[1];
+
+            if (window.hljs) {
+                const validLang = codeLang && hljs.getLanguage(codeLang) ? codeLang : null;
+                const highlighted = validLang
+                    ? hljs.highlight(codeText, { language: validLang }).value
+                    : hljs.highlightAuto(codeText).value;
+                // 用 hljs-pre class 方便 CSS 加背景，code 加 hljs class 触发主题色
+                return `<pre class="hljs-pre"><code class="hljs language-${validLang || 'plaintext'}">${highlighted}</code></pre>`;
+            }
+            const escaped = codeText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            return `<pre class="hljs-pre"><code>${escaped}</code></pre>`;
+        };
+
+        //表格
+        // marked v9+：renderer.table 接收单个 token 对象
+        //   token.header = [{text, tokens, ...}, ...]  列头数组
+        //   token.rows   = [[{text,...},...], ...]      行数组
+        //   token.align  = [null|'left'|'center'|'right', ...]
+        // marked v4-v8：renderer.table(header, body) 两个 HTML 字符串
+        renderer.table = function (token) {
+            if (token && typeof token === 'object' && Array.isArray(token.header)) {
+                // marked v9+：手动拼 thead / tbody
+                const alignStyle = (i) => token.align && token.align[i] ? ` style="text-align:${token.align[i]}"` : '';
+
+                const theadRow = token.header.map((cell, i) =>
+                    `<th${alignStyle(i)}>${cell.text}</th>`
+                ).join('');
+
+                const tbodyRows = token.rows.map(row =>
+                        '<tr>' + row.map((cell, i) =>
+                            `<td${alignStyle(i)}>${cell.text}</td>`
+                        ).join('') + '</tr>'
+                ).join('');
+
+                return `<div class="table-wrapper"><table class="md-table">` +
+                    `<thead><tr>${theadRow}</tr></thead>` +
+                    `<tbody>${tbodyRows}</tbody>` +
+                    `</table></div>`;
+            }
+
+            // marked v4-v8 兼容：两个字符串参数
+            const headerStr = typeof token    === 'string' ? token    : '';
+            const bodyStr   = typeof arguments[1] === 'string' ? arguments[1] : '';
+            return `<div class="table-wrapper"><table class="md-table"><thead>${headerStr}</thead><tbody>${bodyStr}</tbody></table></div>`;
+        };
+
+        // ── TodoList ──
+        // marked v9+ GFM task list：listitem token = {task: true, checked: bool, text: '<已渲染HTML>', ...}
+        // 注意：v9+ 的 token.text 已经是内部渲染后的 HTML，并且 marked 本身会在 text 开头插入
+        //       <input disabled="" type="checkbox"> 这个标签，需要去掉再重新输出我们自己的 checkbox。
+        renderer.listitem = function (token) {
+            if (token && typeof token === 'object') {
+                if (token.task === true) {
+                    const checked   = token.checked ? 'checked' : '';
+                    const cls       = token.checked ? 'todo-item done' : 'todo-item';
+                    // 移除 marked 自动插入的 <input ...> 避免出现两个 checkbox
+                    const innerHtml = (token.text || '').replace(/^<input\b[^>]*>\s*/i, '');
+                    return `<li class="${cls}"><input type="checkbox" ${checked} disabled> ${innerHtml}</li>\n`;
+                }
+                return `<li>${token.text || ''}</li>\n`;
+            }
+
+            // marked v4-v8 兼容：token 是字符串
+            const text = String(token);
+            if (/^\[x\]\s/i.test(text)) {
+                return `<li class="todo-item done"><input type="checkbox" checked disabled> ${text.slice(4)}</li>\n`;
+            }
+            if (/^\[ \]\s/.test(text)) {
+                return `<li class="todo-item"><input type="checkbox" disabled> ${text.slice(4)}</li>\n`;
+            }
+            return `<li>${text}</li>\n`;
+        };
+
+        //  配置 marked
+        marked.setOptions({
+            renderer,
+            gfm: true,          // 开启 GFM：表格、删除线等
+            breaks: false,      // 单个换行不变 <br>
+            pedantic: false
+        });
     }
 
     function loadArticle(id) {
@@ -75,11 +169,15 @@ layui.use(['layer', 'element'], function () {
     function renderArticle(data) {
         const title = data.title || data.articleTitle || '未命名文章';
         const publishTime = formatTime(data.publishTime);
-        const category = data.categoryName || '未分类';
+        const category = data.categoryName
+            || data.category_name
+            || (data.category && (data.category.categoryName || data.category.name))
+            || '未分类';
         const viewCount = data.viewCount ?? 0;
 
         const tags = data.tags || [];
-        const html = data.contentHtml || data.content || data.articleContent || '';
+        const mdContent   = data.contentMd || '';
+        const htmlContent = data.content || '';
 
         $('#title').text(title);
         $('#publishTime').text(publishTime);
@@ -87,10 +185,10 @@ layui.use(['layer', 'element'], function () {
         $('#viewCount').text(viewCount);
 
         renderTags(tags);
-        renderContent(html);
-
+        renderContent(mdContent,htmlContent);
         renderPrevNext(null, null);
         renderToc();
+        bindTocHighlight();
 
         element.render();
     }
@@ -114,16 +212,29 @@ layui.use(['layer', 'element'], function () {
         $wrap.show();
     }
 
-    function renderContent(html) {
+    function renderContent(md, html) {
         const $content = $('#markdown-content');
 
-        if (!html) {
-            $content.html('<p class="article-empty" style="text-align: center; color: var(--text-muted);">暂无正文内容</p>');
+        if (!md && !html) {
+            $content.html('<p class="article-empty" style="text-align:center;color:var(--text-muted);">暂无正文内容</p>');
             return;
         }
 
-        $content.html(html);
+        if (md && window.marked) {
+            // 前端实时渲染 Markdown（支持表格 / 代码高亮 / TodoList）
+            try {
+                $content.html(marked.parse(md));
+            } catch (e) {
+                console.warn('marked 渲染失败，降级为 HTML：', e);
+                $content.html(html);
+            }
+        } else {
+            // 使用后端预渲染的 HTML
+            $content.html(html);
+        }
+
         enhanceContent();
+        renderLatex();     // ← LaTeX 渲染（在 DOM 插入后执行）
     }
 
     function enhanceContent() {
@@ -131,10 +242,10 @@ layui.use(['layer', 'element'], function () {
 
         // 为超链接统一添加新标签页打开
         $content.find('a').attr('target', '_blank').attr('rel', 'noopener noreferrer');
-
+        $content.find('img').attr('loading', 'lazy');
         // 代码高亮
         if (window.hljs) {
-            document.querySelectorAll('#markdown-content pre code').forEach(block => {
+            document.querySelectorAll('#markdown-content pre code:not(.hljs)').forEach(block => {
                 try {
                     hljs.highlightElement(block);
                 } catch (e) {
@@ -145,6 +256,59 @@ layui.use(['layer', 'element'], function () {
 
         // 图片懒加载
         $content.find('img').attr('loading', 'lazy');
+    }
+    //latex渲染
+    function renderLatex() {
+        const contentEl = document.getElementById('markdown-content');
+        if (!contentEl) return;
+
+        // 若页面已加载 KaTeX renderMathInElement，直接调用
+        if (window.renderMathInElement) {
+            renderMathInElement(contentEl, {
+                delimiters: [
+                    { left: '$$', right: '$$', display: true  },
+                    { left: '$',  right: '$',  display: false },
+                    { left: '\\(', right: '\\)', display: false },
+                    { left: '\\[', right: '\\]', display: true  }
+                ],
+                throwOnError: false
+            });
+            return;
+        }
+
+        // 若 KaTeX 尚未加载，动态注入
+        if (!document.getElementById('katex-css')) {
+            const link = document.createElement('link');
+            link.id   = 'katex-css';
+            link.rel  = 'stylesheet';
+            link.href = 'https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css';
+            document.head.appendChild(link);
+        }
+
+        if (!document.getElementById('katex-js')) {
+            const script = document.createElement('script');
+            script.id  = 'katex-js';
+            script.src = 'https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js';
+            script.onload = function () {
+                const autoScript = document.createElement('script');
+                autoScript.src = 'https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js';
+                autoScript.onload = function () {
+                    if (window.renderMathInElement) {
+                        renderMathInElement(contentEl, {
+                            delimiters: [
+                                { left: '$$', right: '$$', display: true  },
+                                { left: '$',  right: '$',  display: false },
+                                { left: '\\(', right: '\\)', display: false },
+                                { left: '\\[', right: '\\]', display: true  }
+                            ],
+                            throwOnError: false
+                        });
+                    }
+                };
+                document.head.appendChild(autoScript);
+            };
+            document.head.appendChild(script);
+        }
     }
 
     function renderToc() {
@@ -186,6 +350,27 @@ layui.use(['layer', 'element'], function () {
 
             toc.appendChild(a);
         });
+    }
+    //目录滚动高亮
+    function bindTocHighlight() {
+        const tocLinks = document.querySelectorAll('.toc-link');
+        if (!tocLinks.length) return;
+
+        const headingIds = Array.from(tocLinks).map(a => a.getAttribute('href').slice(1));
+
+        window.addEventListener('scroll', NanoBlog.debounce(function () {
+            let activeId = headingIds[0];
+            for (const id of headingIds) {
+                const el = document.getElementById(id);
+                if (el && el.getBoundingClientRect().top <= 120) {
+                    activeId = id;
+                }
+            }
+            tocLinks.forEach(a => {
+                const isActive = a.getAttribute('href') === `#${activeId}`;
+                a.classList.toggle('active', isActive);
+            });
+        }, 50));
     }
 
     function renderPrevNext(prevArticle, nextArticle) {

@@ -5,19 +5,26 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.vagrant.nanoblog.dto.ArticlePublishDTO;
 import com.vagrant.nanoblog.mapper.ArticleContentMapper;
+import com.vagrant.nanoblog.mapper.ArticleTagMapper;
+import com.vagrant.nanoblog.mapper.TagMapper;
 import com.vagrant.nanoblog.pojo.Article;
 import com.vagrant.nanoblog.mapper.ArticleMapper;
 import com.vagrant.nanoblog.pojo.ArticleContent;
+import com.vagrant.nanoblog.pojo.ArticleTag;
+import com.vagrant.nanoblog.pojo.Tag;
 import com.vagrant.nanoblog.service.IArticleService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.vagrant.nanoblog.vo.ArticleDetailVO;
 import com.vagrant.nanoblog.vo.ArticleHomeVO;
 import com.vagrant.nanoblog.vo.ArticleListVO;
+import lombok.Getter;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -34,23 +41,25 @@ import java.util.stream.Collectors;
  * @since 2026-03-21
  */
 @Service
+@RequiredArgsConstructor
 public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> implements IArticleService {
     private final ArticleContentMapper articleContentMapper;
     private final ArticleMapper articleMapper;
-    private static final Parser parser = Parser.builder().build();
-    private static final HtmlRenderer renderer = HtmlRenderer.builder().build();
+    //tag & 关联表
+    @Getter
+    private final TagMapper tagMapper;
+    @Getter
+    private final ArticleTagMapper articleTagMapper;
 
-    public ArticleServiceImpl(ArticleContentMapper articleContentMapper, ArticleMapper articleMapper) {
-        this.articleContentMapper = articleContentMapper;
-        this.articleMapper = articleMapper;
-    }
+    private static final Parser MD_PARSER = Parser.builder().build();
+    private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().build();
 
     @Override
     @Transactional
     public Long publishArticle(ArticlePublishDTO dto, Long userId) {
 
         // 1. Markdown → HTML
-        String html = renderer.render(parser.parse(dto.getContentMd()));
+        String html = HTML_RENDERER.render(MD_PARSER.parse(dto.getContentMd()));
 
         // 2. 保存 article（用 MyBatis-Plus 内置方法）
         Article article = new Article();
@@ -58,8 +67,21 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         article.setCategoryId(dto.getCategoryId());
         article.setArticleTitle(dto.getArticleTitle());
         article.setArticleSummary(dto.getArticleSummary());
-        article.setStatus(1);
-        article.setPublishTime(LocalDateTime.now());
+
+        // 封面图：前端上传后把URL放进coverUrl
+        if (StringUtils.hasText(dto.getCoverUrl())) {
+            article.setCoverImageUrl(dto.getCoverUrl());
+        }
+
+        // 状态：前端传0(草稿) 1(发布)
+        // 兜底默认发布
+        int status = (dto.getStatus() != null) ? dto.getStatus() : 1;
+        article.setStatus(status);
+
+        // 只有发布状态才设置发布时间
+        if (status == 1) {
+            article.setPublishTime(LocalDateTime.now());
+        }
 
         this.save(article); // MP方法
 
@@ -70,9 +92,39 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         content.setContentHtml(html);
 
         articleContentMapper.insert(content);
-
+        // 处理标签
+        if (!CollectionUtils.isEmpty(dto.getTags())) {
+            saveArticleTags(article.getId(), dto.getTags());
+        }
         return article.getId();
     }
+    @Override
+    public void saveArticleTags(Long articleId, List<String> tagNames) {
+        for (String tagName : tagNames) {
+            if (!StringUtils.hasText(tagName)) continue;
+
+            // 查tag表，有则复用，无则新建
+            Tag tag = tagMapper.selectOne(
+                    new QueryWrapper<Tag>().eq("tag_name", tagName).eq("is_deleted", 0)
+            );
+
+            if (tag == null) {
+                tag = new Tag();
+                tag.setTagName(tagName);
+                // slug简单处理为小写+去空格
+                tag.setTagSlug(tagName.toLowerCase().replaceAll("\\s+", "-"));
+                tag.setStatus(1);
+                tagMapper.insert(tag);
+            }
+
+            // 写 article_tag 关联
+            ArticleTag articleTag = new ArticleTag();
+            articleTag.setArticleId(articleId);
+            articleTag.setTagId(tag.getId());
+            articleTagMapper.insert(articleTag);
+        }
+    }
+
 
     @Override
     public IPage<ArticleListVO> getArticleList(Integer page, Integer size) {
@@ -197,4 +249,5 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         pageInfo.setRecords(records);
         return pageInfo;
     }
+
 }
