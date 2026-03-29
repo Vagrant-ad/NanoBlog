@@ -193,9 +193,14 @@
 }
 
 .sort-btn.active {
+    background-color: var(--brand-mint) !important;
+    color: var(--brand-blue) !important;
+    box-shadow: 0 5px 15px rgba(167, 243, 208, 0.4);
     background: var(--brand-blue);
     border-color: var(--brand-blue);
-    color: #fff;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(61, 115, 152, 0.2);
+}
+.sort-btn:active:hover {
+    background-color: #89e2c2 !important;
+    box-shadow: 0 8px 20px rgba(167, 243, 208, 0.5);
 }
