@@ -167,3 +167,35 @@
     display: flex;
     justify-content: center;
 }
+
+/*搜索条件按钮*/
+.sort-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 36px;
+}
+
+.sort-btn {
+    padding: 8px 24px;
+    border-radius: var(--radius-pill);
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.sort-btn:hover {
+    border-color: var(--brand-mint);
+    color: var(--brand-blue);
+}
+
+.sort-btn.active {
+    background: var(--brand-blue);
+    border-color: var(--brand-blue);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(61, 115, 152, 0.2);
+}

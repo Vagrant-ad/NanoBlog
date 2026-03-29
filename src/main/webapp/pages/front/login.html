@@ -37,7 +37,7 @@
                         alert("登录成功！");
 
                         //路径跳转
-                        window.location.href = "/NanoBlog_war/pages/front/index.html";
+                        window.location.href = "/pages/front/index.html";
                     } else {
                         // 此时 res 如果是 "密码错误"，也会去掉引号后正常弹出
                         alert(res);
@@ -48,7 +48,7 @@
             }
         };
 
-        xhr.open("POST", "/NanoBlog_war/user/doLogin", true);
+        xhr.open("POST", "/user/doLogin", true);
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         xhr.send("username=" + username + "&password=" + password);
     };

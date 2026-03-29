@@ -22,7 +22,8 @@ public interface ArticleMapper extends BaseMapper<Article> {
     ArticleDetailVO getArticleDetailById(Long id);
     void updateViewCount(Long id);
     //首页文章分页
-    List<ArticleHomeVO> getHomeArticlePage(Page<ArticleHomeVO> page);
+    List<ArticleHomeVO> getHomeArticlePage(Page<ArticleHomeVO> page,@Param("keyword") String keyword,String sortBy);
     //批量查文章标签，返回articleId+tagName
     List<Map<String, Object>> getTagsByArticleIds(@Param("articleIds") List<Long> articleIds);
+
 }

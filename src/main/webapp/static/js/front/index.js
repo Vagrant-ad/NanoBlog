@@ -6,26 +6,34 @@
     const DEFAULT_AVATAR = '/static/images/avatar-default.png';
 
     let currentPage = 1;
+    //排序关键字
     let currentKeyword = '';
+    //排序模式
+    let currentSort = 'time';
 
     const articleGrid = document.querySelector('.article-grid');
+/*
     const searchInput = document.querySelector('.search-box input');
+*/
+    const searchInput = document.getElementById('searchInput');
     const paginationEl = document.getElementById('pagination');
 
     let laypageInstance = null;
 
-    function getApiUrl(page, size, keyword) {
+    //获取url
+    function getApiUrl(page, size, keyword,sort) {
         const params = new URLSearchParams();
         params.set('page', String(page));
         params.set('size', String(size));
-
         if (keyword && keyword.trim()) {
             params.set('keyword', keyword.trim());
         }
-
+        if (sort) {
+            params.set('sortBy', sort);
+        }
         return `/article/home?${params.toString()}`;
     }
-
+    //渲染无搜索结果或无文章情况
     function renderEmptyState(message = '暂无文章') {
         if (!articleGrid) return;
 
@@ -139,16 +147,16 @@
         });
     }
 
-    async function loadArticles(page = 1, keyword = '') {
+    async function loadArticles(page = 1, keyword = '',sort='time') {
         currentPage = page;
         currentKeyword = keyword;
-
+        currentSort = sort;
         if (articleGrid) {
             articleGrid.classList.add('is-loading');
         }
 
         try {
-            const result = await NanoBlog.request(getApiUrl(page, PAGE_SIZE, keyword));
+            const result = await NanoBlog.request(getApiUrl(page, PAGE_SIZE, keyword, sort));
             const pageData = result?.data || result || {};
             const records = pageData.records || [];
             const total = pageData.total || 0;
@@ -169,19 +177,39 @@
 
     function bindSearch() {
         if (!searchInput) return;
-
-        const triggerSearch = NanoBlog.debounce(() => {
-            const keyword = searchInput.value.trim();
-            loadArticles(1, keyword);
-        }, 300);
-
+/*
         searchInput.addEventListener('input', triggerSearch);
-
+*/
+        //回车触发
         searchInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 loadArticles(1, searchInput.value.trim());
             }
+        });
+        //按钮触发
+        const searchBtn = document.getElementById('searchBtn');
+        if (searchBtn) {
+            searchBtn.addEventListener('click', function() {
+                currentKeyword = searchInput.value.trim();
+                loadArticles(1, currentKeyword, currentSort);
+            });
+        }
+    }
+    //绑定排序按钮
+    function bindSortTabs() {
+        const sortBtns = document.querySelectorAll('.sort-btn');
+        if (!sortBtns.length) return;
+
+        sortBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // 切换 active 样式
+                sortBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                // 更新排序并从第一页重新加载
+                currentSort = this.dataset.sort;
+                loadArticles(1, currentKeyword, currentSort);
+            });
         });
     }
 
@@ -193,9 +221,10 @@
             searchInput.focus();
         });
     }
-
+    //初始化
     function init() {
         bindSearch();
+        bindSortTabs();
         bindSearchBoxFocus();
         loadArticles(1, '');
     }

@@ -17,7 +17,7 @@
 
 <script>
     $("#regBtn").click(function() {
-        $.post("/NanoBlog_war/user/doRegister", {
+        $.post("/user/doRegister", {
             username: $("#username").val(),
             passwordHash: $("#passwordHash").val(),
             nickname: $("#nickname").val(),
@@ -25,7 +25,7 @@
         }, function(res) {
             if(res === "success") {
                 alert("注册成功！");
-                window.location.href = "/NanoBlog_war/pages/front/login.html";
+                window.location.href = "/pages/front/login.html";
             } else {
                 alert(res);
             }

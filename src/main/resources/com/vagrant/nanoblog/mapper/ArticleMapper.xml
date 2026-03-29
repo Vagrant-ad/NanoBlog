@@ -44,7 +44,16 @@
                  LEFT JOIN category c ON a.category_id = c.id
         WHERE a.status = 1
           AND a.is_deleted = 0
-        ORDER BY a.is_top DESC, a.publish_time DESC
+        <if test="keyword != null and keyword != ''">
+            AND (a.article_title LIKE CONCAT('%', #{keyword}, '%')
+            OR a.article_summary LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY a.is_top DESC, a.publish_time DESC,
+        <choose>
+            <when test="sortBy == 'view'">a.view_count DESC</when>
+            <when test="sortBy == 'like'">a.like_count DESC</when>
+            <otherwise>a.publish_time DESC</otherwise>
+        </choose>
     </select>
     <!--查询文章标签-->
     <select id="getTagsByArticleIds" resultType="map">
