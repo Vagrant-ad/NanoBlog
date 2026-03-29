@@ -167,3 +167,40 @@
     display: flex;
     justify-content: center;
 }
+
+/*搜索条件按钮*/
+.sort-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 36px;
+}
+
+.sort-btn {
+    padding: 8px 24px;
+    border-radius: var(--radius-pill);
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.sort-btn:hover {
+    border-color: var(--brand-mint);
+    color: var(--brand-blue);
+}
+
+.sort-btn.active {
+    background-color: var(--brand-mint) !important;
+    color: var(--brand-blue) !important;
+    box-shadow: 0 5px 15px rgba(167, 243, 208, 0.4);
+    background: var(--brand-blue);
+    border-color: var(--brand-blue);
+    font-weight: 600;
+}
+.sort-btn:active:hover {
+    background-color: #89e2c2 !important;
+    box-shadow: 0 8px 20px rgba(167, 243, 208, 0.5);
+}
