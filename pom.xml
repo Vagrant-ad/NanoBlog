@@ -253,6 +253,32 @@
       <version>0.21.0</version>
     </dependency>
 
+    <!-- commonmark 扩展：表格、任务列表、自动链接、删除线 -->
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark</artifactId>
+      <version>0.21.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark-ext-gfm-tables</artifactId>
+      <version>0.21.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark-ext-task-list-items</artifactId>
+      <version>0.21.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark-ext-autolink</artifactId>
+      <version>0.21.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark-ext-gfm-strikethrough</artifactId>
+      <version>0.21.0</version>
+    </dependency>
     <!--BCrpty加密的安全依赖-->
     <dependency>
       <groupId>org.springframework.security</groupId>
