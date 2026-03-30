@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.vagrant.nanoblog.vo.ArticleDetailVO;
 import com.vagrant.nanoblog.vo.ArticleHomeVO;
 import com.vagrant.nanoblog.vo.ArticleListVO;
+import com.vagrant.nanoblog.vo.ArticleManageVO;
 import lombok.Getter;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -187,18 +188,20 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public ArticleDetailVO getArticleDetail(Long id) {
-
-        // 1. 查 article
+        //先浏览量自增
+        articleMapper.updateViewCount(id);
         Article article = this.getById(id);
-        if (article == null) {
-            return null;
-        }
+        if (article == null || article.getIsDeleted() == 1) return null;
 
-        // 2. 查 content
         ArticleContent content = articleContentMapper.selectById(id);
 
+        // 批量查该文章的标签
+        List<Map<String, Object>> tagRows = articleMapper.getTagsByArticleIds(
+                Collections.singletonList(id));
+        List<String> tags = tagRows.stream()
+                .map(row -> (String) row.get("tagName"))
+                .collect(Collectors.toList());
 
-        // 3. 组装 VO
         ArticleDetailVO vo = new ArticleDetailVO();
         vo.setId(article.getId());
         vo.setTitle(article.getArticleTitle());
@@ -206,23 +209,26 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         vo.setPublishTime(article.getPublishTime());
         vo.setViewCount(article.getViewCount());
         vo.setLikeCount(article.getLikeCount());
+        vo.setStatus(article.getStatus());
+        vo.setCoverImageUrl(article.getCoverImageUrl());
+        vo.setTags(tags);
+
         if (content != null) {
             vo.setContent(content.getContentHtml());
+            vo.setContentMd(content.getContentMd());
         }
-
-
         return vo;
     }
 
     @Override
-    public IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size) {
+    public IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size,String keyword,String sortBy) {
         if (page == null || page < 1) page = 1;
         if (size == null || size < 1 || size > 100) size = 8;
 
         Page<ArticleHomeVO> pageInfo = new Page<>(page, size);
 
         // 1. 查首页文章基础数据
-        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo);
+        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo,keyword, sortBy);
 
         if (records == null || records.isEmpty()) {
             pageInfo.setRecords(records);
@@ -249,5 +255,169 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         pageInfo.setRecords(records);
         return pageInfo;
     }
+    //个人中心相关方法
 
+    @Override
+    public IPage<ArticleManageVO> getMyPublished(Long userId, Integer page, Integer size) {
+        if (page == null || page < 1) page = 1;
+        if (size == null || size < 1 || size > 100) size = 10;
+
+        Page<Article> pageInfo = new Page<>(page, size);
+        QueryWrapper<Article> qw = new QueryWrapper<Article>()
+                .eq("author_id", userId)
+                .eq("status", 1)
+                .eq("is_deleted", 0)
+                .orderByDesc("publish_time");
+
+        IPage<Article> articlePage = this.page(pageInfo, qw);
+        return convertToManageVO(articlePage);
+    }
+
+    @Override
+    public IPage<ArticleManageVO> getMyDrafts(Long userId, Integer page, Integer size) {
+        if (page == null || page < 1) page = 1;
+        if (size == null || size < 1 || size > 100) size = 10;
+
+        Page<Article> pageInfo = new Page<>(page, size);
+        QueryWrapper<Article> qw = new QueryWrapper<Article>()
+                .eq("author_id", userId)
+                .eq("status", 0)
+                .eq("is_deleted", 0)
+                .orderByDesc("create_time");
+
+        IPage<Article> articlePage = this.page(pageInfo, qw);
+        return convertToManageVO(articlePage);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateArticle(Long articleId, ArticlePublishDTO dto, Long userId) {
+        // 1. 校验文章归属
+        Article article = this.getById(articleId);
+        if (article == null || article.getIsDeleted() == 1) {
+            throw new RuntimeException("文章不存在");
+        }
+        if (!article.getAuthorId().equals(userId)) {
+            throw new RuntimeException("无权编辑此文章");
+        }
+
+        // 2. 更新 article 主表
+        article.setArticleTitle(dto.getArticleTitle());
+        article.setArticleSummary(dto.getArticleSummary());
+        article.setCategoryId(dto.getCategoryId());
+        if (StringUtils.hasText(dto.getCoverUrl())) {
+            article.setCoverImageUrl(dto.getCoverUrl());
+        }
+
+        // 状态变更：如果从草稿改为发布，补充发布时间
+        int newStatus = (dto.getStatus() != null) ? dto.getStatus() : article.getStatus();
+        if (newStatus == 1 && article.getPublishTime() == null) {
+            article.setPublishTime(LocalDateTime.now());
+        }
+        article.setStatus(newStatus);
+        this.updateById(article);
+
+        // 3. 更新正文内容
+        if (StringUtils.hasText(dto.getContentMd())) {
+            String html = HTML_RENDERER.render(MD_PARSER.parse(dto.getContentMd()));
+            ArticleContent content = articleContentMapper.selectById(articleId);
+            if (content != null) {
+                content.setContentMd(dto.getContentMd());
+                content.setContentHtml(html);
+                articleContentMapper.updateById(content);
+            } else {
+                // 兜底：如果content记录不存在则新建
+                content = new ArticleContent();
+                content.setArticleId(articleId);
+                content.setContentMd(dto.getContentMd());
+                content.setContentHtml(html);
+                articleContentMapper.insert(content);
+            }
+        }
+
+        // 4. 更新标签：先删旧关联，再写新关联
+        articleTagMapper.delete(
+                new QueryWrapper<ArticleTag>().eq("article_id", articleId)
+        );
+        if (!CollectionUtils.isEmpty(dto.getTags())) {
+            saveArticleTags(articleId, dto.getTags());
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteArticle(Long articleId, Long userId) {
+        Article article = this.getById(articleId);
+        if (article == null || article.getIsDeleted() == 1) {
+            throw new RuntimeException("文章不存在");
+        }
+        if (!article.getAuthorId().equals(userId)) {
+            throw new RuntimeException("无权删除此文章");
+        }
+        // 软删除
+        article.setIsDeleted(1);
+        this.updateById(article);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void publishDraft(Long articleId, Long userId) {
+        Article article = this.getById(articleId);
+        if (article == null || article.getIsDeleted() == 1) {
+            throw new RuntimeException("文章不存在");
+        }
+        if (!article.getAuthorId().equals(userId)) {
+            throw new RuntimeException("无权操作此文章");
+        }
+        if (article.getStatus() != 0) {
+            throw new RuntimeException("只有草稿才能发布");
+        }
+        article.setStatus(1);
+        article.setPublishTime(LocalDateTime.now());
+        this.updateById(article);
+    }
+
+    /**
+     * Article 分页结果 → ArticleManageVO 分页结果（公共转换，含标签批量查询）
+     */
+    private IPage<ArticleManageVO> convertToManageVO(IPage<Article> articlePage) {
+        Page<ArticleManageVO> result = new Page<>();
+        result.setTotal(articlePage.getTotal());
+        result.setCurrent(articlePage.getCurrent());
+        result.setSize(articlePage.getSize());
+
+        if (CollectionUtils.isEmpty(articlePage.getRecords())) {
+            result.setRecords(Collections.emptyList());
+            return result;
+        }
+
+        // 批量查标签
+        List<Long> ids = articlePage.getRecords().stream()
+                .map(Article::getId).collect(Collectors.toList());
+        List<Map<String, Object>> tagRows = articleMapper.getTagsByArticleIds(ids);
+        Map<Long, List<String>> tagMap = tagRows.stream().collect(Collectors.groupingBy(
+                row -> ((Number) row.get("articleId")).longValue(),
+                Collectors.mapping(row -> (String) row.get("tagName"), Collectors.toList())
+        ));
+
+        List<ArticleManageVO> voList = articlePage.getRecords().stream().map(a -> {
+            ArticleManageVO vo = new ArticleManageVO();
+            vo.setId(a.getId());
+            vo.setArticleTitle(a.getArticleTitle());
+            vo.setArticleSummary(a.getArticleSummary());
+            vo.setCoverImageUrl(a.getCoverImageUrl());
+            vo.setStatus(a.getStatus());
+            vo.setCategoryId(a.getCategoryId());
+            vo.setViewCount(a.getViewCount());
+            vo.setLikeCount(a.getLikeCount());
+            vo.setCommentCount(a.getCommentCount());
+            vo.setCreateTime(a.getCreateTime());
+            vo.setPublishTime(a.getPublishTime());
+            vo.setTags(tagMap.getOrDefault(a.getId(), Collections.emptyList()));
+            return vo;
+        }).collect(Collectors.toList());
+
+        result.setRecords(voList);
+        return result;
+    }
 }

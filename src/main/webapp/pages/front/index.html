@@ -37,10 +37,11 @@
         <!-- 中间：搜索框 -->
         <div class="navbar-center">
             <div class="search-box">
-                <i class="layui-icon layui-icon-search"></i>
-                <input type="text" placeholder="搜索文章标题、标签、作者">
+                <i class="layui-icon layui-icon-search" id="searchBtn"></i>
+                <input type="text" placeholder="搜索文章标题、标签、作者" id="searchInput">
             </div>
         </div>
+
 
         <!-- 右侧：用户操作区 -->
         <div class="navbar-right">
@@ -59,11 +60,13 @@
 
         <!-- 文章列表区域 -->
         <section class="article-section">
-
-            <!-- 标题栏 -->
+            <!--选择排序模式-->
             <div class="section-header">
-                <h1>最新文章</h1>
-                <p>记录学习、开发与思考</p>
+                <div class="sort-tabs">
+                    <button class="sort-btn active" data-sort="time">最新发布</button>
+                    <button class="sort-btn" data-sort="view">最多浏览</button>
+                    <button class="sort-btn" data-sort="like">最多点赞</button>
+                </div>
             </div>
 
             <!-- 双列文章卡片容器(Grid -->
