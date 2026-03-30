@@ -21,6 +21,10 @@ import com.vagrant.nanoblog.vo.ArticleManageVO;
 import lombok.Getter;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
+import org.commonmark.ext.autolink.AutolinkExtension;
+import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
+import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.ext.task.list.items.TaskListItemsExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,11 +32,11 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 /**
  * <p>
  * 文章表 服务实现类
@@ -52,8 +56,23 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Getter
     private final ArticleTagMapper articleTagMapper;
 
-    private static final Parser MD_PARSER = Parser.builder().build();
-    private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().build();
+    private static final Parser MD_PARSER = Parser.builder()
+            .extensions(Arrays.asList(
+                    TablesExtension.create(),
+                    TaskListItemsExtension.create(),
+                    AutolinkExtension.create(),
+                    StrikethroughExtension.create()
+            ))
+            .build();
+
+    private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder()
+            .extensions(Arrays.asList(
+                    TablesExtension.create(),
+                    TaskListItemsExtension.create(),
+                    AutolinkExtension.create(),
+                    StrikethroughExtension.create()
+            ))
+            .build();
 
     @Override
     @Transactional

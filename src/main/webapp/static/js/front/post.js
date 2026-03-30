@@ -125,8 +125,26 @@ layui.use(['layer', 'element'], function () {
             if (/^\[ \]\s/.test(text))  return `<li class="todo-item"><input type="checkbox" disabled> ${text.slice(4)}</li>\n`;
             return `<li>${text}</li>\n`;
         };
+        // 在 initMarkdown 里，marked.use 之前加上：
 
-        // ★ marked v9+ 必须用 marked.use()，setOptions({ renderer }) 对 renderer 无效
+        renderer.link = function(token) {
+            const href = token.href || '';
+            const text = token.text || href;
+            return `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+        };
+
+        renderer.image = function(token) {
+            const src = token.href || '';
+            const alt = token.text || '';
+            return `<img src="${src}" alt="${alt}" loading="lazy" style="max-width:100%;">`;
+        };
+
+        renderer.list = function(token) {
+            const tag = token.ordered ? 'ol' : 'ul';
+            const body = token.items.map(item => renderer.listitem(item)).join('');
+            return `<${tag}>${body}</${tag}>`;
+        };
+
         marked.use({ renderer, gfm: true, breaks: false, pedantic: false });
     }
 
@@ -172,10 +190,10 @@ layui.use(['layer', 'element'], function () {
         $wrap.show();
     }
 
-    // ─────────────────────────────────────────────
+
     // 渲染内容 + 后处理（修复后端 HTML 里未渲染的 Markdown 元素）
-    // ─────────────────────────────────────────────
-    function renderContent(md, html) {
+
+    /*function renderContent(md, html) {
         const $content = $('#markdown-content');
 
         if (!md && !html) {
@@ -196,8 +214,27 @@ layui.use(['layer', 'element'], function () {
         enhanceContent($content);
         highlightCodeBlocks();
         renderLatex();
-    }
+    }*/
+    function renderContent(md, html) {
+        const $content = $('#markdown-content');
 
+        if (!html && !md) {
+            $content.html('<p style="text-align:center;color:var(--text-muted);">暂无正文内容</p>');
+            return;
+        }
+
+        // 优先用后端渲染好的 HTML，不在前端重复解析 md
+        // 后端 commonmark 已经处理好列表、链接、图片等所有标准元素
+        $content.html(html || '');
+
+        // 后处理：代码高亮、LaTeX、链接增强
+        highlightCodeBlocks();
+        renderLatex();
+        fixInlineMarkdownTables($content);
+        fixTodoList($content);
+        enhanceContent($content);
+        // 保留fixInlineMarkdownTables 和 fixTodoList，覆盖commonmark的表格和todolist渲染错误
+    }
     // ── 修复一：<p> 里的 Markdown 管道表格 → <table> ──
     function fixInlineMarkdownTables($content) {
         $content.find('p').each(function () {
