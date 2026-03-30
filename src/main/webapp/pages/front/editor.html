@@ -37,14 +37,15 @@
     <!-- 中间：搜索框 -->
     <div class="navbar-center">
       <div class="search-box">
-        <i class="layui-icon layui-icon-search"></i>
-        <input type="text" placeholder="搜索文章标题、标签、作者">
+        <i class="layui-icon layui-icon-search" id="searchBtn"></i>
+        <input type="text" placeholder="搜索文章标题、标签、作者" id="searchInput">
       </div>
     </div>
 
+
     <!-- 右侧：用户操作区 -->
     <div class="navbar-right">
-      <!--active-->
+      <!-- 在 editor.html 加上 active 类 -->
       <a href="/pages/front/editor.html" class="nav-button active">写文章</a>
 
       <a href="/pages/front/login.html" class="nav-link">登录</a>

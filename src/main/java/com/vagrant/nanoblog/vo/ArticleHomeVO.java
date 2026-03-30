@@ -6,6 +6,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
 
+//主页显示文章卡片
 @Data
 public class ArticleHomeVO {
     /** 文章ID */
