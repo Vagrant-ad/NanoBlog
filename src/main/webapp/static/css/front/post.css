@@ -161,7 +161,32 @@
     background: rgba(163, 216, 224, 0.15);
     transition: background 0.2s;
 }
+/* 列表样式 */
+.markdown-body ul {
+    list-style: disc;
+    padding-left: 2em;
+    margin: 0.5em 0;
+}
 
+.markdown-body ol {
+    list-style: decimal;
+    padding-left: 2em;
+    margin: 0.5em 0;
+}
+
+.markdown-body ul ul {
+    list-style: circle;   /* 二级无序列表空心圆 */
+    margin: 0;
+}
+
+.markdown-body ul ul ul {
+    list-style: square;   /* 三级无序列表方块 */
+}
+
+.markdown-body li {
+    margin: 0.3em 0;
+    line-height: 1.7;
+}
 /* TodoList 样式 */
 .markdown-body ul:has(li.todo-item) {
     list-style: none;
@@ -189,6 +214,26 @@
     text-decoration: line-through;
 }
 
+/* 链接样式 */
+.markdown-body a {
+    color: var(--brand-blue) !important;
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+    transition: opacity 0.2s;
+}
+/* 图片样式 */
+.markdown-body img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1em auto;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+}
+
+.markdown-body a:hover {
+    opacity: 0.75;
+}
 /* 代码块字体 */
 #markdown-content pre code {
     font-family: "JetBrains Mono", Consolas, monospace;
@@ -202,7 +247,50 @@
     font-family: "JetBrains Mono", Consolas, monospace;
     font-weight: 500;
 }
+/* 代码块复制按钮 */
+.hljs-pre {
+    position: relative;
+}
 
+.code-copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.15);
+    color: #adb5bd;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    backdrop-filter: blur(4px);
+    z-index: 10;
+}
+
+.code-copy-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: var(--brand-mint);
+}
+
+.code-copy-btn.copied {
+    background: rgba(163, 216, 224, 0.3);
+    color: var(--brand-mint);
+    border-color: var(--brand-mint);
+}
+
+/* 代码块语言标签*/
+.code-lang-label {
+    position: absolute;
+    top: 10px;
+    left: 16px;
+    font-size: 0.72rem;
+    color: #6c757d;
+    font-family: "JetBrains Mono", monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+}
 /* KaTeX display 公式居中 */
 .katex-display {
     margin: 1.5em 0;
