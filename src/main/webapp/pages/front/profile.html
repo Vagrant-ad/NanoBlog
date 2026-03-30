@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>个人资料 - NanoBlog</title>
     <link rel="stylesheet" href="../../static/css/common/common.css">
-    <link rel="stylesheet" href="../../static/css/common/auth.css">
+    <link rel="stylesheet" href="../../static/css/front/auth.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 </head>
@@ -12,7 +12,7 @@
 
 <div class="profile-page">
 
-    <!-- ① 头像 & 基本信息卡片 -->
+    <!--  头像 基本信息卡片 -->
     <div class="card profile-hero">
         <div class="hero-bg"></div>
         <div class="hero-body">
@@ -42,11 +42,7 @@
     </div>
 
     <!-- ② 统计数据栏（接口预留） -->
-    <!--
-        TODO（队友对接）：
-        GET /user/getStats
-        响应: { code: 200, data: { followCount: 12, viewCount: 3421, likeCount: 87 } }
-    -->
+
     <div class="card">
         <div class="stats-row">
             <div class="stat-item">
@@ -67,7 +63,7 @@
         </div>
     </div>
 
-    <!-- ③ 详细信息（查看 / 编辑，原始逻辑保留） -->
+
     <div class="card">
         <div class="card-header">
             <i class="fas fa-id-card"></i>
@@ -134,19 +130,7 @@
     </div>
 
     <!-- ④ 我的文章（接口预留） -->
-    <!--
-        TODO（队友对接）：
-        GET /article/getMyArticles?page=1&size=5
-        响应: {
-          code: 200,
-          data: {
-            list: [
-              { id, title, coverUrl, viewCount, likeCount, status, createTime }
-            ],
-            total: 18
-          }
-        }
-    -->
+
     <div class="card">
         <div class="card-header">
             <i class="fas fa-newspaper"></i>
@@ -194,9 +178,7 @@
 </div><!-- /profile-page -->
 
 
-<!-- ══════════════════════════════════════
-     修改密码 Modal
-     ══════════════════════════════════════ -->
+<!--  修改密码 Modal -->
 <div id="pwdModal" class="modal-overlay" onclick="handleOverlayClick(event, 'pwdModal')">
     <div class="modal-box">
         <div class="modal-header">
@@ -251,9 +233,7 @@
     </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     注销确认 Modal
-     ══════════════════════════════════════ -->
+<!---->
 <div id="deleteModal" class="modal-overlay confirm-modal" onclick="handleOverlayClick(event, 'deleteModal')">
     <div class="modal-box">
         <div class="confirm-body">

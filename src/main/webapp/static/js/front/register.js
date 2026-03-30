@@ -1,3 +1,4 @@
+//const layer = window.layer;
 // 粒子背景
 (function() {
     const canvas = document.getElementById('particleCanvas');
@@ -66,7 +67,7 @@ document.querySelectorAll('.field-input').forEach(input => {
     });
 });
 
-// ===== 以下为原有核心逻辑，不做任何修改 =====
+
 $("#regBtn").click(function() {
     var username = $("#username").val();
     var password = $("#passwordHash").val();
@@ -74,6 +75,8 @@ $("#regBtn").click(function() {
     var email = $("#email").val();
     var emailCode = $("#emailCode").val();
     var roleId = $("#roleId").val();
+
+    var layer = window.layer;
 
     if (!username || !password || !nickname || !email) {
         layer.msg("请完整填写注册信息！", {icon: 7});
@@ -96,6 +99,7 @@ $("#regBtn").click(function() {
             roleId: roleId
         }),
         success: function(res) {
+            var layer = window.layer;
             if (res.code === 200) {
                 layer.msg("注册成功！即将跳转登录", {icon: 1, time: 1500}, function(){
                     window.location.href = "login.html";
@@ -105,8 +109,9 @@ $("#regBtn").click(function() {
             }
         },
         error: function() {
+            var layer = window.layer;
             layer.msg("网络请求失败，请稍后再试", {icon: 2});
-            // 4. 加一行打印日志，如果还报错，我们可以直接看控制台的原因
+
             console.error("请求报错状态码:", xhr.status, "报错详情:", xhr.responseText);
             layer.msg("网络请求失败，请稍后再试", {icon: 2});
             $(this).text("注 册").removeClass("loading");

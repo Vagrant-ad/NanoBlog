@@ -30,7 +30,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     @Autowired
-    private UserRoleMapper userRoleMapper; // 【新增注入】
+    private UserRoleMapper userRoleMapper;
 
     // key: 用户名, value: 失败次数
     private static final java.util.Map<String, Integer> failCountMap = new java.util.concurrent.ConcurrentHashMap<>();
@@ -39,7 +39,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class) // 【新增事务控制】保证用户表和角色关联表同时成功或失败
+    @Transactional(rollbackFor = Exception.class)
     public ResponseResult register(User user, Long roleId) {
         //防止null
         if (user == null || user.getPasswordHash() == null || user.getPasswordHash().isEmpty()) {
@@ -50,7 +50,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         QueryWrapper<User> wrapper = new QueryWrapper<>();
         wrapper.eq("username", user.getUsername());
         if (this.baseMapper.selectOne(wrapper) != null) {
-            return ResponseResult.errorResult(400,"该用户名已被占用"); // 使用封装类
+            return ResponseResult.errorResult(400,"该用户名已被占用");
         }
 
         // 密码加密
@@ -62,10 +62,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         //  执行插入
         int rows = this.baseMapper.insert(user);
         if (rows > 0) {
-            // 【新增逻辑】：MyBatis-Plus insert 后会自动将生成的 id 回写到 user 对象中
+
             UserRole userRole = new UserRole();
             userRole.setUserId(user.getId());
-            // 如果前端没传 roleId，默认给 1（假设1是普通用户）
+
             userRole.setRoleId(roleId != null ? roleId : 1L);
             userRole.setCreateTime(LocalDateTime.now());
 
@@ -110,18 +110,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         if (BCrypt.checkpw(password, user.getPasswordHash())) {
             // 登录成功，清除该用户的失败记录
             failCountMap.remove(username);
-            // 登录成功时，更新最后登录时间（可选）
+            // 登录成功时，更新最后登录时间
             user.setLastLoginTime(LocalDateTime.now());
             this.updateById(user);
 
-            return ResponseResult.okResult(user);//返回用户信息的成功结果
+            return ResponseResult.okResult(user);
         } else {
             // 4. 密码错误，累计次数
             int count = failCountMap.getOrDefault(username, 0) + 1;
             failCountMap.put(username, count);
 
             if (count >= 5) {
-                // 锁定 10 分钟：当前时间 + 10分钟 * 60秒 * 1000毫秒
+                // 锁定 10 分钟
                 lockMap.put(username, System.currentTimeMillis() + 600000);
                 return ResponseResult.errorResult(403,"连续输错5次密码，账号已锁定10分钟");
             }
@@ -150,12 +150,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         User user = this.getById(userId);
         if (user == null) return ResponseResult.errorResult(404, "用户不存在");
 
-        // 2. 校验旧密码 (使用 BCrypt 匹配)
+        // 2. 校验旧密码
         if (!BCrypt.checkpw(oldPassword, user.getPasswordHash())) {
             return ResponseResult.errorResult(400, "原密码输入错误");
         }
 
-        // 3. 设置新密码 (加密)
+        // 3. 设置新密码
         user.setPasswordHash(encoder.encode(newPassword));
         user.setUpdateTime(LocalDateTime.now());
 

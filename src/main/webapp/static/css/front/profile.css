@@ -1,7 +1,4 @@
-/* ======================================================
-          profile.css — NanoBlog 个人主页专属样式
-          依赖 auth.css 中的 :root CSS 变量
-          ====================================================== */
+/*个人主页专属样式 */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -61,9 +58,7 @@ body {
     letter-spacing: 0.3px;
 }
 
-/* ═══════════════════════════════════
-   [1] 头像 & 基本信息卡片
-   ═══════════════════════════════════ */
+/* 头像 基本信息卡片 */
 .profile-hero {
     position: relative;
 }
@@ -215,9 +210,8 @@ body {
 }
 .btn-danger-ghost:hover { background: #fef2f2; border-color: #fca5a5; }
 
-/* ═══════════════════════════════════
-   [2] 统计数据栏
-   ═══════════════════════════════════ */
+/* 统计数据栏
+*/
 .stats-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -263,9 +257,8 @@ body {
     font-size: 0.85rem;
 }
 
-/* ═══════════════════════════════════
-   [3] 信息面板（查看 & 编辑）
-   ═══════════════════════════════════ */
+/*  信息面板（查看 & 编辑）
+ */
 .info-panel { padding: 20px 24px 24px; }
 
 /* 查看模式 */
@@ -360,9 +353,8 @@ body {
     margin-top: 4px;
 }
 
-/* ═══════════════════════════════════
-   [4] 我的文章
-   ═══════════════════════════════════ */
+/*  我的文章
+  */
 .articles-body { padding: 0 24px 20px; }
 
 .article-list { display: flex; flex-direction: column; gap: 0; }
@@ -439,9 +431,8 @@ body {
     justify-content: center;
 }
 
-/* ═══════════════════════════════════
-   [5] 危险区 / 注销账号
-   ═══════════════════════════════════ */
+/* 危险区 / 注销账号
+*/
 .danger-zone-body {
     padding: 20px 24px;
     display: flex;
@@ -454,9 +445,8 @@ body {
 .card-header.danger-header i { color: #dc2626; }
 .card-header.danger-header h3 { color: #dc2626; }
 
-/* ═══════════════════════════════════
-   [6] 修改密码弹窗 Modal
-   ═══════════════════════════════════ */
+/* 修改密码弹窗 Modal
+ */
 .modal-overlay {
     position: fixed;
     inset: 0;

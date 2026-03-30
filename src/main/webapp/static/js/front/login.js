@@ -1,3 +1,5 @@
+
+//const layer = window.layer;
 // 粒子背景
 (function() {
     const canvas = document.getElementById('particleCanvas');
@@ -50,8 +52,11 @@ document.querySelectorAll('.field-input').forEach(input => {
     });
 });
 
-// ===== 以下为原有核心逻辑，不做任何修改 =====
+
 document.getElementById("loginBtn").onclick = function() {
+
+    var layer = window.layer;
+
     var username = document.getElementById("username").value;
     var password = document.getElementById("password").value;
     var captcha = document.getElementById("captcha").value;
@@ -68,6 +73,7 @@ document.getElementById("loginBtn").onclick = function() {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState === 4 && xhr.status === 200) {
+            var layer = window.layer;
             var res = JSON.parse(xhr.responseText);
             if (res.code === 200) {
                 layer.msg("登录成功！", {icon: 1, time: 1000}, function() {
