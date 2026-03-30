@@ -16,11 +16,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface IUserService extends IService<User> {
     ResponseResult register(User user, Long roleId);
-    ResponseResult login(String username, String password); //登录方法
-    // 更新个人资料：使用 DTO 接收参数
+    ResponseResult login(String username, String password);
+    // 更新个人资料
     ResponseResult updateUserProfile(UserUpdateDTO dto);
 
-    // 添加方法定义
+    // 更新密码
     ResponseResult updatePassword(Long userId, String oldPassword, String newPassword);
 
 

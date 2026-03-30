@@ -151,71 +151,7 @@
     </div>
 </div>
 
+<script src="/static/js/front/register.js"></script>
 <script src="/static/lib/layui/layui.js"></script>
-<script>
-    $("#regBtn").click(function() {
-        $.post("/user/doRegister", {
-            username: $("#username").val(),
-            passwordHash: $("#passwordHash").val(),
-            nickname: $("#nickname").val(),
-            email: $("#email").val()
-        }, function(res) {
-            if(res === "success") {
-                alert("注册成功！");
-                window.location.href = "/pages/front/login.html";
-            } else {
-                alert(res);
-            }
-        });
-    });
-
-    // ===== 以下为原有核心逻辑，不做任何修改 =====
-    $("#regBtn").click(function() {
-        var username = $("#username").val();
-        var password = $("#passwordHash").val();
-        var nickname = $("#nickname").val();
-        var email = $("#email").val();
-        var emailCode = $("#emailCode").val();
-        var roleId = $("#roleId").val();
-
-        if (!username || !password || !nickname || !email) {
-            layer.msg("请完整填写注册信息！", {icon: 7});
-            return;
-        }
-        if (!emailCode) {
-            layer.msg("请输入邮箱验证码！", {icon: 7});
-            return;
-        }
-
-        $.ajax({
-            url: "/user/doRegister",
-            type: "POST",
-            contentType: "application/json",
-            data: JSON.stringify({
-                username: username,
-                password: password,
-                nickname: nickname,
-                email: email,
-                roleId: roleId
-            }),
-            success: function(res) {
-                if (res.code === 200) {
-                    layer.msg("注册成功！即将跳转登录", {icon: 1, time: 1500}, function(){
-                        window.location.href = "login.html";
-                    });
-                } else {
-                    layer.msg(res.msg, {icon: 2});
-                }
-            },
-            error: function() {
-                layer.msg("网络请求失败，请稍后再试", {icon: 2});
-                // 4. 加一行打印日志，如果还报错，我们可以直接看控制台的原因
-                console.error("请求报错状态码:", xhr.status, "报错详情:", xhr.responseText);
-                layer.msg("网络请求失败，请稍后再试", {icon: 2});
-                $(this).text("注 册").removeClass("loading");
-            }
-        });
-    });
-</script>
 </body>
 </html>
