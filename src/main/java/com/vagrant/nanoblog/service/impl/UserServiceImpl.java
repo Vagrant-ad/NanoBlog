@@ -2,16 +2,18 @@ package com.vagrant.nanoblog.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.vagrant.nanoblog.common.ResponseResult;
-import com.vagrant.nanoblog.dto.UserRegisterDTO;
 import com.vagrant.nanoblog.dto.UserUpdateDTO;
+import com.vagrant.nanoblog.mapper.UserRoleMapper;
 import com.vagrant.nanoblog.pojo.User;
 import com.vagrant.nanoblog.mapper.UserMapper;
+import com.vagrant.nanoblog.pojo.UserRole;
 import com.vagrant.nanoblog.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -27,6 +29,9 @@ import java.time.LocalDateTime;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
+    @Autowired
+    private UserRoleMapper userRoleMapper; // 【新增注入】
+
     // key: 用户名, value: 失败次数
     private static final java.util.Map<String, Integer> failCountMap = new java.util.concurrent.ConcurrentHashMap<>();
     // key: 用户名, value: 锁定结束的时间戳（毫秒）
@@ -34,12 +39,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
 
     @Override
-    public ResponseResult register(User user) {
+    @Transactional(rollbackFor = Exception.class) // 【新增事务控制】保证用户表和角色关联表同时成功或失败
+    public ResponseResult register(User user, Long roleId) {
+        //防止null
+        if (user == null || user.getPasswordHash() == null || user.getPasswordHash().isEmpty()) {
+            return ResponseResult.errorResult(400, "注册失败：密码不能为空");
+        }
+
         // 查重：用户名是否已存在
         QueryWrapper<User> wrapper = new QueryWrapper<>();
         wrapper.eq("username", user.getUsername());
         if (this.baseMapper.selectOne(wrapper) != null) {
-            return ResponseResult.errorResult("该用户名已被占用"); // 使用封装类
+            return ResponseResult.errorResult(400,"该用户名已被占用"); // 使用封装类
         }
 
         // 密码加密
@@ -50,7 +61,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         //  执行插入
         int rows = this.baseMapper.insert(user);
-        return rows > 0 ? ResponseResult.okResult() : ResponseResult.errorResult("注册失败，请稍后再试");
+        if (rows > 0) {
+            // 【新增逻辑】：MyBatis-Plus insert 后会自动将生成的 id 回写到 user 对象中
+            UserRole userRole = new UserRole();
+            userRole.setUserId(user.getId());
+            // 如果前端没传 roleId，默认给 1（假设1是普通用户）
+            userRole.setRoleId(roleId != null ? roleId : 1L);
+            userRole.setCreateTime(LocalDateTime.now());
+
+            // 插入关联表
+            userRoleMapper.insert(userRole);
+            return ResponseResult.okResult();
+        }
+        return ResponseResult.errorResult(500,"注册失败，请稍后再试");
     }
 
 
@@ -62,7 +85,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             if (System.currentTimeMillis() < lockTime) {
                 // 计算剩余分钟
                 long minutesLeft = (lockTime - System.currentTimeMillis()) / 1000 / 60;
-                return ResponseResult.errorResult("账号被锁定，请在 " + (minutesLeft + 1) + " 分钟后再试");
+                return ResponseResult.errorResult(403,"账号被锁定，请在 " + (minutesLeft + 1) + " 分钟后再试");
             } else {
                 // 时间已到，自动移除锁定
                 lockMap.remove(username);
@@ -76,12 +99,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         User user = this.getOne(wrapper);
 
         if (user == null) {
-            return ResponseResult.errorResult("用户不存在");
+            return ResponseResult.errorResult(404,"用户不存在");
         }
 
         //判断账户是否被封禁
         if (user.getStatus() != null && user.getStatus() == 0) {
-            return ResponseResult.errorResult("您的账号已被管理员封禁！");
+            return ResponseResult.errorResult(403,"您的账号已被管理员封禁！");
         }
         // 3. 校验密码
         if (BCrypt.checkpw(password, user.getPasswordHash())) {
@@ -100,16 +123,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             if (count >= 5) {
                 // 锁定 10 分钟：当前时间 + 10分钟 * 60秒 * 1000毫秒
                 lockMap.put(username, System.currentTimeMillis() + 600000);
-                return ResponseResult.errorResult("连续输错5次密码，账号已锁定10分钟");
+                return ResponseResult.errorResult(403,"连续输错5次密码，账号已锁定10分钟");
             }
-            return ResponseResult.errorResult("密码错误，还可以尝试 " + (5 - count) + " 次");
+            return ResponseResult.errorResult(400,"密码错误，还可以尝试 " + (5 - count) + " 次");
         }
     }
 
     @Override
     public ResponseResult updateUserProfile(UserUpdateDTO dto) {
         User user = this.getById(dto.getId());
-        if (user == null) return ResponseResult.errorResult("用户不存在");
+        if (user == null) return ResponseResult.errorResult(404,"用户不存在");
 
         user.setNickname(dto.getNickname());
         user.setEmail(dto.getEmail());
@@ -118,7 +141,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         user.setUpdateTime(java.time.LocalDateTime.now()); // 更新时间
 
         boolean success = this.updateById(user);
-        return success ? ResponseResult.okResult() : ResponseResult.errorResult("更新失败");
+        return success ? ResponseResult.okResult() : ResponseResult.errorResult(500,"更新失败");
     }
+
+    @Override
+    public ResponseResult updatePassword(Long userId, String oldPassword, String newPassword) {
+        // 1. 查询用户
+        User user = this.getById(userId);
+        if (user == null) return ResponseResult.errorResult(404, "用户不存在");
+
+        // 2. 校验旧密码 (使用 BCrypt 匹配)
+        if (!BCrypt.checkpw(oldPassword, user.getPasswordHash())) {
+            return ResponseResult.errorResult(400, "原密码输入错误");
+        }
+
+        // 3. 设置新密码 (加密)
+        user.setPasswordHash(encoder.encode(newPassword));
+        user.setUpdateTime(LocalDateTime.now());
+
+        // 4. 更新数据库
+        if (this.updateById(user)) {
+            return ResponseResult.okResult("密码修改成功");
+        }
+        return ResponseResult.errorResult(500, "服务器异常，修改失败");
+    }
+
 
 }
