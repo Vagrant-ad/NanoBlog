@@ -1,0 +1,299 @@
+/* =========================================
+   全局样式重置与基础设定
+   ========================================= */
+body {
+    background-color: #f0f2f5; /* 类似 Facebook 的浅灰背景 */
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    margin: 0;
+    color: #1a202c;
+}
+
+/* 页面主容器 */
+.profile-container {
+    max-width: 860px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+/* 个人资料卡片主容器 */
+.profile-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+/* 顶部彩色装饰条 */
+.profile-header-bg {
+    height: 160px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+}
+
+/* 内容内边距控制 */
+.profile-content {
+    padding: 0 40px 40px;
+}
+
+/* =========================================
+   头像区域样式
+   ========================================= */
+.avatar-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: -80px; /* 让头像往上移动，压在背景条上 */
+    margin-bottom: 30px;
+}
+
+.avatar-wrapper {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 24px; /* 圆角矩形风格 */
+    border: 6px solid #ffffff;
+    background: #ffffff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+}
+
+.avatar-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 保证图片不变形 */
+    display: block;
+}
+
+/* 头像悬浮遮罩（上传图标） */
+.avatar-mask {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 28px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+}
+
+.avatar-wrapper:hover .avatar-mask {
+    opacity: 1;
+}
+
+.avatar-mask span {
+    font-size: 12px;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+.avatar-mask input {
+    display: none; /* 隐藏原始文件选择框 */
+}
+
+/* =========================================
+   信息展示区 (View Panel)
+   ========================================= */
+.user-main-info {
+    margin-bottom: 25px;
+}
+
+.user-main-info h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    color: #2d3748;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.username-tag {
+    color: #a0aec0;
+    font-size: 16px;
+    margin-left: 10px;
+}
+
+/* 状态标签样式 */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.status-ok {
+    background-color: #c6f6d5;
+    color: #2f855a;
+}
+
+.status-error {
+    background-color: #fed7d7;
+    color: #c53030;
+}
+
+/* 信息网格布局 (现在包含 5 个模块) */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 两列布局 */
+    gap: 30px;
+    padding: 25px 0;
+    border-top: 1px solid #edf2f7;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.info-item i {
+    font-size: 20px;
+    color: #667eea; /* 统一图标颜色 */
+    width: 24px;
+    text-align: center;
+}
+
+.info-label {
+    font-size: 13px;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+}
+
+.info-value {
+    font-size: 15px;
+    color: #4a5568;
+    font-weight: 600;
+}
+
+/* 简介区域 */
+.bio-box {
+    margin-top: 25px;
+    padding: 20px;
+    background: #f8fafc;
+    border-left: 4px solid #667eea;
+    border-radius: 8px;
+}
+
+.bio-box p {
+    margin: 0;
+    color: #4a5568;
+    line-height: 1.6;
+    font-style: italic;
+}
+
+/* =========================================
+   编辑表单区 (Edit Panel)
+   ========================================= */
+.edit-panel {
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+/* =========================================
+   通用按钮组件
+   ========================================= */
+.btn {
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5a67d8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(90, 103, 191, 0.3);
+}
+
+.btn-light {
+    background: #edf2f7;
+    color: #4a5568;
+}
+
+.btn-light:hover {
+    background: #e2e8f0;
+}
+
+/* 工具类 */
+.hidden {
+    display: none !important;
+}
+
+/* 响应式调整 */
+@media (max-width: 640px) {
+    .info-grid {
+        grid-template-columns: 1fr; /* 手机端单列 */
+    }
+    .profile-content {
+        padding: 0 20px 30px;
+    }
+    .avatar-section {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .action-btns {
+        margin-top: 15px;
+    }
+}

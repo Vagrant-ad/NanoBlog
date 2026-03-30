@@ -297,6 +297,10 @@ CREATE TABLE `role` (
 
 LOCK TABLES `role` WRITE;
 /*!40000 ALTER TABLE `role` DISABLE KEYS */;
+INSERT INTO `role` (`role_code`, `role_name`, `remark`, `create_time`, `update_time`, `is_deleted`)
+VALUES
+    ('USER',  '普通用户', '默认注册角色，可发布文章、评论', NOW(), NOW(), 0),
+    ('ADMIN', '管理员',   '拥有后台全部管理权限',          NOW(), NOW(), 0);
 /*!40000 ALTER TABLE `role` ENABLE KEYS */;
 UNLOCK TABLES;
 
