@@ -2,9 +2,287 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - NanoBlog 管理后台</title>
+    <!-- 引入Bootstrap（样式+分页/按钮组件） -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .user-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+        .search-bar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .table-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .page-info {
+            margin-top: 15px;
+            text-align: right;
+        }
+    </style>
 </head>
 <body>
+<div class="user-container">
+    <h2>用户管理</h2>
+    <!-- 搜索栏 -->
+    <div class="search-bar">
+        <input type="text" id="search-username" class="form-control w-25" placeholder="请输入用户名搜索">
+        <button id="btn-search" class="btn btn-primary">搜索</button>
+        <button id="btn-refresh" class="btn btn-secondary">刷新列表</button>
+    </div>
 
+    <!-- 用户列表表格 -->
+    <table class="table table-bordered table-hover">
+        <thead class="table-light">
+        <tr>
+            <th>ID</th>
+            <th>用户名</th>
+            <th>邮箱</th>
+            <th>状态</th>
+            <th>创建时间</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody id="user-table-body">
+        <!-- 动态渲染用户列表 -->
+        </tbody>
+    </table>
+
+    <!-- 分页控件 -->
+    <div class="page-info">
+        <nav>
+            <ul class="pagination justify-content-end" id="pagination">
+                <!-- 动态渲染分页按钮 -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<script>
+    // 全局分页参数
+    let currentPage = 1;
+    const pageSize = 10; // 每页10条
+
+    // 初始化：加载第一页数据
+    $(function() {
+        loadUserList();
+        // 绑定搜索/刷新事件
+        $('#btn-search').click(() => {
+            currentPage = 1; // 搜索重置为第一页
+            loadUserList();
+        });
+        $('#btn-refresh').click(() => {
+            $('#search-username').val(''); // 清空搜索框
+            currentPage = 1;
+            loadUserList();
+        });
+    });
+
+    /**
+     * 加载用户列表（分页+搜索）
+     */
+    function loadUserList() {
+        const username = $('#search-username').val().trim();
+        // 对接GET /admin/user/list接口
+        $.ajax({
+            url: '/admin/user/list',
+            method: 'GET',
+            data: {
+                page: currentPage,
+                size: pageSize,
+                username: username // 按用户名搜索
+            },
+            success: function(res) {
+                if (res.code !== 200) {
+                    alert('加载用户列表失败：' + res.msg);
+                    return;
+                }
+                // 渲染用户表格
+                renderUserTable(res.data.records);
+                // 渲染分页控件
+                renderPagination(res.data.total, currentPage, pageSize);
+            },
+            error: function() {
+                alert('网络异常，无法加载用户列表！');
+            }
+        });
+    }
+
+    /**
+     * 渲染用户表格
+     * @param {Array} userList - 用户列表数据
+     */
+    function renderUserTable(userList) {
+        const $tbody = $('#user-table-body');
+        $tbody.empty(); // 清空原有内容
+
+        if (userList.length === 0) {
+            $tbody.html('<tr><td colspan="6" class="text-center">暂无用户数据</td></tr>');
+            return;
+        }
+
+        // 遍历渲染每一行
+        userList.forEach(user => {
+            // 状态文本/样式
+            const statusText = user.status === 1 ? '启用' : '禁用';
+            const statusClass = user.status === 1 ? 'text-success' : 'text-danger';
+            // 操作按钮（状态切换）
+            const toggleBtnText = user.status === 1 ? '禁用' : '启用';
+            const toggleBtnClass = user.status === 1 ? 'btn-danger' : 'btn-success';
+
+            const tr = `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.username}</td>
+                        <td>${user.email || '-'}</td>
+                        <td class="${statusClass}">${statusText}</td>
+                        <td>${formatTime(user.createTime)}</td>
+                        <td class="table-actions">
+                            <button class="btn ${toggleBtnClass} btn-sm btn-toggle-status"
+                                    data-id="${user.id}"
+                                    data-status="${user.status}">
+                                ${toggleBtnText}
+                            </button>
+                            <button class="btn btn-warning btn-sm btn-delete-user"
+                                    data-id="${user.id}">
+                                删除
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            $tbody.append(tr);
+        });
+
+        // 绑定状态切换事件
+        $('.btn-toggle-status').click(function() {
+            const userId = $(this).data('id');
+            const currentStatus = $(this).data('status');
+            const targetStatus = currentStatus === 1 ? 0 : 1; // 切换状态
+            toggleUserStatus(userId, targetStatus);
+        });
+
+        // 绑定删除用户事件
+        $('.btn-delete-user').click(function() {
+            const userId = $(this).data('id');
+            if (confirm(`确认删除用户【ID: ${userId}】吗？删除后不可恢复！`)) {
+                deleteUser(userId);
+            }
+        });
+    }
+
+    /**
+     * 渲染分页控件
+     * @param {Number} total - 总条数
+     * @param {Number} currentPage - 当前页
+     * @param {Number} pageSize - 每页条数
+     */
+    function renderPagination(total, currentPage, pageSize) {
+        const $pagination = $('#pagination');
+        $pagination.empty();
+
+        const totalPages = Math.ceil(total / pageSize);
+        if (totalPages <= 1) return; // 只有1页，无需分页
+
+        // 上一页
+        const prevLi = `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:;" data-page="${currentPage - 1}">上一页</a>
+                </li>
+            `;
+        $pagination.append(prevLi);
+
+        // 页码（简化版：只显示当前页前后2页）
+        for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+            const pageLi = `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="javascript:;" data-page="${i}">${i}</a>
+                    </li>
+                `;
+            $pagination.append(pageLi);
+        }
+
+        // 下一页
+        const nextLi = `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:;" data-page="${currentPage + 1}">下一页</a>
+                </li>
+            `;
+        $pagination.append(nextLi);
+
+        // 绑定分页点击事件
+        $('.page-link').click(function() {
+            const targetPage = $(this).data('page');
+            if (targetPage && targetPage !== currentPage) {
+                currentPage = targetPage;
+                loadUserList();
+            }
+        });
+    }
+
+    /**
+     * 切换用户状态（启用/禁用）
+     * @param {Number} userId - 用户ID
+     * @param {Number} targetStatus - 目标状态（0禁用/1启用）
+     */
+    function toggleUserStatus(userId, targetStatus) {
+        $.ajax({
+            url: `/admin/user/${userId}/status`,
+            method: 'PUT',
+            data: { status: targetStatus }, // 传递目标状态
+            success: function(res) {
+                if (res.code === 200) {
+                    alert(`用户${targetStatus === 1 ? '启用' : '禁用'}成功！`);
+                    loadUserList(); // 刷新列表
+                } else {
+                    alert(`操作失败：${res.msg}`);
+                }
+            },
+            error: function() {
+                alert('网络异常，状态切换失败！');
+            }
+        });
+    }
+
+    /**
+     * 删除用户（软删除）
+     * @param {Number} userId - 用户ID
+     */
+    function deleteUser(userId) {
+        $.ajax({
+            url: `/admin/user/${userId}`,
+            method: 'DELETE',
+            success: function(res) {
+                if (res.code === 200) {
+                    alert('用户删除成功！');
+                    loadUserList(); // 刷新列表
+                } else {
+                    alert(`删除失败：${res.msg}`);
+                }
+            },
+            error: function() {
+                alert('网络异常，删除失败！');
+            }
+        });
+    }
+
+    /**
+     * 格式化时间（简化版，实际可根据后端返回格式调整）
+     * @param {String} time - 原始时间字符串
+     * @returns {String} 格式化后的时间
+     */
+    function formatTime(time) {
+        if (!time) return '-';
+        return new Date(time).toLocaleString('zh-CN');
+    }
+</script>
 </body>
 </html>

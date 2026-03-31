@@ -2,9 +2,73 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员仪表盘 - NanoBlog</title>
+    <!-- 引入常用样式/脚本依赖 -->
+    <link rel="stylesheet" href="../../static/css/bootstrap.min.css">
+    <script src="../../static/js/jquery.min.js"></script>
+    <script src="../../static/js/echarts.min.js"></script>
+    <!-- 自定义仪表盘样式 -->
+    <style>
+        .dashboard-container { display: flex; min-height: 100vh; }
+        .sidebar { width: 200px; background: #2c3e50; color: white; }
+        .main-content { flex: 1; padding: 20px; }
+        .stat-card { border: 1px solid #eee; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
+    </style>
 </head>
 <body>
+<div class="dashboard-container">
+    <!-- 侧边导航 -->
+    <div class="sidebar">
+        <h3>NanoBlog 管理</h3>
+        <ul>
+            <li><a href="#dashboard">仪表盘</a></li>
+            <li><a href="#articles">文章管理</a></li>
+            <li><a href="#users">用户管理</a></li>
+            <li><a href="#comments">评论管理</a></li>
+        </ul>
+    </div>
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <h1>仪表盘</h1>
+        <!-- 数据统计卡片 -->
+        <div class="stat-row" style="display: flex; gap: 20px;">
+            <div class="stat-card" style="flex: 1;">
+                <h4>总文章数</h4>
+                <p id="article-count">0</p>
+            </div>
+            <div class="stat-card" style="flex: 1;">
+                <h4>总用户数</h4>
+                <p id="user-count">0</p>
+            </div>
+            <div class="stat-card" style="flex: 1;">
+                <h4>待审核评论</h4>
+                <p id="pending-comment">0</p>
+            </div>
+        </div>
+        <!-- 数据图表 -->
+        <div id="chart-container" style="width: 100%; height: 400px;"></div>
+    </div>
+</div>
 
+<!-- 交互逻辑 -->
+<script>
+    // 模拟加载统计数据
+    $(function() {
+        // 实际项目中替换为后端接口请求
+        $('#article-count').text('128');
+        $('#user-count').text('56');
+        $('#pending-comment').text('8');
+
+        // 初始化图表（文章发布趋势）
+        const chart = echarts.init(document.getElementById('chart-container'));
+        chart.setOption({
+            title: { text: '近7天文章发布量' },
+            xAxis: { type: 'category', data: ['周一','周二','周三','周四','周五','周六','周日'] },
+            yAxis: { type: 'value' },
+            series: [{ name: '发布量', type: 'bar', data: [5, 8, 3, 12, 7, 9, 6] }]
+        });
+    });
+</script>
 </body>
 </html>
