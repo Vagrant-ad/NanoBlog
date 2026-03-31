@@ -12,9 +12,6 @@
     let currentSort = 'time';
 
     const articleGrid = document.querySelector('.article-grid');
-/*
-    const searchInput = document.querySelector('.search-box input');
-*/
     const searchInput = document.getElementById('searchInput');
     const paginationEl = document.getElementById('pagination');
 
@@ -33,7 +30,7 @@
         }
         return `/article/home?${params.toString()}`;
     }
-    //渲染无搜索结果或无文章情况
+    //渲染空状态
     function renderEmptyState(message = '暂无文章') {
         if (!articleGrid) return;
 
@@ -177,9 +174,6 @@
 
     function bindSearch() {
         if (!searchInput) return;
-/*
-        searchInput.addEventListener('input', triggerSearch);
-*/
         //回车触发
         searchInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
@@ -203,10 +197,10 @@
 
         sortBtns.forEach(btn => {
             btn.addEventListener('click', function() {
-                // 切换 active 样式
+                //切换active样式
                 sortBtns.forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
-                // 更新排序并从第一页重新加载
+                //更新排序并从第一页加载
                 currentSort = this.dataset.sort;
                 loadArticles(1, currentKeyword, currentSort);
             });

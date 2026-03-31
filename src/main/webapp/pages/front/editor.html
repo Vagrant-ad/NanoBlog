@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" xmlns="http://www.w3.org/1999/html">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,9 +47,10 @@
     <div class="navbar-right">
       <!-- 在 editor.html 加上 active 类 -->
       <a href="/pages/front/editor.html" class="nav-button active">写文章</a>
-
-      <a href="/pages/front/login.html" class="nav-link">登录</a>
-      <a href="/pages/front/register.html" class="nav-button">注册</a>
+      <!--<a href="/pages/front/login.html" class="nav-link">登录</a>
+      <a href="/pages/front/register.html" class="nav-button">注册</a>-->
+      <!--用户区域由js根据登录状态动态渲染-->
+      <div id="navUserArea"></div>
     </div>
   </div>
 </header>
@@ -134,6 +135,6 @@
 <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 <script src="/static/lib/layui/layui.js"></script>
 <script src="/static/js/front/editor.js"></script>
-
+<script src="/static/js/common/common.js"></script>
 </body>
 </html>

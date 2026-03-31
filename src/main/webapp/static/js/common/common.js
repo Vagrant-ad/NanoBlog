@@ -1,10 +1,13 @@
 (function (window, document) {
     'use strict';
 
+    // 前端通用工具
     const NanoBlog = {
         apiBase: ''
     };
 
+    // 统一请求封装
+    // 处理JSON序列化、HTTP 状态和业务code
     NanoBlog.request = async function (url, options = {}) {
         const config = {
             method: 'GET',
@@ -40,6 +43,7 @@
         return data;
     };
 
+    // 延迟执行高频触发函数
     NanoBlog.debounce = function (fn, delay = 300) {
         let timer = null;
         return function (...args) {
@@ -48,11 +52,13 @@
         };
     };
 
+    // 读取URL查询参数
     NanoBlog.getQueryParam = function (name) {
         const params = new URLSearchParams(window.location.search);
         return params.get(name);
     };
 
+    // 转义HTML，避免XSS
     NanoBlog.escapeHtml = function (str) {
         if (str === null || str === undefined) return '';
         return String(str)
@@ -63,6 +69,7 @@
             .replaceAll("'", '&#39;');
     };
 
+    // 格式化日期字符串
     NanoBlog.formatDate = function (value, withTime = true) {
         if (!value) return '';
 
@@ -84,6 +91,7 @@
         return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
     };
 
+    // 按长度截断文本
     NanoBlog.truncateText = function (text, maxLen = 120) {
         if (!text) return '';
         const str = String(text).trim();
@@ -91,6 +99,7 @@
         return str.slice(0, maxLen).trimEnd() + '...';
     };
 
+    // 统一标签格式：数组或逗号分隔字符串
     NanoBlog.normalizeTags = function (tags) {
         if (!tags) return [];
 
@@ -106,6 +115,7 @@
         return [];
     };
 
+    // 统一提示：优先 layer，兜底 alert
     NanoBlog.toast = function (msg, icon = 2) {
         if (window.layui && layui.layer) {
             layui.layer.msg(msg, { icon, time: 1800 });
@@ -114,6 +124,7 @@
         }
     };
 
+    // 根据当前路径高亮导航
     NanoBlog.setActiveNav = function () {
         const currentPath = window.location.pathname;
         const navLinks = document.querySelectorAll('.navbar-menu a');
@@ -130,6 +141,7 @@
         });
     };
 
+    // 页面滚动时切换导航栏样式
     NanoBlog.bindNavbarScrollEffect = function () {
         const navbar = document.querySelector('.navbar');
         if (!navbar) return;
@@ -146,9 +158,77 @@
         window.addEventListener('scroll', update, { passive: true });
     };
 
+    // 初始化导航用户区域（登录态/未登录态）
+    NanoBlog.initNavUser = function () {
+        const container = document.getElementById('navUserArea');
+        if (!container) return;
+
+        fetch('/user/getProfile', { credentials: 'same-origin' })
+            .then(res => res.json())
+            .then(result => {
+                if (result.code === 200 && result.data) {
+                    const user = result.data.user;
+                    const avatar = user.avatarUrl || '/static/images/avatar-default.png';
+                    const nickname = user.nickname || user.username || '用户';
+
+                    container.innerHTML = `
+                    <div class="nav-user-dropdown">
+                        <img class="nav-avatar" src="${avatar}" alt="${nickname}"
+                             onerror="this.src='/static/images/avatar-default.png'">
+                        <div class="nav-user-menu">
+                            <div class="nav-user-info">
+                                <img src="${avatar}" alt="${nickname}"
+                                     onerror="this.src='/static/images/avatar-default.png'">
+                                <div>
+                                    <div class="nav-user-name">${nickname}</div>
+                                    <div class="nav-user-username">@${user.username}</div>
+                                </div>
+                            </div>
+                            <div class="nav-menu-divider"></div>
+                            <a class="nav-menu-item" href="/pages/front/profile.html">
+                                <i class="layui-icon layui-icon-username"></i> 个人资料
+                            </a>
+                            <a class="nav-menu-item" href="/pages/front/editor.html">
+                                <i class="layui-icon layui-icon-edit"></i> 写文章
+                            </a>
+                            <div class="nav-menu-divider"></div>
+                            <button class="nav-menu-item nav-menu-logout" id="navLogoutBtn">
+                                <i class="layui-icon layui-icon-logout"></i>  退出登录
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                    // 退出登录
+                    document.getElementById('navLogoutBtn').addEventListener('click', function () {
+                        fetch('/user/logout', { method: 'POST', credentials: 'same-origin' })
+                            .then(() => {
+                                window.location.href = '/pages/front/index.html';
+                            });
+                    });
+
+                } else {
+                    // 未登录时显示登录/注册入口
+                    container.innerHTML = `
+                    <a href="/pages/front/login.html" class="nav-link">登录</a>
+                    <a href="/pages/front/register.html" class="nav-button">注册</a>
+                `;
+                }
+            })
+            .catch(() => {
+                // 获取用户信息失败时按未登录处理
+                container.innerHTML = `
+                <a href="/pages/front/login.html" class="nav-link">登录</a>
+                <a href="/pages/front/register.html" class="nav-button">注册</a>
+            `;
+            });
+    };
+
+    // 页面初始化入口
     NanoBlog.init = function () {
         NanoBlog.setActiveNav();
         NanoBlog.bindNavbarScrollEffect();
+        NanoBlog.initNavUser();
     };
 
     window.NanoBlog = NanoBlog;
