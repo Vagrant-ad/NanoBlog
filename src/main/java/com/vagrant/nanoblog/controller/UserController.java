@@ -93,7 +93,14 @@ public class UserController {
         }
         return result;
     }
-
+    //退出登录
+    @PostMapping("/logout")
+    @ResponseBody
+    public ResponseResult logout(HttpSession session) {
+        session.removeAttribute("LOGIN_USER");
+        session.invalidate();
+        return ResponseResult.okResult();
+    }
     //验证码
     @GetMapping("/captcha")
     public void getCaptcha(HttpServletRequest request, javax.servlet.http.HttpServletResponse response) {
