@@ -6,6 +6,7 @@
     <title>用户登录 - NanoBlog</title>
     <link rel="icon" href="/favicon.ico">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <link rel="stylesheet" href="/static/lib/layui/css/layui.css">
     <link rel="stylesheet" href="/static/css/front/auth.css">
 </head>
@@ -103,26 +104,7 @@
                 <span class="btn-submit__text">登 录</span>
                 <span class="btn-submit__arrow">→</span>
             </button>
-
-                        //路径跳转
-                        window.location.href = "/pages/front/index.html";
-                    } else {
-                        // 此时 res 如果是 "密码错误"，也会去掉引号后正常弹出
-                        alert(res);
-                    }
-                } else {
-                    alert("网络请求失败。状态码: " + xhr.status);
-                }
-            }
-        };
-
-        xhr.open("POST", "/user/doLogin", true);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhr.send("username=" + username + "&password=" + password);
-    };
-</script>
-
-            </script>
-        </div>
+            <script src="/static/js/front/login.js"></script>
+            <script src="/static/lib/layui/layui.js"></script>
 </body>
 </html>

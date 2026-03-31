@@ -59,11 +59,9 @@ public class UserController {
         user.setEmail(dto.getEmail());
 
         // 把 DTO 的 password 赋值给 User 的 passwordHash
-        // 这样Service 层的 user.getPasswordHash() 才不会是 null
         user.setPasswordHash(dto.getPassword());
 
         // 2. 调用 service
-        // 将 DTO 中的 roleId 传给 service
         return userService.register(user, dto.getRoleId());
     }
 
@@ -85,7 +83,7 @@ public class UserController {
             return ResponseResult.errorResult(400, "验证码错误！");
         }
 
-        // 3. 校验通过后，立即删除 session 里的验证码（防止重复使用）
+        // 3. 校验通过后，立即删除 session 里的验证码
         request.getSession().removeAttribute("captcha_key");
 
         ResponseResult result = userService.login(username, password);
@@ -143,16 +141,15 @@ public class UserController {
             return ResponseResult.errorResult(401, "请先登录");
         }
 
-        // 2. 查询完整的用户信息（确保数据是最新的）
+        // 2. 查询完整的用户信息
         User user = userService.getById(sessionUser.getId());
 
-        // 3. 使用你现有的 UserRoleMapper 查询该用户的角色记录
-        // 需要在 UserController 中 @Autowired private UserRoleMapper userRoleMapper;
+        // 3. 使用 UserRoleMapper 查询该用户的角色记录
         UserRole userRole = userRoleMapper.selectOne(
                 new QueryWrapper<UserRole>().eq("user_id", user.getId())
         );
 
-        // 4. 将数据封装进 Map，这样就不需要新创建 DTO 类了
+        // 4. 将数据封装进 Map
         Map<String, Object> result = new HashMap<>();
         result.put("user", user); // 放入用户基本信息
         result.put("roleId", userRole != null ? userRole.getRoleId() : 1); // 放入角色ID，默认1
@@ -167,7 +164,6 @@ public class UserController {
     @PostMapping("/updateProfile")
     @ResponseBody
     public ResponseResult updateProfile(@RequestBody UserUpdateDTO updateDTO) {
-        // 这里的逻辑在 UserServiceImpl 中实现
         return userService.updateUserProfile(updateDTO);
     }
 
@@ -190,7 +186,7 @@ public class UserController {
             File serverFile = new File(dir, newFileName);
             file.transferTo(serverFile);
 
-            // 返回给前端的 URL 依然保持这个格式
+
             String imageUrl = "/user/showAvatar?name=" + newFileName;
             return ResponseResult.okResult(imageUrl);
         } catch (Exception e) {
@@ -208,7 +204,7 @@ public class UserController {
             File file = new File("D:/nanoblog_uploads/" + name);
             if (!file.exists()) return;
 
-            // 设置响应头，告诉浏览器这是图片
+
             response.setContentType("image/jpeg");
             java.nio.file.Files.copy(file.toPath(), response.getOutputStream());
         } catch (Exception e) {
