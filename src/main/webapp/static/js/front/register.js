@@ -108,7 +108,7 @@ $("#regBtn").click(function() {
                 layer.msg(res.msg, {icon: 2});
             }
         },
-        error: function() {
+        error: function(xhr,status,error) {
             var layer = window.layer;
             layer.msg("网络请求失败，请稍后再试", {icon: 2});
 
