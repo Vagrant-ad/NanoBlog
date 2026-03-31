@@ -59,24 +59,18 @@ layui.use(['layer', 'element'], function () {
             });
     }
 
-    // ─────────────────────────────────────────────
     // 请求分类列表（返回 Deferred，供 $.when 使用）
-    // ─────────────────────────────────────────────
     function loadCategoryList() {
         return $.ajax({ url: CATEGORY_API, method: 'GET', dataType: 'json' });
     }
 
-    // ─────────────────────────────────────────────
     // 请求文章详情（返回 Deferred，供 $.when 使用）
-    // ─────────────────────────────────────────────
     function loadArticleData(id) {
         state.loadingIndex = layer.load(2, { shade: [0.08, '#000'] });
         return $.ajax({ url: `${API_BASE}/${id}`, method: 'GET', dataType: 'json' });
     }
 
-    // ─────────────────────────────────────────────
     // Markdown 初始化（备用，后端若返回 contentMd 时生效）
-    // ─────────────────────────────────────────────
     function initMarkdown() {
         if (!window.marked) return;
 
@@ -148,16 +142,14 @@ layui.use(['layer', 'element'], function () {
         marked.use({ renderer, gfm: true, breaks: false, pedantic: false });
     }
 
-    // ─────────────────────────────────────────────
     // 渲染文章
-    // ─────────────────────────────────────────────
     function renderArticle(data) {
         const title       = data.title || data.articleTitle || data.article_title || '未命名文章';
         const publishTime = formatTime(data.publishTime || data.publish_time);
         const viewCount   = data.viewCount ?? data.view_count ?? 0;
         const tags        = data.tags || [];
 
-        // ★ 用 categoryId 在本地缓存里查分类名
+        // 用 categoryId 在本地缓存里查分类名
         const categoryId  = data.categoryId || data.category_id;
         const category    = (categoryId && state.categoryMap[categoryId])
             || data.categoryName || data.category_name || '未分类';
@@ -232,10 +224,11 @@ layui.use(['layer', 'element'], function () {
         renderLatex();
         fixInlineMarkdownTables($content);
         fixTodoList($content);
+        fixAdmonitions($content);
         enhanceContent($content);
         // 保留fixInlineMarkdownTables 和 fixTodoList，覆盖commonmark的表格和todolist渲染错误
     }
-    // ── 修复一：<p> 里的 Markdown 管道表格 → <table> ──
+    // 修复<p> 里的 Markdown 管道表格 → <table>
     function fixInlineMarkdownTables($content) {
         $content.find('p').each(function () {
             const $p    = $(this);
@@ -276,7 +269,7 @@ layui.use(['layer', 'element'], function () {
         return `<div class="table-wrapper"><table class="md-table"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
     }
 
-    // ── 修复二：<li> 里的 [x]/[ ] 文本 → checkbox ──
+    // 修复<li> 里的 [x]/[ ] 文本 → checkbox
     function fixTodoList($content) {
         $content.find('li').each(function () {
             const $li = $(this);
@@ -293,34 +286,115 @@ layui.use(['layer', 'element'], function () {
         $content.find('ul:has(li.todo-item)')
             .css({ 'list-style': 'none', 'padding-left': '4px' });
     }
+    //支持github拓展语法
+    function fixAdmonitions($content) {
+        // GitHub 风格：> [!TIP] / [!NOTE] / [!WARNING] / [!IMPORTANT] / [!CAUTION]
+        const typeMap = {
+            'TIP':       { label: '提示',  icon: '💡', color: '#1a7f37', bg: 'rgba(26,127,55,0.08)',  border: '#2da44e' },
+            'NOTE':      { label: '注意',  icon: 'ℹ️',  color: '#0969da', bg: 'rgba(9,105,218,0.08)',  border: '#54aeff' },
+            'WARNING':   { label: '警告',  icon: '⚠️', color: '#9a6700', bg: 'rgba(154,103,0,0.08)',  border: '#d4a72c' },
+            'IMPORTANT': { label: '重要',  icon: '❗', color: '#8250df', bg: 'rgba(130,80,223,0.08)', border: '#a371f7' },
+            'CAUTION':   { label: '危险',  icon: '🔥', color: '#cf222e', bg: 'rgba(207,34,46,0.08)',  border: '#ff8182' }
+        };
 
-    // ── 修复三：<pre><code class="language-*"> → hljs 高亮 ──
+        $content.find('blockquote').each(function () {
+            const $bq = $(this);
+            const $firstP = $bq.find('p').first();
+            if (!$firstP.length) return;
+
+            const firstLine = $firstP.text().trim();
+            const match = firstLine.match(/^\[!(TIP|NOTE|WARNING|IMPORTANT|CAUTION)\]/i);
+            if (!match) return;
+
+            const type = match[1].toUpperCase();
+            const cfg = typeMap[type];
+            if (!cfg) return;
+
+            // 移除第一行的 [!TYPE] 标记文本
+            const fullHtml = $firstP.html();
+            const cleaned = fullHtml.replace(/^\[!(TIP|NOTE|WARNING|IMPORTANT|CAUTION)\]\s*/i, '').trim();
+            if (cleaned) {
+                $firstP.html(cleaned);
+            } else {
+                $firstP.remove();
+            }
+
+            // 重建为 admonition 样式块
+            $bq.addClass('admonition admonition-' + type.toLowerCase());
+            $bq.prepend(`
+            <div class="admonition-title" style="color:${cfg.color}">
+                <span class="admonition-icon">${cfg.icon}</span>
+                ${cfg.label}
+            </div>
+        `);
+            $bq.css({
+                'background': cfg.bg,
+                'border-left-color': cfg.border
+            });
+        });
+    }
+    // 修复<pre><code class="language-*"> → hljs 高亮
     function highlightCodeBlocks() {
         if (!window.hljs) return;
         document.querySelectorAll('#markdown-content pre code').forEach(block => {
             if (block.classList.contains('hljs')) return;
             const langClass = Array.from(block.classList).find(c => c.startsWith('language-'));
             let lang = langClass ? langClass.replace('language-', '') : null;
-            //防止整段代码被当成语言名
-            if (lang && lang.length > 30) {
-                lang = null;
-            }
+            if (lang && lang.length > 30) lang = null;
+
             try {
-                try {
-                    if (lang && hljs.getLanguage(lang)) {
-                        block.innerHTML = hljs.highlight(block.textContent, { language: lang }).value;
-                    } else {
-                        block.innerHTML = hljs.highlightAuto(block.textContent).value;
-                    }
-                } catch (e) {
-                    console.warn('hljs fallback:', e);
+                if (lang && hljs.getLanguage(lang)) {
+                    block.innerHTML = hljs.highlight(block.textContent, { language: lang }).value;
+                } else {
                     block.innerHTML = hljs.highlightAuto(block.textContent).value;
                 }
                 block.classList.add('hljs');
-                if (block.parentElement?.tagName === 'PRE') {
-                    block.parentElement.classList.add('hljs-pre');
+            } catch (e) {
+                try { block.innerHTML = hljs.highlightAuto(block.textContent).value; }
+                catch (e2) { console.warn('hljs 高亮失败：', e2); }
+            }
+
+            // 给 pre 加相对定位，放复制按钮
+            const pre = block.parentElement;
+            if (pre?.tagName === 'PRE') {
+                pre.classList.add('hljs-pre');
+                pre.style.position = 'relative';
+
+                // 语言标签
+                if (lang) {
+                    const langLabel = document.createElement('span');
+                    langLabel.className = 'code-lang-label';
+                    langLabel.textContent = lang;
+                    pre.appendChild(langLabel);
                 }
-            } catch (e) { console.warn('hljs 高亮失败：', e); }
+
+                // 复制按钮
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'code-copy-btn';
+                copyBtn.textContent = '复制';
+                copyBtn.addEventListener('click', function () {
+                    const text = block.textContent || '';
+                    navigator.clipboard.writeText(text).then(() => {
+                        copyBtn.textContent = '已复制 ✓';
+                        copyBtn.classList.add('copied');
+                        setTimeout(() => {
+                            copyBtn.textContent = '复制';
+                            copyBtn.classList.remove('copied');
+                        }, 2000);
+                    }).catch(() => {
+                        // 兼容不支持 clipboard API 的环境
+                        const ta = document.createElement('textarea');
+                        ta.value = text;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        copyBtn.textContent = '已复制 ✓';
+                        setTimeout(() => { copyBtn.textContent = '复制'; }, 2000);
+                    });
+                });
+                pre.appendChild(copyBtn);
+            }
         });
     }
 
