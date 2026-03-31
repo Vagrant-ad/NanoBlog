@@ -10,23 +10,20 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
     init();
 
     function init() {
-        // 1. 初始化 UI 组件
+        //1.初始化UI组件
         initEditor();
         initTagSystem();
         initCoverUpload();
 
-        // 2. 加载数据
+        //2.加载数据
         loadCategories();
 
-        // 3. 绑定交互
+        //3.绑定交互
         bindSubmit();
 
-        // 4. 激活导航栏“写文章”按钮的高亮态
-        // 只需要这一行，样式会自动从 common.css 加载
+        //4.高亮导航栏“写文章”
         $('.navbar-right a[href*="editor.html"]').addClass('active');
     }
-
-    // ... 后面 initEditor, initTagSystem 等逻辑保持不变 ...
 
     function initEditor() {
         easyMDE = new EasyMDE({
@@ -94,7 +91,7 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
     }
 
     function bindSubmit() {
-        // 发布文章
+        //发布文章
         form.on('submit(publishBtn)', function(data) {
             const contentMd = easyMDE.value();
             if (!contentMd.trim()) return layer.msg('内容不能为空');
@@ -102,7 +99,7 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
             return false;
         });
 
-        // 存为草稿：标题有值即可保存，内容允许为空
+        //存草稿:标题必填,正文可空
         $('.btn-draft').on('click', function() {
             const titleVal = $('input[name="articleTitle"]').val().trim();
             if (!titleVal) return layer.msg('请先输入文章标题');
@@ -114,13 +111,13 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
             submitArticle(field, 0);
         });
     }
-    // 公共提交函数，status: 0=草稿 1=发布
+    //公共提交流程,status:0草稿,1发布
     function submitArticle(field, status) {
         const submitData = {
             ...field,
             tags: articleTags,
             contentMd: easyMDE.value(),
-            coverUrl: $('#coverUrlInput').val(),  // 封面图 URL
+            coverUrl: $('#coverUrlInput').val(), //封面图URL
             status: status
         };
 
@@ -160,7 +157,7 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
                             '<option value="' + c.id + '">' + c.categoryName + '</option>'
                         );
                     });
-                    form.render('select'); // 通知 layui 重新渲染下拉框
+                    form.render('select'); //通知layui重渲染下拉框
                 } else {
                     layer.msg('分类加载失败');
                 }
