@@ -224,6 +224,7 @@ layui.use(['layer', 'element'], function () {
         renderLatex();
         fixInlineMarkdownTables($content);
         fixTodoList($content);
+        fixAdmonitions($content);
         enhanceContent($content);
         // 保留fixInlineMarkdownTables 和 fixTodoList，覆盖commonmark的表格和todolist渲染错误
     }
@@ -285,7 +286,53 @@ layui.use(['layer', 'element'], function () {
         $content.find('ul:has(li.todo-item)')
             .css({ 'list-style': 'none', 'padding-left': '4px' });
     }
+    //支持github拓展语法
+    function fixAdmonitions($content) {
+        // GitHub 风格：> [!TIP] / [!NOTE] / [!WARNING] / [!IMPORTANT] / [!CAUTION]
+        const typeMap = {
+            'TIP':       { label: '提示',  icon: '💡', color: '#1a7f37', bg: 'rgba(26,127,55,0.08)',  border: '#2da44e' },
+            'NOTE':      { label: '注意',  icon: 'ℹ️',  color: '#0969da', bg: 'rgba(9,105,218,0.08)',  border: '#54aeff' },
+            'WARNING':   { label: '警告',  icon: '⚠️', color: '#9a6700', bg: 'rgba(154,103,0,0.08)',  border: '#d4a72c' },
+            'IMPORTANT': { label: '重要',  icon: '❗', color: '#8250df', bg: 'rgba(130,80,223,0.08)', border: '#a371f7' },
+            'CAUTION':   { label: '危险',  icon: '🔥', color: '#cf222e', bg: 'rgba(207,34,46,0.08)',  border: '#ff8182' }
+        };
 
+        $content.find('blockquote').each(function () {
+            const $bq = $(this);
+            const $firstP = $bq.find('p').first();
+            if (!$firstP.length) return;
+
+            const firstLine = $firstP.text().trim();
+            const match = firstLine.match(/^\[!(TIP|NOTE|WARNING|IMPORTANT|CAUTION)\]/i);
+            if (!match) return;
+
+            const type = match[1].toUpperCase();
+            const cfg = typeMap[type];
+            if (!cfg) return;
+
+            // 移除第一行的 [!TYPE] 标记文本
+            const fullHtml = $firstP.html();
+            const cleaned = fullHtml.replace(/^\[!(TIP|NOTE|WARNING|IMPORTANT|CAUTION)\]\s*/i, '').trim();
+            if (cleaned) {
+                $firstP.html(cleaned);
+            } else {
+                $firstP.remove();
+            }
+
+            // 重建为 admonition 样式块
+            $bq.addClass('admonition admonition-' + type.toLowerCase());
+            $bq.prepend(`
+            <div class="admonition-title" style="color:${cfg.color}">
+                <span class="admonition-icon">${cfg.icon}</span>
+                ${cfg.label}
+            </div>
+        `);
+            $bq.css({
+                'background': cfg.bg,
+                'border-left-color': cfg.border
+            });
+        });
+    }
     // 修复<pre><code class="language-*"> → hljs 高亮
     function highlightCodeBlocks() {
         if (!window.hljs) return;
