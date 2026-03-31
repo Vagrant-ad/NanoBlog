@@ -47,9 +47,10 @@
         <div class="navbar-right">
             <!-- 在 editor.html 加上 active 类 -->
             <a href="/pages/front/editor.html" class="nav-button">写文章</a>
-
-            <a href="/pages/front/login.html" class="nav-link">登录</a>
-            <a href="/pages/front/register.html" class="nav-button">注册</a>
+            <!--<a href="/pages/front/login.html" class="nav-link">登录</a>
+            <a href="/pages/front/register.html" class="nav-button">注册</a>-->
+            <!--用户区域由js根据登录状态动态渲染-->
+            <div id="navUserArea"></div>
         </div>
     </div>
 </header>
@@ -98,7 +99,7 @@
                         </div>
 
                         <div class="card-meta">
-                            <span class="meta-author">崔哲超</span>
+                            <span class="meta-author">测试用户</span>
                             <span class="meta-dot">·</span>
                             <!-- 使用 <time> 标签提升 SEO 语义 -->
                             <time class="meta-time" datetime="2026-03-25">2026-03-25</time>
@@ -123,7 +124,7 @@
                             <a href="/tags/mybatis" class="tag">MyBatis</a>
                         </div>
                         <div class="card-meta">
-                            <span class="meta-author">崔哲超</span>
+                            <span class="meta-author">测试用户</span>
                             <span class="meta-dot">·</span>
                             <time class="meta-time" datetime="2026-03-24">2026-03-24</time>
                             <span class="meta-dot">·</span>
@@ -132,7 +133,7 @@
                     </div>
                 </article>
 
-                <!-- 后续文章卡片由 JS 动态渲染 -->
+                <!-- 实际文章卡片由 JS 动态渲染 -->
 
             </div>
 

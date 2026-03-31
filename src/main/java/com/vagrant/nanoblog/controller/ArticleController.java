@@ -4,6 +4,7 @@ package com.vagrant.nanoblog.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.vagrant.nanoblog.common.ResponseResult;
 import com.vagrant.nanoblog.dto.ArticlePublishDTO;
+import com.vagrant.nanoblog.pojo.User;
 import com.vagrant.nanoblog.service.IArticleService;
 import com.vagrant.nanoblog.service.impl.ArticleServiceImpl;
 import com.vagrant.nanoblog.vo.ArticleDetailVO;
@@ -11,10 +12,13 @@ import com.vagrant.nanoblog.vo.ArticleHomeVO;
 import com.vagrant.nanoblog.vo.ArticleListVO;
 import com.vagrant.nanoblog.vo.ArticleManageVO;
 import lombok.RequiredArgsConstructor;
+import org.aspectj.weaver.patterns.HasThisTypePatternTriedToSneakInSomeGenericOrParameterizedTypePatternMatchingStuffAnywhereVisitor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.stereotype.Controller;
+
+import javax.servlet.http.HttpSession;
 
 /**
  * <p>
@@ -29,11 +33,19 @@ import org.springframework.stereotype.Controller;
 @RequiredArgsConstructor
 public class ArticleController {
     private final IArticleService articleService;
+    //获取登录用户id
+    private Long getCurrentUserId(HttpSession session) {
+        User loginUser = (User) session.getAttribute("LOGIN_USER");
+        if (loginUser == null) {
+            throw new RuntimeException("请先登录");
+        }
+        return loginUser.getId();
+    }
 
     @PostMapping("/publish")
-    public ResponseResult<Long> publish(@RequestBody ArticlePublishDTO dto) {
+    public ResponseResult<Long> publish(@RequestBody ArticlePublishDTO dto, HttpSession session) {
+        Long userId = getCurrentUserId(session);
 
-        Long userId = 2L; // TODO 后面替换成登录用户
         Long articleId = articleService.publishArticle(dto, userId);
         return ResponseResult.okResult(articleId);
     }
@@ -69,8 +81,8 @@ public class ArticleController {
     @GetMapping("/my/published")
     public ResponseResult<IPage<ArticleManageVO>> myPublished(
             @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
-        Long userId = 2L; // TODO: 替换为登录用户
+            @RequestParam(defaultValue = "10") Integer size,HttpSession session) {
+        Long userId = getCurrentUserId(session);
         return ResponseResult.okResult(articleService.getMyPublished(userId, page, size));
     }
 
@@ -81,8 +93,8 @@ public class ArticleController {
     @GetMapping("/my/drafts")
     public ResponseResult<IPage<ArticleManageVO>> myDrafts(
             @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
-        Long userId = 2L; // TODO: 替换为登录用户
+            @RequestParam(defaultValue = "10") Integer size, HttpSession session) {
+        Long userId = getCurrentUserId(session);
         return ResponseResult.okResult(articleService.getMyDrafts(userId, page, size));
     }
 
@@ -93,8 +105,8 @@ public class ArticleController {
     @PutMapping("/{id}")
     public ResponseResult<Void> update(
             @PathVariable Long id,
-            @RequestBody ArticlePublishDTO dto) {
-        Long userId = 2L; // TODO: 替换为登录用户
+            @RequestBody ArticlePublishDTO dto,HttpSession session) {
+        Long userId = getCurrentUserId(session);
         articleService.updateArticle(id, dto, userId);
         return ResponseResult.okResult();
     }
@@ -104,8 +116,8 @@ public class ArticleController {
      * DELETE /article/{id}
      */
     @DeleteMapping("/{id}")
-    public ResponseResult<Void> delete(@PathVariable Long id) {
-        Long userId = 2L; // TODO: 替换为登录用户
+    public ResponseResult<Void> delete(@PathVariable Long id, HttpSession session) {
+        Long userId = getCurrentUserId(session);
         articleService.deleteArticle(id, userId);
         return ResponseResult.okResult();
     }
@@ -115,8 +127,8 @@ public class ArticleController {
      * POST /article/{id}/publish
      */
     @PostMapping("/{id}/publish")
-    public ResponseResult<Void> publishDraft(@PathVariable Long id) {
-        Long userId = 2L; // TODO: 替换为登录用户
+    public ResponseResult<Void> publishDraft(@PathVariable Long id,HttpSession session) {
+        Long userId = getCurrentUserId(session);
         articleService.publishDraft(id, userId);
         return ResponseResult.okResult();
     }
