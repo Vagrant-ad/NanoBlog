@@ -338,6 +338,30 @@
     </div>
 </div>
 
+<!--草稿发布-->
+<div id="publishDraftModal" class="modal-overlay confirm-modal" onclick="handleOverlayClick(event, 'publishDraftModal')">
+    <div class="modal-box">
+        <div class="confirm-body">
+            <div class="confirm-icon" style="background:#f0fdf4; color:#16a34a;">
+                <i class="fas fa-paper-plane"></i>
+            </div>
+            <h4>确认发布此草稿？</h4>
+            <p id="publishDraftDesc">发布后文章将对所有人可见，你仍可随时编辑修改。</p>
+        </div>
+        <div class="confirm-footer">
+            <button class="btn btn-secondary" onclick="closePublishDraftModal()">
+                <i class="fas fa-times"></i> 取消
+            </button>
+            <button class="btn" id="confirmPublishDraftBtn"
+                    style="background:linear-gradient(135deg,#34d399,#16a34a);color:#fff;border:none;
+                           box-shadow:0 4px 12px rgba(22,163,74,0.25);flex:1;justify-content:center;">
+                <i class="fas fa-paper-plane"></i> 确认发布
+            </button>
+        </div>
+    </div>
+</div>
+
+
 <!---->
 <div id="deleteModal" class="modal-overlay confirm-modal" onclick="handleOverlayClick(event, 'deleteModal')">
     <div class="modal-box">
