@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>评论管理 - NanoBlog 后台</title>
+    <!-- 引入 Layui 样式 -->
+    <link rel="stylesheet" href="../../static/lib/layui/css/layui.css">
+    <!-- 引入通用样式 -->
+    <link rel="stylesheet" href="../../static/css/common/common.css">
+    <style>
+        /* 后台通用样式 */
+        .admin-container {
+            width: 95%;
+            margin: 20px auto;
+        }
+        .filter-bar {
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        /* 评论内容单元格自动换行 */
+        .layui-table-cell {
+            height: auto !important;
+            line-height: 26px !important;
+            white-space: normal !important;
+        }
+        /* 超长评论内容省略 */
+        .comment-content {
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+    </style>
+</head>
+<body>
+<div class="admin-container">
+    <!-- 筛选栏：按文章ID/标题筛选 -->
+    <div class="filter-bar layui-form">
+        <div class="layui-form-item">
+            <label class="layui-form-label">文章ID</label>
+            <div class="layui-input-inline">
+                <input type="number" name="articleId" id="articleIdInput" placeholder="请输入文章ID" class="layui-input">
+            </div>
+
+            <label class="layui-form-label">文章标题</label>
+            <div class="layui-input-inline" style="width: 300px;">
+                <input type="text" name="articleTitle" id="articleTitleInput" placeholder="请输入文章标题关键词" class="layui-input">
+            </div>
+
+            <button class="layui-btn layui-btn-normal" id="searchBtn">搜索</button>
+            <button class="layui-btn layui-btn-primary" id="resetBtn">重置</button>
+        </div>
+    </div>
+
+    <!-- 评论列表表格 -->
+    <table class="layui-hide" id="commentTable" lay-filter="commentTable"></table>
+
+    <!-- 操作列模板 -->
+    <script type="text/html" id="operationTpl">
+        <button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="delete">删除</button>
+    </script>
+</div>
+
+<!-- JS 依赖 -->
+<script src="../../static/lib/layui/layui.js"></script>
+<script>
+    layui.use(['table', 'form', 'layer'], function () {
+        var table = layui.table;
+        var form = layui.form;
+        var layer = layui.layer;
+
+        // 初始化评论表格
+        var commentTable = table.render({
+            elem: '#commentTable',
+            url: '/admin/comment/list', // 管理员评论列表接口
+            method: 'GET',
+            page: true, // 开启分页
+            limits: [10, 20, 50],
+            limit: 10,
+            request: {
+                pageName: 'pageNum', // 页码参数名
+                limitName: 'pageSize' // 每页条数参数名
+            },
+            cols: [[
+                {field: 'id', title: '评论ID', width: 90, align: 'center'},
+                {
+                    field: 'commentContent', title: '评论内容', minWidth: 300,
+                    templet: function (d) {
+                        return '<div class="comment-content">' + d.commentContent + '</div>';
+                    }
+                },
+                {field: 'authorNickname', title: '评论者', width: 120, align: 'center'},
+                {
+                    field: 'articleTitle', title: '所属文章', width: 200,
+                    templet: function (d) {
+                        return '<a href="/article/' + d.articleId + '" target="_blank">' + d.articleTitle + '</a>';
+                    }
+                },
+                {field: 'createTime', title: '评论时间', width: 180, align: 'center'},
+                {
+                    field: 'status', title: '状态', width: 100, align: 'center',
+                    templet: function (d) {
+                        var statusMap = {0: '正常', 1: '已删除'};
+                        var colorMap = {0: '#5FB878', 1: '#FF5722'};
+                        return '<span style="color: ' + colorMap[d.status] + ';">' + statusMap[d.status] + '</span>';
+                    }
+                },
+                {title: '操作', width: 100, align: 'center', templet: '#operationTpl'}
+            ]],
+            done: function (res, curr, count) {
+                // 表格渲染完成回调（可自定义处理）
+            }
+        });
+
+        // 搜索按钮点击事件
+        $('#searchBtn').click(function () {
+            commentTable.reload({
+                where: {
+                    articleId: $('#articleIdInput').val(),
+                    articleTitle: $('#articleTitleInput').val()
+                },
+                page: {
+                    curr: 1 // 重置页码到第一页
+                }
+            });
+        });
+
+        // 重置按钮点击事件
+        $('#resetBtn').click(function () {
+            $('#articleIdInput').val('');
+            $('#articleTitleInput').val('');
+            form.render('input'); // 重新渲染输入框
+            commentTable.reload({
+                where: {},
+                page: {curr: 1}
+            });
+        });
+
+        // 监听表格行操作（删除评论）
+        table.on('tool(commentTable)', function (obj) {
+            var data = obj.data; // 当前行评论数据
+            var layEvent = obj.event; // 操作类型（delete）
+
+            if (layEvent === 'delete') {
+                // 删除评论确认弹窗
+                layer.confirm('确定删除该评论？删除后不可恢复！', {
+                    icon: 5,
+                    title: '警告'
+                }, function (index) {
+                    // 调用删除接口
+                    $.ajax({
+                        url: '/admin/comment/' + data.id,
+                        method: 'DELETE',
+                        success: function (res) {
+                            if (res.code === 0) {
+                                layer.msg('删除成功', {icon: 1});
+                                obj.del(); // 移除当前行
+                            } else {
+                                layer.msg('删除失败：' + res.msg, {icon: 2});
+                            }
+                        },
+                        error: function () {
+                            layer.msg('网络异常，请重试', {icon: 2});
+                        }
+                    });
+                    layer.close(index); // 关闭确认弹窗
+                });
+            }
+        });
+    });
+</script>
+</body>
+</html>

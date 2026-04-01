@@ -1,10 +1,183 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章管理 - NanoBlog 后台</title>
+    <!-- 引入 Layui 样式 -->
+    <link rel="stylesheet" href="../../static/lib/layui/css/layui.css">
+    <!-- 引入通用样式 -->
+    <link rel="stylesheet" href="../../static/css/common/common.css">
+    <style>
+        /* 后台专属样式 */
+        .admin-container {
+            width: 95%;
+            margin: 20px auto;
+        }
+        .filter-bar {
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .layui-table-cell {
+            height: auto !important;
+            line-height: 26px !important;
+        }
+    </style>
 </head>
 <body>
+<div class="admin-container">
+    <!-- 筛选栏 -->
+    <div class="filter-bar layui-form">
+        <div class="layui-form-item">
+            <label class="layui-form-label">文章状态</label>
+            <div class="layui-input-inline">
+                <select name="status" id="statusSelect" lay-filter="statusFilter">
+                    <option value="">全部</option>
+                    <option value="0">草稿</option>
+                    <option value="1">已发布</option>
+                    <option value="2">已归档</option>
+                </select>
+            </div>
 
+            <label class="layui-form-label">文章标题</label>
+            <div class="layui-input-inline" style="width: 300px;">
+                <input type="text" name="title" id="titleInput" placeholder="请输入标题关键词" class="layui-input">
+            </div>
+
+            <button class="layui-btn layui-btn-normal" id="searchBtn">搜索</button>
+            <button class="layui-btn layui-btn-primary" id="resetBtn">重置</button>
+        </div>
+    </div>
+
+    <!-- 文章列表表格 -->
+    <table class="layui-hide" id="postTable" lay-filter="postTable"></table>
+
+    <!-- 操作列模板 -->
+    <script type="text/html" id="operationTpl">
+        {{#  if(d.status === 1){ }}
+        <button class="layui-btn layui-btn-sm layui-btn-warning" lay-event="archive">下架(归档)</button>
+        {{#  } }}
+        <button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="delete">删除</button>
+    </script>
+</div>
+
+<!-- JS 依赖 -->
+<script src="../../static/lib/layui/layui.js"></script>
+<script>
+    layui.use(['table', 'form', 'layer'], function () {
+        var table = layui.table;
+        var form = layui.form;
+        var layer = layui.layer;
+
+        // 初始化表格
+        var postTable = table.render({
+            elem: '#postTable',
+            url: '/admin/article/list', // 管理员文章列表接口
+            method: 'GET',
+            page: true, // 开启分页
+            limits: [10, 20, 50],
+            limit: 10,
+            request: {
+                pageName: 'pageNum', // 页码参数名
+                limitName: 'pageSize' // 每页条数参数名
+            },
+            cols: [[
+                {field: 'id', title: 'ID', width: 80, align: 'center'},
+                {field: 'title', title: '文章标题', minWidth: 200},
+                {field: 'authorName', title: '作者', width: 120, align: 'center'},
+                {
+                    field: 'status', title: '状态', width: 100, align: 'center',
+                    templet: function (d) {
+                        var statusMap = {0: '草稿', 1: '已发布', 2: '已归档'};
+                        var colorMap = {0: '#999', 1: '#5FB878', 2: '#FFB800'};
+                        return '<span style="color: ' + colorMap[d.status] + ';">' + statusMap[d.status] + '</span>';
+                    }
+                },
+                {field: 'viewCount', title: '阅读量', width: 100, align: 'center'},
+                {field: 'publishTime', title: '发布时间', width: 180, align: 'center'},
+                {title: '操作', width: 200, align: 'center', templet: '#operationTpl'}
+            ]],
+            done: function (res, curr, count) {
+                // 表格渲染完成回调（可自定义处理）
+            }
+        });
+
+        // 搜索按钮点击事件
+        $('#searchBtn').click(function () {
+            postTable.reload({
+                where: {
+                    status: $('#statusSelect').val(),
+                    title: $('#titleInput').val()
+                },
+                page: {
+                    curr: 1 // 重置页码到第一页
+                }
+            });
+        });
+
+        // 重置按钮点击事件
+        $('#resetBtn').click(function () {
+            $('#statusSelect').val('');
+            $('#titleInput').val('');
+            form.render('select'); // 重新渲染下拉框
+            postTable.reload({
+                where: {},
+                page: {curr: 1}
+            });
+        });
+
+        // 监听表格行操作
+        table.on('tool(postTable)', function (obj) {
+            var data = obj.data; // 当前行数据
+            var layEvent = obj.event; // 操作类型（archive/delete）
+
+            if (layEvent === 'archive') {
+                // 下架（归档）操作
+                layer.confirm('确定将该文章下架并归档？', {icon: 3, title: '提示'}, function (index) {
+                    $.ajax({
+                        url: '/admin/article/' + data.id + '/status',
+                        method: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify({status: 2}), // 2=归档状态
+                        success: function (res) {
+                            if (res.code === 0) {
+                                layer.msg('归档成功', {icon: 1});
+                                obj.update({status: 2}); // 刷新当前行状态
+                            } else {
+                                layer.msg('归档失败：' + res.msg, {icon: 2});
+                            }
+                        },
+                        error: function () {
+                            layer.msg('网络异常，请重试', {icon: 2});
+                        }
+                    });
+                    layer.close(index);
+                });
+            } else if (layEvent === 'delete') {
+                // 删除操作（软删除）
+                layer.confirm('确定删除该文章？删除后不可恢复！', {icon: 5, title: '警告'}, function (index) {
+                    $.ajax({
+                        url: '/admin/article/' + data.id,
+                        method: 'DELETE',
+                        success: function (res) {
+                            if (res.code === 0) {
+                                layer.msg('删除成功', {icon: 1});
+                                obj.del(); // 删除当前行
+                            } else {
+                                layer.msg('删除失败：' + res.msg, {icon: 2});
+                            }
+                        },
+                        error: function () {
+                            layer.msg('网络异常，请重试', {icon: 2});
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+    });
+</script>
 </body>
 </html>

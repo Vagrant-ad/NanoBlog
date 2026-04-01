@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Language" content="zh-CN">
+    <title>分类标签管理 - NanoBlog 后台</title>
+    <!-- 引入Bootstrap样式（CDN） -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入jQuery（CDN） -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <!-- 引入Bootstrap JS（CDN） -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        /* 简单样式优化 */
+        .container {
+            margin-top: 20px;
+        }
+        .tab-content {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 0 0 0.375rem 0.375rem;
+        }
+        .modal-footer {
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>分类标签管理</h2>
+    <!-- Tab切换导航 -->
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="category-tab" data-bs-toggle="tab" data-bs-target="#category-panel" type="button" role="tab" aria-controls="category-panel" aria-selected="true">分类管理</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tag-tab" data-bs-toggle="tab" data-bs-target="#tag-panel" type="button" role="tab" aria-controls="tag-panel" aria-selected="false">标签管理</button>
+        </li>
+    </ul>
+
+    <!-- Tab内容面板 -->
+    <div class="tab-content" id="myTabContent">
+        <!-- 分类管理面板 -->
+        <div class="tab-pane fade show active" id="category-panel" role="tabpanel" aria-labelledby="category-tab">
+            <!-- 新增分类按钮 -->
+            <button type="button" class="btn btn-primary mb-3" onclick="openCategoryModal()">新增分类</button>
+            <!-- 分类列表表格 -->
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>分类名称</th>
+                    <th>排序值</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="category-list">
+                <!-- 分类列表由JS动态渲染 -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 标签管理面板 -->
+        <div class="tab-pane fade" id="tag-panel" role="tabpanel" aria-labelledby="tag-tab">
+            <!-- 新增标签按钮 -->
+            <button type="button" class="btn btn-primary mb-3" onclick="openTagModal()">新增标签</button>
+            <!-- 标签列表表格 -->
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>标签名称</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="tag-list">
+                <!-- 标签列表由JS动态渲染 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 分类新增/编辑模态框 -->
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryModalLabel">新增分类</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <input type="hidden" id="categoryId" name="categoryId">
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">分类名称</label>
+                        <input type="text" class="form-control" id="categoryName" name="categoryName" required placeholder="请输入分类名称">
+                    </div>
+                    <div class="mb-3">
+                        <label for="categorySort" class="form-label">排序值</label>
+                        <input type="number" class="form-control" id="categorySort" name="categorySort" required placeholder="请输入排序值（数字越大越靠前）">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveCategory()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 标签新增模态框 -->
+<div class="modal fade" id="tagModal" tabindex="-1" aria-labelledby="tagModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tagModalLabel">新增标签</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="tagForm">
+                    <div class="mb-3">
+                        <label for="tagName" class="form-label">标签名称</label>
+                        <input type="text" class="form-control" id="tagName" name="tagName" required placeholder="请输入标签名称">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveTag()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 页面加载完成后初始化数据
+    $(function() {
+        loadCategoryList(); // 加载分类列表
+        loadTagList(); // 加载标签列表
+    });
+
+    // ---------------------- 分类管理相关方法 ----------------------
+    // 加载分类列表
+    function loadCategoryList() {
+        $.ajax({
+            url: "/category/list",
+            type: "GET",
+            dataType: "json",
+            success: function(res) {
+                // 假设接口返回格式：{code:200, data:[{id:1, name:"分类1", sort:10}, ...]}
+                if (res.code === 200) {
+                    let html = "";
+                    res.data.forEach(category => {
+                        html += `<tr>
+                                <td>${category.id}</td>
+                                <td>${category.name}</td>
+                                <td>${category.sort}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning me-2" onclick="editCategory(${category.id}, '${category.name}', ${category.sort})">编辑</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteCategory(${category.id})">删除</button>
+                                </td>
+                            </tr>`;
+                    });
+                    $("#category-list").html(html);
+                } else {
+                    alert("加载分类列表失败：" + res.msg);
+                }
+            },
+            error: function() {
+                alert("加载分类列表失败，请检查接口连接");
+            }
+        });
+    }
+
+    // 打开分类新增/编辑模态框
+    function openCategoryModal(categoryId = null) {
+        const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+        const modalLabel = document.getElementById('categoryModalLabel');
+        // 重置表单
+        $("#categoryForm")[0].reset();
+        $("#categoryId").val("");
+
+        if (categoryId) {
+            // 编辑模式
+            modalLabel.innerText = "编辑分类";
+        } else {
+            // 新增模式
+            modalLabel.innerText = "新增分类";
+        }
+        modal.show();
+    }
+
+    // 编辑分类（回显数据）
+    function editCategory(id, name, sort) {
+        openCategoryModal(id);
+        $("#categoryId").val(id);
+        $("#categoryName").val(name);
+        $("#categorySort").val(sort);
+    }
+
+    // 保存分类（新增/编辑）
+    function saveCategory() {
+        const categoryId = $("#categoryId").val();
+        const categoryName = $("#categoryName").val().trim();
+        const categorySort = $("#categorySort").val().trim();
+
+        if (!categoryName || !categorySort) {
+            alert("分类名称和排序值不能为空！");
+            return;
+        }
+
+        const data = {
+            name: categoryName,
+            sort: categorySort
+        };
+
+        let url = "/admin/category/add";
+        let type = "POST";
+
+        // 编辑模式
+        if (categoryId) {
+            url = `/admin/category/${categoryId}`;
+            type = "PUT";
+        }
+
+        $.ajax({
+            url: url,
+            type: type,
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function(res) {
+                if (res.code === 200) {
+                    alert(categoryId ? "编辑分类成功" : "新增分类成功");
+                    // 关闭模态框并刷新列表
+                    bootstrap.Modal.getInstance(document.getElementById('categoryModal')).hide();
+                    loadCategoryList();
+                } else {
+                    alert("操作失败：" + res.msg);
+                }
+            },
+            error: function() {
+                alert("保存分类失败，请检查接口连接");
+            }
+        });
+    }
+
+    // 删除分类（含文章关联校验）
+    function deleteCategory(id) {
+        if (!confirm("确认要删除该分类吗？")) {
+            return;
+        }
+
+        // 第一步：校验该分类下是否有文章（需补充分类文章数查询接口，此处假设接口为 /admin/category/{id}/articleCount）
+        $.ajax({
+            url: `/admin/category/${id}/articleCount`,
+            type: "GET",
+            dataType: "json",
+            success: function(countRes) {
+                // 假设接口返回 {code:200, data: 5}（5为文章数）
+                if (countRes.code === 200 && countRes.data > 0) {
+                    alert("请先移除该分类下的所有文章");
+                    return;
+                }
+
+                // 第二步：校验通过，执行删除
+                $.ajax({
+                    url: `/admin/category/${id}`,
+                    type: "DELETE",
+                    success: function(deleteRes) {
+                        if (deleteRes.code === 200) {
+                            alert("删除分类成功");
+                            loadCategoryList();
+                        } else {
+                            alert("删除分类失败：" + deleteRes.msg);
+                        }
+                    },
+                    error: function() {
+                        alert("删除分类失败，请检查接口连接");
+                    }
+                });
+            },
+            error: function() {
+                alert("校验分类文章数失败，请检查接口连接");
+            }
+        });
+    }
+
+    // ---------------------- 标签管理相关方法 ----------------------
+    // 加载标签列表
+    function loadTagList() {
+        $.ajax({
+            url: "/tag/list",
+            type: "GET",
+            dataType: "json",
+            success: function(res) {
+                // 假设接口返回格式：{code:200, data:[{id:1, name:"标签1"}, ...]}
+                if (res.code === 200) {
+                    let html = "";
+                    res.data.forEach(tag => {
+                        html += `<tr>
+                                <td>${tag.id}</td>
+                                <td>${tag.name}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteTag(${tag.id})">删除</button>
+                                </td>
+                            </tr>`;
+                    });
+                    $("#tag-list").html(html);
+                } else {
+                    alert("加载标签列表失败：" + res.msg);
+                }
+            },
+            error: function() {
+                alert("加载标签列表失败，请检查接口连接");
+            }
+        });
+    }
+
+    // 打开标签新增模态框
+    function openTagModal() {
+        const modal = new bootstrap.Modal(document.getElementById('tagModal'));
+        // 重置表单
+        $("#tagForm")[0].reset();
+        modal.show();
+    }
+
+    // 保存标签（新增）
+    function saveTag() {
+        const tagName = $("#tagName").val().trim();
+        if (!tagName) {
+            alert("标签名称不能为空！");
+            return;
+        }
+
+        $.ajax({
+            url: "/admin/tag/add",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ name: tagName }),
+            success: function(res) {
+                if (res.code === 200) {
+                    alert("新增标签成功");
+                    // 关闭模态框并刷新列表
+                    bootstrap.Modal.getInstance(document.getElementById('tagModal')).hide();
+                    loadTagList();
+                } else {
+                    alert("新增标签失败：" + res.msg);
+                }
+            },
+            error: function() {
+                alert("新增标签失败，请检查接口连接");
+            }
+        });
+    }
+
+    // 删除标签
+    function deleteTag(id) {
+        if (!confirm("确认要删除该标签吗？")) {
+            return;
+        }
+
+        $.ajax({
+            url: `/admin/tag/${id}`,
+            type: "DELETE",
+            success: function(res) {
+                if (res.code === 200) {
+                    alert("删除标签成功");
+                    loadTagList();
+                } else {
+                    alert("删除标签失败：" + res.msg);
+                }
+            },
+            error: function() {
+                alert("删除标签失败，请检查接口连接");
+            }
+        });
+    }
+</script>
+</body>
+</html>
