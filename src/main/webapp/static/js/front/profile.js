@@ -369,20 +369,12 @@ function publishDraftArticle(id) {
 let _editingArticleId = null;
 
 function openEditArticle(id) {
-    _editingArticleId = id;
-    // 先从详情接口拉取数据回填
-    const loadingToast = showToast('加载文章数据...', 'info');
-    fetch(`/article/${id}`)
-        .then(res => res.json())
-        .then(res => {
-            if (res.code === 200 && res.data) {
-                fillEditForm(res.data);
-                document.getElementById('editArticleModal').classList.add('active');
-            } else {
-                showToast(res.msg || '文章数据加载失败', 'error');
-            }
-        })
-        .catch(() => showToast('网络异常', 'error'));
+    if (!id) {
+        showToast('文章ID缺失', 'error');
+        return;
+    }
+    // 携带文章id跳转到文章界面
+    window.location.href = `/pages/front/editor.html?id=${id}`;
 }
 
 function fillEditForm(data) {
@@ -421,6 +413,8 @@ function closeEditArticle() {
     document.getElementById('editArticleModal').classList.remove('active');
     _editingArticleId = null;
 }
+
+
 
 function submitEditArticle() {
     if (!_editingArticleId) return;
