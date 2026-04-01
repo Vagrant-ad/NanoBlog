@@ -24,9 +24,6 @@ function handleOverlayClick(e, modalId) {
         if (modalId === 'pwdModal') closeChangePassword();
         if (modalId === 'deleteModal') closeDeleteConfirm();
         if (modalId === 'editArticleModal') closeEditArticle();
-        // --- 追加下面这两行 ---
-        if (modalId === 'deleteArticleModal') closeDeleteArticle();
-        if (modalId === 'publishDraftModal') closePublishDraft();
     }
 }
 
