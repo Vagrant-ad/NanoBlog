@@ -76,7 +76,7 @@ a {
     align-items: center;
     gap: 12px;
     padding-left: 20px;
-    border-left: 1px solid #e2e8f0; /* 增加一道极细的分隔线，区分功能按钮与账号按钮 */
+    border-left: 1px solid #e2e8f0; /* 增加一道分隔线，区分功能按钮与账号按钮 */
 }
 /* 导航栏按钮基础样式 */
 .nav-button {
@@ -205,6 +205,225 @@ a {
     box-shadow: 0 6px 16px rgba(61, 115, 152, 0.3);
 }
 
+/* 导航栏右侧 */
+/* 用户头像/登录注册 容器 */
+.nav-user-dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* 头像 */
+.nav-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 2px #e2e8f0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: block;
+}
+
+.nav-user-dropdown:hover .nav-avatar {
+    box-shadow: 0 0 0 2px var(--brand-mint), 0 4px 12px rgba(167, 243, 208, 0.5);
+    transform: scale(1.05);
+}
+
+/* 下拉菜单：使用 opacity 和 transform 实现平滑浮出动画 */
+.nav-user-menu {
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(10px);
+    position: absolute;
+    top: calc(100% + 15px);
+    right: 0;
+    min-width: 240px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15); /*增加阴影*/
+    padding: 8px;
+    z-index: 2000;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-user-dropdown:hover .nav-user-menu {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.nav-user-menu::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: 0;
+    width: 100%;
+    height: 15px;
+}
+
+/* 顶部用户信息区 */
+.nav-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+
+.nav-user-info img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
+}
+
+.nav-user-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nav-user-username {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+
+/* 分割线 */
+.nav-menu-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 6px 4px;
+}
+
+/* 菜单项 */
+.nav-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+}
+
+.nav-menu-item:hover {
+    background: var(--brand-mint-light);
+    color: var(--brand-blue);
+    transform: translateX(2px);
+}
+/*图标样式优化*/
+.nav-menu-item i.layui-icon {
+    font-size: 1.1rem;
+    color: #64748b;
+    width: 20px;
+    text-align: center;
+    transition: color 0.2s;
+}
+
+.nav-menu-item:hover i.layui-icon {
+    color: var(--brand-blue);
+}
+
+/* 退出登录图标特殊处理 */
+.nav-menu-logout i.layui-icon {
+    color: #f87171;
+}
+
+.nav-menu-logout:hover i.layui-icon {
+    color: #dc2626;
+}
+
+/* 调整文字与图标的对齐 */
+.nav-menu-item span, .nav-menu-item {
+    display: flex;
+    align-items: center;
+}
+/* 退出登录按钮特殊颜色 */
+.nav-menu-logout {
+    color: #ef4444;
+    margin-top: 4px;
+}
+
+.nav-menu-logout:hover {
+    background: #fef2f2;
+    color: #dc2626;
+    transform: translateX(2px);
+}
+
+.auth-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 20px;
+    border-left: 1px solid #e2e8f0;
+}
+
+/* 基础按钮样式 */
+.nav-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 22px;
+    border-radius: var(--radius-pill);
+    background-color: var(--brand-blue);
+    color: #ffffff !important;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.nav-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(61, 115, 152, 0.3);
+    opacity: 0.95;
+}
+
+/*高亮状态*/
+.nav-button.active {
+    background-color: var(--brand-mint) !important;
+    color: var(--brand-blue) !important;
+    box-shadow: 0 5px 15px rgba(167, 243, 208, 0.4);
+}
+
+.nav-button.active:hover {
+    background-color: #89e2c2 !important;
+    box-shadow: 0 8px 20px rgba(167, 243, 208, 0.5);
+}
+
+/* 登录链接 */
+.nav-link {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.nav-link:hover {
+    color: var(--brand-blue);
+}
 /* 辅助类：SEO 文字隐藏 */
 .sr-only {
     position: absolute;
