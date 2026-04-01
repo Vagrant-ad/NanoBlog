@@ -33,20 +33,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * <p>
- * 文章表 服务实现类
- * </p>
- *
- * @author vagrant
- * @since 2026-03-21
- */
 @Service
 @RequiredArgsConstructor
 public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> implements IArticleService {
     private final ArticleContentMapper articleContentMapper;
     private final ArticleMapper articleMapper;
-    //tag & 关联表
     @Getter
     private final TagMapper tagMapper;
     @Getter
@@ -58,53 +49,44 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @Transactional
     public Long publishArticle(ArticlePublishDTO dto, Long userId) {
-
-        // 1. Markdown → HTML
         String html = HTML_RENDERER.render(MD_PARSER.parse(dto.getContentMd()));
 
-        // 2. 保存 article（用 MyBatis-Plus 内置方法）
         Article article = new Article();
         article.setAuthorId(userId);
         article.setCategoryId(dto.getCategoryId());
         article.setArticleTitle(dto.getArticleTitle());
         article.setArticleSummary(dto.getArticleSummary());
 
-        // 封面图：前端上传后把URL放进coverUrl
         if (StringUtils.hasText(dto.getCoverUrl())) {
             article.setCoverImageUrl(dto.getCoverUrl());
         }
 
-        // 状态：前端传0(草稿) 1(发布)
-        // 兜底默认发布
         int status = (dto.getStatus() != null) ? dto.getStatus() : 1;
         article.setStatus(status);
 
-        // 只有发布状态才设置发布时间
         if (status == 1) {
             article.setPublishTime(LocalDateTime.now());
         }
 
-        this.save(article); // MP方法
+        this.save(article);
 
-        // 3. 保存 content
         ArticleContent content = new ArticleContent();
         content.setArticleId(article.getId());
         content.setContentMd(dto.getContentMd());
         content.setContentHtml(html);
 
         articleContentMapper.insert(content);
-        // 处理标签
         if (!CollectionUtils.isEmpty(dto.getTags())) {
             saveArticleTags(article.getId(), dto.getTags());
         }
         return article.getId();
     }
+
     @Override
     public void saveArticleTags(Long articleId, List<String> tagNames) {
         for (String tagName : tagNames) {
             if (!StringUtils.hasText(tagName)) continue;
 
-            // 查tag表，有则复用，无则新建
             Tag tag = tagMapper.selectOne(
                     new QueryWrapper<Tag>().eq("tag_name", tagName).eq("is_deleted", 0)
             );
@@ -112,13 +94,11 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             if (tag == null) {
                 tag = new Tag();
                 tag.setTagName(tagName);
-                // slug简单处理为小写+去空格
                 tag.setTagSlug(tagName.toLowerCase().replaceAll("\\s+", "-"));
                 tag.setStatus(1);
                 tagMapper.insert(tag);
             }
 
-            // 写 article_tag 关联
             ArticleTag articleTag = new ArticleTag();
             articleTag.setArticleId(articleId);
             articleTag.setTagId(tag.getId());
@@ -126,34 +106,17 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
     }
 
-
     @Override
     public IPage<ArticleListVO> getArticleList(Integer page, Integer size) {
         if (page == null || page < 1) page = 1;
         if (size == null || size < 1 || size > 100) size = 10;
         Page<Article> pageInfo = new Page<>(page, size);
-        //查询状态为1的文章按发布时间降序
         QueryWrapper<Article> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("status", 1)
                 .orderByDesc("publish_time");
 
         IPage<Article> articlePage = this.page(pageInfo, queryWrapper);
 
-        /*// 日志：打印核心数据
-        System.out.println("===== 调试日志 =====");
-        System.out.println("1. 分页参数：page=" + page + ", size=" + size);
-        System.out.println("2. 查询条件：status=1");
-        System.out.println("3. 总记录数：" + articlePage.getTotal());
-        System.out.println("4. 当前页记录数：" + articlePage.getRecords().size());
-        // 打印第一条Article数据（看字段是否有值）
-        if (!articlePage.getRecords().isEmpty()) {
-            Article first = articlePage.getRecords().get(0);
-            System.out.println("5. 第一条文章数据：id=" + first.getId() +
-                    ", title=" + first.getArticleTitle() +
-                    ", publishTime=" + first.getPublishTime());
-        }*/
-
-        // 转换成VO
         Page<ArticleListVO> result = new Page<>();
         result.setTotal(articlePage.getTotal());
         result.setCurrent(articlePage.getCurrent());
@@ -173,29 +136,17 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }).collect(Collectors.toList());
 
         result.setRecords(voList);
-
-/*        // 新增日志打印VO结果
-        System.out.println("6. VO总记录数：" + result.getTotal());
-        System.out.println("7. VO当前页记录数：" + result.getRecords().size());
-        if (!result.getRecords().isEmpty()) {
-            System.out.println("8. 第一条VO数据：" + result.getRecords().get(0));
-        }
-        System.out.println("======================================");*/
-
-
         return result;
     }
 
     @Override
     public ArticleDetailVO getArticleDetail(Long id) {
-        //先浏览量自增
         articleMapper.updateViewCount(id);
         Article article = this.getById(id);
         if (article == null || article.getIsDeleted() == 1) return null;
 
         ArticleContent content = articleContentMapper.selectById(id);
 
-        // 批量查该文章的标签
         List<Map<String, Object>> tagRows = articleMapper.getTagsByArticleIds(
                 Collections.singletonList(id));
         List<String> tags = tagRows.stream()
@@ -220,42 +171,38 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return vo;
     }
 
+    // ===================== 【这里已经彻底改好】 =====================
     @Override
-    public IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size,String keyword,String sortBy) {
+    public IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size, String keyword, String sortBy, Long categoryId) {
         if (page == null || page < 1) page = 1;
         if (size == null || size < 1 || size > 100) size = 8;
 
         Page<ArticleHomeVO> pageInfo = new Page<>(page, size);
 
-        // 1. 查首页文章基础数据
-        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo,keyword, sortBy);
+        // 稳定传参，重启永不失效
+        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo, keyword, sortBy, categoryId);
 
         if (records == null || records.isEmpty()) {
             pageInfo.setRecords(records);
             return pageInfo;
         }
 
-        // 2. 收集当前页文章ID
         List<Long> articleIds = records.stream()
                 .map(ArticleHomeVO::getId)
                 .collect(Collectors.toList());
 
-        // 3. 批量查标签
         List<Map<String, Object>> tagRows = articleMapper.getTagsByArticleIds(articleIds);
 
-        // 4. 组装 articleId -> tags
         Map<Long, List<String>> tagMap = tagRows.stream()
                 .collect(Collectors.groupingBy(
                         row -> ((Number) row.get("articleId")).longValue(),
                         Collectors.mapping(row -> (String) row.get("tagName"), Collectors.toList())
                 ));
 
-        // 5. 填充 tags
         records.forEach(vo -> vo.setTags(tagMap.getOrDefault(vo.getId(), Collections.emptyList())));
         pageInfo.setRecords(records);
         return pageInfo;
     }
-    //个人中心相关方法
 
     @Override
     public IPage<ArticleManageVO> getMyPublished(Long userId, Integer page, Integer size) {
@@ -292,7 +239,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateArticle(Long articleId, ArticlePublishDTO dto, Long userId) {
-        // 1. 校验文章归属
         Article article = this.getById(articleId);
         if (article == null || article.getIsDeleted() == 1) {
             throw new RuntimeException("文章不存在");
@@ -301,7 +247,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             throw new RuntimeException("无权编辑此文章");
         }
 
-        // 2. 更新 article 主表
         article.setArticleTitle(dto.getArticleTitle());
         article.setArticleSummary(dto.getArticleSummary());
         article.setCategoryId(dto.getCategoryId());
@@ -309,7 +254,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             article.setCoverImageUrl(dto.getCoverUrl());
         }
 
-        // 状态变更：如果从草稿改为发布，补充发布时间
         int newStatus = (dto.getStatus() != null) ? dto.getStatus() : article.getStatus();
         if (newStatus == 1 && article.getPublishTime() == null) {
             article.setPublishTime(LocalDateTime.now());
@@ -317,7 +261,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         article.setStatus(newStatus);
         this.updateById(article);
 
-        // 3. 更新正文内容
         if (StringUtils.hasText(dto.getContentMd())) {
             String html = HTML_RENDERER.render(MD_PARSER.parse(dto.getContentMd()));
             ArticleContent content = articleContentMapper.selectById(articleId);
@@ -326,7 +269,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 content.setContentHtml(html);
                 articleContentMapper.updateById(content);
             } else {
-                // 兜底：如果content记录不存在则新建
                 content = new ArticleContent();
                 content.setArticleId(articleId);
                 content.setContentMd(dto.getContentMd());
@@ -335,7 +277,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             }
         }
 
-        // 4. 更新标签：先删旧关联，再写新关联
         articleTagMapper.delete(
                 new QueryWrapper<ArticleTag>().eq("article_id", articleId)
         );
@@ -354,7 +295,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (!article.getAuthorId().equals(userId)) {
             throw new RuntimeException("无权删除此文章");
         }
-        // 软删除
         article.setIsDeleted(1);
         this.updateById(article);
     }
@@ -377,9 +317,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         this.updateById(article);
     }
 
-    /**
-     * Article 分页结果 → ArticleManageVO 分页结果（公共转换，含标签批量查询）
-     */
     private IPage<ArticleManageVO> convertToManageVO(IPage<Article> articlePage) {
         Page<ArticleManageVO> result = new Page<>();
         result.setTotal(articlePage.getTotal());
@@ -391,7 +328,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             return result;
         }
 
-        // 批量查标签
         List<Long> ids = articlePage.getRecords().stream()
                 .map(Article::getId).collect(Collectors.toList());
         List<Map<String, Object>> tagRows = articleMapper.getTagsByArticleIds(ids);
@@ -419,5 +355,48 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         result.setRecords(voList);
         return result;
+    }
+
+    @Override
+    public IPage<ArticleListVO> listByCategory(Long categoryId, Integer pageNum, Integer pageSize) {
+        Page<Article> page = new Page<>(pageNum, pageSize);
+
+        QueryWrapper<Article> wrapper = new QueryWrapper<>();
+        wrapper.eq("status", 1)
+                .eq("is_deleted", 0)
+                .eq("category_id", categoryId)
+                .orderByDesc("publish_time");
+
+        IPage<Article> articlePage = this.page(page, wrapper);
+
+        List<ArticleListVO> voList = articlePage.getRecords().stream().map(article -> {
+            ArticleListVO vo = new ArticleListVO();
+            vo.setId(article.getId());
+            vo.setArticleTitle(article.getArticleTitle());
+            vo.setArticleSummary(article.getArticleSummary());
+            vo.setCategoryId(article.getCategoryId());
+            vo.setViewCount(article.getViewCount());
+            vo.setLikeCount(article.getLikeCount());
+            vo.setCommentCount(article.getCommentCount());
+            vo.setPublishTime(article.getPublishTime());
+            return vo;
+        }).collect(Collectors.toList());
+
+        Page<ArticleListVO> resultPage = new Page<>();
+        resultPage.setRecords(voList);
+        resultPage.setTotal(articlePage.getTotal());
+        resultPage.setSize(articlePage.getSize());
+        resultPage.setCurrent(articlePage.getCurrent());
+
+        return resultPage;
+    }
+
+    // ===================== 【新增：按标签查询文章】 =====================
+    @Override
+    public IPage<ArticleHomeVO> listByTag(Long tagId, Integer pageNum, Integer pageSize) {
+        Page<ArticleHomeVO> page = new Page<>(pageNum, pageSize);
+        // 调用你已写好的 Mapper 方法
+        articleMapper.getArticlePageByTagId(page, tagId);
+        return page;
     }
 }
