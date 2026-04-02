@@ -72,7 +72,7 @@ public class ArticleController {
         return ResponseResult.okResult(articleService.getHomeArticleList(page, size,keyword,sortBy));
     }
 
-    // ===================== 个人中心相关接口 =====================
+    // 个人中心相关接口
 
     /**
      * 我的已发布文章列表
