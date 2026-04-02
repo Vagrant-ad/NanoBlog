@@ -1,5 +1,3 @@
-
-//const layer = window.layer;
 // 粒子背景
 (function() {
     const canvas = document.getElementById('particleCanvas');
@@ -76,10 +74,35 @@ document.getElementById("loginBtn").onclick = function() {
             var layer = window.layer;
             var res = JSON.parse(xhr.responseText);
             if (res.code === 200) {
-                layer.msg("登录成功！", {icon: 1, time: 1000}, function() {
-                    sessionStorage.setItem("loginUsername", username);
-                    window.location.href = "/pages/front/index.html";
-                });
+                // 登录成功，记录用户名
+                sessionStorage.setItem("loginUsername", username);
+
+                // 登录成功后请求 /user/getProfile 获取 roleId，再决定跳转目标
+                var profileXhr = new XMLHttpRequest();
+                profileXhr.onreadystatechange = function() {
+                    if (profileXhr.readyState === 4 && profileXhr.status === 200) {
+                        var profileRes = JSON.parse(profileXhr.responseText);
+
+                        var redirectUrl = '/pages/front/index.html';
+
+                        if (profileRes.code === 200 && profileRes.data) {
+
+                            var roleId = profileRes.data.roleId;
+
+                            if (roleId == 2) {
+                                redirectUrl = '/pages/admin/dashboard.html';
+                            }
+                        }
+
+
+                        layer.msg("登录成功！", {icon: 1, time: 1000}, function() {
+                            window.location.href = redirectUrl;
+                        });
+                    }
+                };
+                profileXhr.open("GET", "/user/getProfile", true);
+                profileXhr.send();
+
             } else {
                 layer.msg(res.msg, {icon: 2});
             }

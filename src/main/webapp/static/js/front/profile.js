@@ -264,7 +264,7 @@ function renderArticleItems(container, records, isDraft) {
 
         var thumbInner = a.coverImageUrl
             ? '<img src="' + a.coverImageUrl + '" alt="' + title + '" '
-            + 'onerror="this.parentElement.innerHTML=\'<i class=\\\"fas fa-file-alt\\\"></i>\'">'
+            + 'onerror="this.parentElement.innerHTML=\'<i class=\"fas fa-file-alt\\\"></i>'
             : '<i class="fas fa-file-alt"></i>';
 
         var timeLabel = isDraft ? '创建' : '发布';
