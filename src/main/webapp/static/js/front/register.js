@@ -1,4 +1,3 @@
-//const layer = window.layer;
 // 粒子背景
 (function() {
     const canvas = document.getElementById('particleCanvas');
