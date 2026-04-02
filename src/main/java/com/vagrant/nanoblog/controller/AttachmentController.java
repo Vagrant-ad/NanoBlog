@@ -1,8 +1,10 @@
 package com.vagrant.nanoblog.controller;
 
 
+
 import com.vagrant.nanoblog.common.ResponseResult;
 import com.vagrant.nanoblog.pojo.Attachment;
+import com.vagrant.nanoblog.pojo.User;
 import com.vagrant.nanoblog.service.IAttachmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -34,7 +37,14 @@ import java.util.UUID;
 @RequestMapping("/attachment")
 public class AttachmentController {
     private final IAttachmentService attachmentService;
-
+    //获取登录用户id
+    private Long getCurrentUserId(HttpSession session) {
+        User loginUser = (User) session.getAttribute("LOGIN_USER");
+        if (loginUser == null) {
+            throw new RuntimeException("请先登录");
+        }
+        return loginUser.getId();
+    }
     /**
      * 图片上传接口
      * POST /upload/image
@@ -50,7 +60,7 @@ public class AttachmentController {
     @PostMapping("/upload/image")
     public ResponseResult<String> uploadImage(
             @RequestParam("file") MultipartFile file,
-            HttpServletRequest request) {
+            HttpServletRequest request, HttpSession session) {
 
         // 1. 基本校验
         if (file == null || file.isEmpty()) {
@@ -93,7 +103,7 @@ public class AttachmentController {
 
         // 6. 写 attachment 表记录（userId 暂时硬编码，后续替换）
         Attachment attachment = new Attachment();
-        attachment.setUploaderId(2L); // TODO: 替换为登录用户
+        attachment.setUploaderId(getCurrentUserId(session)); //获取当前用户id
         attachment.setFileName(originalName);
         attachment.setFileUrl(fileUrl);
         attachment.setFileType(contentType);

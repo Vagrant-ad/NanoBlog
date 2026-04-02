@@ -2,57 +2,109 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>用户登录</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录 - NanoBlog</title>
+    <link rel="icon" href="/favicon.ico">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <link rel="stylesheet" href="/static/lib/layui/css/layui.css">
+    <link rel="stylesheet" href="/static/css/front/auth.css">
 </head>
-<div class="login-box">
-    <h2>NanoBlog 登录</h2>
-    <input type="text" id="username" placeholder="请输入用户名">
-    <input type="password" id="password" placeholder="请输入密码">
-    <button id="loginBtn">登 录</button>
+<body class="auth-body">
 
-    <div class="links">
-        还没有账号？ <a href="register.html">去注册</a>
+<canvas id="particleCanvas"></canvas>
+<div class="geo-shape geo-circle-large"></div>
+<div class="geo-shape geo-circle-small"></div>
+<div class="geo-shape geo-ring"></div>
+
+<div class="auth-wrapper">
+    <!-- 左侧品牌区 -->
+    <div class="auth-panel auth-panel--brand">
+        <div class="brand-content">
+            <a href="index.html" class="brand-logo-link">
+                <img src="/static/images/logo-horizontal.png" alt="NanoBlog" class="brand-logo">
+            </a>
+            <div class="brand-headline">
+                <h1 class="brand-title">欢迎回来</h1>
+                <p class="brand-subtitle">登录 NanoBlog，继续探索知识的海洋<br>记录你的每一次灵感闪光</p>
+            </div>
+            <div class="brand-decor">
+                <div class="decor-dot decor-dot--1"></div>
+                <div class="decor-dot decor-dot--2"></div>
+                <div class="decor-dot decor-dot--3"></div>
+                <div class="decor-rings"><span></span><span></span><span></span></div>
+            </div>
+        </div>
+        <div class="brand-footer-text">探索 · 创作 · 分享</div>
     </div>
-</div>
 
-<script>
-    document.getElementById("loginBtn").onclick = function() {
-        var username = document.getElementById("username").value;
-        var password = document.getElementById("password").value;
+    <!-- 右侧表单区 -->
+    <div class="auth-panel auth-panel--form">
+        <div class="form-container">
+            <div class="form-head">
+                <div class="form-head__badge">LOGIN</div>
+                <h2 class="form-head__title">账号登录</h2>
+                <p class="form-head__sub">还没有账号？<a href="register.html" class="link-accent">立即注册 →</a></p>
+            </div>
 
-        if (!username || !password) {
-            alert("用户名和密码不能为空！");
-            return;
-        }
+            <div class="field-group">
+                <label class="field-label">用户名 / 邮箱</label>
+                <div class="field-wrap">
+                    <span class="field-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </span>
+                    <input type="text" id="username" class="field-input" placeholder="请输入用户名或邮箱">
+                    <span class="field-line"></span>
+                </div>
+            </div>
 
-        var xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                if (xhr.status === 200) {
+            <div class="field-group">
+                <label class="field-label">密码</label>
+                <div class="field-wrap">
+                    <span class="field-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </span>
+                    <input type="password" id="password" class="field-input" placeholder="请输入密码">
+                    <button type="button" class="field-eye" id="togglePwd">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <span class="field-line"></span>
+                </div>
+            </div>
 
-                    var res = xhr.responseText.trim().replace(/"/g, "");
+            <div class="field-group">
+                <label class="field-label">验证码</label>
+                <div class="captcha-wrap" style="display: flex; align-items: stretch; gap: 12px;">
+                    <div class="field-wrap" style="flex: 1; margin-bottom: 0;">
+            <span class="field-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </span>
+                        <input type="text" id="captcha" class="field-input" placeholder="验证码" maxlength="4">
+                        <span class="field-line"></span>
+                    </div>
 
-                    if (res === "success") {
-                        alert("登录成功！");
+                    <img src="/user/captcha"
+                         id="captchaImg"
+                         alt="验证码"
+                         title="点击更换验证码"
+                         onclick="this.src='/user/captcha?t=' + new Date().getTime()"
+                         class="captcha-img">
+                </div>
+            </div>
 
-                        //路径跳转
-                        window.location.href = "/pages/front/index.html";
-                    } else {
-                        // 此时 res 如果是 "密码错误"，也会去掉引号后正常弹出
-                        alert(res);
-                    }
-                } else {
-                    alert("网络请求失败。状态码: " + xhr.status);
-                }
-            }
-        };
+            <div class="form-options">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="rememberMe" checked class="checkbox-input">
+                    <span class="checkbox-custom"></span>
+                    <span>记住我</span>
+                </label>
+            </div>
 
-        xhr.open("POST", "/user/doLogin", true);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhr.send("username=" + username + "&password=" + password);
-    };
-</script>
-
+            <button id="loginBtn" class="btn-submit">
+                <span class="btn-submit__text">登 录</span>
+                <span class="btn-submit__arrow">→</span>
+            </button>
+            <script src="/static/js/front/login.js"></script>
+            <script src="/static/lib/layui/layui.js"></script>
 </body>
 </html>

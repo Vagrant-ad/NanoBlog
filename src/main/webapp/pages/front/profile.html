@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>个人资料 - NanoBlog</title>
+    <link rel="stylesheet" href="../../static/css/common/common.css">
+    <link rel="stylesheet" href="../../static/css/front/auth.css">
+    <link rel="stylesheet" href="../../static/css/front/profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+</head>
+<body>
+<header class="navbar">
+    <div class="navbar-inner">
+        <!-- 左侧：Logo + 导航 -->
+        <div class="navbar-left">
+            <a class="logo-link" href="/pages/front/index.html">
+                <img src="/static/images/logo-horizontal.png" alt="NanoBlog Logo" class="logo-image">
+                <span class="sr-only">NanoBlog</span>
+            </a>
+            <nav class="navbar-menu">
+                <a href="/pages/front/index.html">首页</a>
+                <a href="#">分类</a>
+                <a href="#">标签</a>
+            </nav>
+        </div>
+
+        <!-- 中间：搜索框 -->
+        <div class="navbar-center">
+            <div class="search-box">
+                <i class="layui-icon layui-icon-search" id="searchBtn"></i>
+                <input type="text" placeholder="搜索文章标题、标签、作者" id="searchInput">
+            </div>
+        </div>
+
+
+        <!-- 右侧：用户操作区 -->
+        <div class="navbar-right">
+            <!-- 在 editor.html 加上 active 类 -->
+            <a href="/pages/front/editor.html" class="nav-button">写文章</a>
+            <!--<a href="/pages/front/login.html" class="nav-link">登录</a>
+            <a href="/pages/front/register.html" class="nav-button">注册</a>-->
+            <!--用户区域由js根据登录状态动态渲染-->
+            <div id="navUserArea"></div>
+        </div>
+    </div>
+</header>
+
+<div class="profile-page">
+
+    <!--  头像 基本信息卡片 -->
+    <div class="card profile-hero">
+        <div class="hero-bg"></div>
+        <div class="hero-body">
+            <div class="avatar-wrapper">
+                <img id="avatarDisplay" src="../../static/images/avatar-default.png" alt="头像">
+                <label class="avatar-mask" for="avatarInput">
+                    <i class="fas fa-camera"></i>
+                    <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(this)">
+                </label>
+            </div>
+            <div class="hero-info">
+                <h2 id="nicknameDisplay">加载中...</h2>
+                <div class="hero-meta">
+                    <span id="usernameDisplay" class="username-tag">@loading</span>
+                    <span id="statusBadge" class="status-badge">---</span>
+                </div>
+            </div>
+            <div class="hero-actions">
+                <button id="editBtn" class="btn btn-ghost" onclick="enableEdit()">
+                    <i class="fas fa-pen"></i> 编辑资料
+                </button>
+                <button class="btn btn-ghost" onclick="openChangePassword()">
+                    <i class="fas fa-key"></i> 修改密码
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ② 统计数据栏（接口预留） -->
+
+    <div class="card">
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-icon"><i class="fas fa-user-friends"></i></div>
+                <div class="stat-value" id="statFollow">--</div>
+                <div class="stat-label">我的关注</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon"><i class="fas fa-eye"></i></div>
+                <div class="stat-value" id="statView">--</div>
+                <div class="stat-label">总浏览量</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon"><i class="fas fa-thumbs-up"></i></div>
+                <div class="stat-value" id="statLike">--</div>
+                <div class="stat-label">总获赞</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-id-card"></i>
+            <h3>账号详情</h3>
+        </div>
+
+        <!-- 查看面板 -->
+        <div id="viewPanel" class="info-panel">
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>用户ID</label>
+                    <input type="text" id="userId" readonly class="readonly-input">
+                </div>
+                <div class="info-item">
+                    <label>电子邮箱</label>
+                    <p id="emailDisplay">---</p>
+                </div>
+                <div class="info-item">
+                    <label>用户角色</label>
+                    <p id="roleDisplay" class="role-text">---</p>
+                </div>
+                <div class="info-item">
+                    <label>注册时间</label>
+                    <p id="createTimeDisplay">---</p>
+                </div>
+                <div class="info-item">
+                    <label>最后登录</label>
+                    <p id="lastLoginDisplay">---</p>
+                </div>
+                <div class="info-item">
+                    <label>更新时间</label>
+                    <p id="updateTimeDisplay">---</p>
+                </div>
+            </div>
+            <div class="bio-section">
+                <label>个人简介</label>
+                <p id="bioDisplay">加载中...</p>
+            </div>
+        </div>
+
+        <!-- 编辑面板 -->
+        <div id="editPanel" class="info-panel" style="display:none;">
+            <div class="edit-form">
+                <div class="form-group">
+                    <label>昵称</label>
+                    <input type="text" id="nicknameInput" placeholder="起个好听的名字吧">
+                </div>
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="emailInput" placeholder="yourname@example.com">
+                </div>
+                <div class="form-group">
+                    <label>个人简介</label>
+                    <textarea id="bioInput" rows="4" placeholder="介绍一下你自己..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-secondary" onclick="cancelEdit()">取消</button>
+                    <button class="btn btn-primary" onclick="submitUpdate()">
+                        <i class="fas fa-check"></i> 保存修改
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ④ 我的文章（接口预留） -->
+
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-newspaper"></i>
+            <h3>我的文章</h3>
+        </div>
+        <div class="articles-body">
+            <div id="articleList" class="article-list">
+                <!-- 初始占位，由 loadMyArticles() 填充 -->
+                <div class="articles-empty">
+                    <i class="fas fa-file-alt"></i>
+                    <span>暂无文章，快去创作吧~</span>
+                </div>
+            </div>
+        </div>
+        <div class="articles-footer">
+            <button class="btn btn-ghost" onclick="goToMyArticles()">
+                <i class="fas fa-list"></i> 查看全部文章
+            </button>
+        </div>
+    </div>
+
+    <!-- ⑤ 危险区 / 注销账号（接口预留） -->
+    <!--
+        TODO（队友对接）：
+        POST /user/deleteAccount
+        Body: { password: "..." }
+        响应: { code: 200 } → 前端清 session，跳转登录页
+    -->
+    <div class="card">
+        <div class="card-header danger-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>危险区域</h3>
+        </div>
+        <div class="danger-zone-body">
+            <div class="danger-info">
+                <h4>注销账号</h4>
+                <p>此操作不可逆，账号下所有数据将被永久删除。</p>
+            </div>
+            <button class="btn btn-danger-ghost" onclick="openDeleteConfirm()">
+                <i class="fas fa-user-times"></i> 注销账号
+            </button>
+        </div>
+    </div>
+
+</div><!-- /profile-page -->
+
+
+<!--  修改密码 Modal -->
+<div id="pwdModal" class="modal-overlay" onclick="handleOverlayClick(event, 'pwdModal')">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-header-left">
+                <i class="fas fa-key"></i>
+                <h3>修改密码</h3>
+            </div>
+            <button class="modal-close" onclick="closeChangePassword()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-field">
+                <label>当前密码</label>
+                <div class="modal-field-wrap">
+                    <input type="password" id="oldPassword" placeholder="请输入当前密码">
+                    <button class="eye-btn" type="button" onclick="toggleEye('oldPassword', this)">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-field">
+                <label>新密码</label>
+                <div class="modal-field-wrap">
+                    <input type="password" id="newPassword" placeholder="至少 6 位，含字母和数字" oninput="checkPwdStrength(this.value)">
+                    <button class="eye-btn" type="button" onclick="toggleEye('newPassword', this)">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+                <div class="pwd-strength">
+                    <div class="pwd-bar" id="pBar1"></div>
+                    <div class="pwd-bar" id="pBar2"></div>
+                    <div class="pwd-bar" id="pBar3"></div>
+                    <div class="pwd-bar" id="pBar4"></div>
+                    <span class="pwd-strength-label" id="pLabel"></span>
+                </div>
+            </div>
+            <div class="modal-field">
+                <label>确认新密码</label>
+                <div class="modal-field-wrap">
+                    <input type="password" id="confirmPassword" placeholder="再次输入新密码">
+                    <button class="eye-btn" type="button" onclick="toggleEye('confirmPassword', this)">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeChangePassword()">取消</button>
+            <button class="btn btn-primary" onclick="submitChangePassword()">
+                <i class="fas fa-save"></i> 确认修改
+            </button>
+        </div>
+    </div>
+</div>
+
+<!---->
+<div id="deleteModal" class="modal-overlay confirm-modal" onclick="handleOverlayClick(event, 'deleteModal')">
+    <div class="modal-box">
+        <div class="confirm-body">
+            <div class="confirm-icon"><i class="fas fa-trash-alt"></i></div>
+            <h4>确认注销账号？</h4>
+            <p>你的所有文章、评论、关注数据将被<strong>永久删除</strong>，无法找回。请输入密码确认此操作。</p>
+            <div class="modal-field" style="margin-top:16px; text-align:left;">
+                <label style="font-size:0.72rem;font-weight:700;color:#dc2626;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:6px;">验证当前密码</label>
+                <div class="modal-field-wrap">
+                    <input type="password" id="deleteConfirmPassword" placeholder="输入密码以确认">
+                </div>
+            </div>
+        </div>
+        <div class="confirm-footer">
+            <button class="btn btn-secondary" onclick="closeDeleteConfirm()">我再想想</button>
+            <button class="btn btn-danger" onclick="submitDeleteAccount()">
+                <i class="fas fa-trash-alt"></i> 确认注销
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast 提示 -->
+<div id="toast" class="toast"></div>
+
+
+<script src="/static/js/front/profile.js"></script>
+<script src="/static/js/common/common.js"></script>
+</body>
+</html>
