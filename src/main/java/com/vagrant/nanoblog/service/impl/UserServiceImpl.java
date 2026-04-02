@@ -102,11 +102,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             return ResponseResult.errorResult(404,"用户不存在");
         }
 
-        //判断账户是否被封禁
+        //3.判断账号是否被注销
+        if (user.getIsDeleted() != null && user.getIsDeleted() == 1) {
+            return ResponseResult.errorResult(403,"该账号已被注销！");
+        }
+
+        //4.判断账户是否被封禁
         if (user.getStatus() != null && user.getStatus() == 0) {
             return ResponseResult.errorResult(403,"您的账号已被管理员封禁！");
         }
-        // 3. 校验密码
+
+        // 5. 校验密码
         if (BCrypt.checkpw(password, user.getPasswordHash())) {
             // 登录成功，清除该用户的失败记录
             failCountMap.remove(username);
@@ -166,5 +172,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         return ResponseResult.errorResult(500, "服务器异常，修改失败");
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseResult deleteAccount(Long userId, String password) {
+        // 1. 查询用户
+        User user = this.getById(userId);
+        if (user == null || user.getIsDeleted() == 1) {
+            return ResponseResult.errorResult(404, "用户不存在");
+        }
+
+        // 2. 校验密码
+        if (!BCrypt.checkpw(password, user.getPasswordHash())) {
+            return ResponseResult.errorResult(400, "密码错误，注销失败");
+        }
+
+        // 3. 软删除：将 is_deleted 设为 1
+        user.setIsDeleted(1);
+        user.setUpdateTime(LocalDateTime.now());
+
+        boolean success = this.updateById(user);
+        if (success) {
+            return ResponseResult.okResult();
+        }
+        return ResponseResult.errorResult(500, "注销失败，请稍后再试");
+    }
 
 }

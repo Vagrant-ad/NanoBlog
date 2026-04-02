@@ -165,18 +165,14 @@ public class UserController {
     }
 
 
-    /**
-     * 1. 更新/完善个人信息
-     */
+    // 更新/完善个人信息
     @PostMapping("/updateProfile")
     @ResponseBody
     public ResponseResult updateProfile(@RequestBody UserUpdateDTO updateDTO) {
         return userService.updateUserProfile(updateDTO);
     }
 
-    /**
-     * 2.接收前端上传的头像图片，并返回图片访问URL
-     */
+    // 接收前端上传的头像图片，并返回图片访问URL
     @PostMapping("/uploadAvatar")
     @ResponseBody
     public ResponseResult uploadAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
@@ -193,7 +189,6 @@ public class UserController {
             File serverFile = new File(dir, newFileName);
             file.transferTo(serverFile);
 
-
             String imageUrl = "/user/showAvatar?name=" + newFileName;
             return ResponseResult.okResult(imageUrl);
         } catch (Exception e) {
@@ -201,10 +196,7 @@ public class UserController {
         }
     }
 
-    /**
-     * 3. 新增：读取并展示头像的接口
-     * 浏览器访问这个接口，Java会去D盘读文件并返回给浏览器
-     */
+    //读取并展示头像的接口浏览器访问这个接口，读文件并返回给浏览器
     @GetMapping("/showAvatar")
     public void showAvatar(@RequestParam("name") String name, javax.servlet.http.HttpServletResponse response) {
         try {
@@ -219,6 +211,7 @@ public class UserController {
         }
     }
 
+    //修改密码
     @PostMapping("/updatePassword")
     @ResponseBody
     public ResponseResult updatePassword(@RequestBody Map<String, String> params, HttpSession session) {
@@ -236,6 +229,27 @@ public class UserController {
 
         // 3. 调用 Service
         return userService.updatePassword(loginUser.getId(), oldPwd, newPwd);
+    }
+
+    //删除账号
+    @PostMapping("/deleteAccount")
+    @ResponseBody
+    public ResponseResult deleteAccount(@RequestBody Map<String, String> params, HttpSession session) {
+        User loginUser = (User) session.getAttribute("LOGIN_USER");
+        if (loginUser == null) return ResponseResult.errorResult(401, "请先登录");
+
+        String password = params.get("password");
+        if (password == null || password.trim().isEmpty()) {
+            return ResponseResult.errorResult(400, "请输入密码");
+        }
+
+        ResponseResult result = userService.deleteAccount(loginUser.getId(), password);
+        if (result.getCode() == 200) {
+            // 注销成功后清除 Session
+            session.removeAttribute("LOGIN_USER");
+            session.invalidate();
+        }
+        return result;
     }
 
 }

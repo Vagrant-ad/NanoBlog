@@ -22,6 +22,8 @@ public interface IUserService extends IService<User> {
 
     // 更新密码
     ResponseResult updatePassword(Long userId, String oldPassword, String newPassword);
+    // 注销账号（软删除）
+    ResponseResult deleteAccount(Long userId, String password);
 
 
 }
