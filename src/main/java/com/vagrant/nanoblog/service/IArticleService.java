@@ -38,4 +38,13 @@ public interface IArticleService extends IService<Article> {
     void deleteArticle(Long articleId, Long userId);
     /** 草稿直接发布 */
     void publishDraft(Long articleId, Long userId);
+    // 后台管理相关
+    /** 管理员查询所有文章列表（支持状态和标题筛选） */
+    IPage<ArticleManageVO> getAllArticles(Integer page, Integer size, Integer status, String title);
+
+    /** 管理员修改文章状态 */
+    void updateArticleStatus(Long articleId, Integer status);
+
+    /** 管理员删除文章（不受归属限制） */
+    void adminDeleteArticle(Long articleId);
 }

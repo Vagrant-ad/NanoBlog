@@ -1,6 +1,7 @@
 package com.vagrant.nanoblog.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.vagrant.nanoblog.common.ResponseResult;
 import com.vagrant.nanoblog.dto.UserUpdateDTO;
 import com.vagrant.nanoblog.mapper.UserRoleMapper;
@@ -17,14 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-/**
- * <p>
- * 用户表 服务实现类
- * </p>
- *
- * @author vagrant
- * @since 2026-03-21
- */
+// ... existing code ...
+
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -32,16 +27,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Autowired
     private UserRoleMapper userRoleMapper;
 
-    // key: 用户名, value: 失败次数
+    // key: 用户名，value: 失败次数
     private static final java.util.Map<String, Integer> failCountMap = new java.util.concurrent.ConcurrentHashMap<>();
-    // key: 用户名, value: 锁定结束的时间戳（毫秒）
+    // key: 用户名，value: 锁定结束的时间戳（毫秒）
     private static final java.util.Map<String, Long> lockMap = new java.util.concurrent.ConcurrentHashMap<>();
 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ResponseResult register(User user, Long roleId) {
-        //防止null
+        //防止 null
         if (user == null || user.getPasswordHash() == null || user.getPasswordHash().isEmpty()) {
             return ResponseResult.errorResult(400, "注册失败：密码不能为空");
         }
@@ -78,7 +73,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
 
     @Override
-     public   ResponseResult login(String username, String password){
+    public   ResponseResult login(String username, String password){
         // 1. 检查是否处于锁定状态
         if (lockMap.containsKey(username)) {
             long lockTime = lockMap.get(username);
@@ -123,7 +118,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             if (count >= 5) {
                 // 锁定 10 分钟
                 lockMap.put(username, System.currentTimeMillis() + 600000);
-                return ResponseResult.errorResult(403,"连续输错5次密码，账号已锁定10分钟");
+                return ResponseResult.errorResult(403,"连续输错 5 次密码，账号已锁定 10 分钟");
             }
             return ResponseResult.errorResult(400,"密码错误，还可以尝试 " + (5 - count) + " 次");
         }
@@ -166,5 +161,77 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         return ResponseResult.errorResult(500, "服务器异常，修改失败");
     }
 
+    @Override
+    public Page<User> getUserList(Page<User> page, String username) {
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("is_deleted", 0); // 只查询未删除的用户
+
+        // 如果传入了用户名，进行模糊搜索
+        if (username != null && !username.trim().isEmpty()) {
+            wrapper.like("username", username);
+        }
+
+        // 按创建时间降序排列
+        wrapper.orderByDesc("create_time");
+
+// 执行分页查询
+        com.baomidou.mybatisplus.core.metadata.IPage<User> iPage = this.page(page, wrapper);
+
+        // 将 IPage 转换为 Page 返回
+        Page<User> resultPage = new Page<>(iPage.getCurrent(), iPage.getSize(), iPage.getTotal());
+        resultPage.setRecords(iPage.getRecords());
+        resultPage.setPages(iPage.getPages());
+
+        return resultPage;
+    }
+
+    @Override
+    public ResponseResult updateUserStatus(Long userId, Integer status) {
+        // 1. 查询用户
+        User user = this.getById(userId);
+        if (user == null) {
+            return ResponseResult.errorResult(404, "用户不存在");
+        }
+
+        // 2. 不能修改自己的状态（防止管理员把自己禁用）
+        // 这个逻辑可以在 Controller 层根据 session 中的用户 ID 判断
+
+        // 3. 更新状态
+        user.setStatus(status);
+        user.setUpdateTime(LocalDateTime.now());
+
+        boolean success = this.updateById(user);
+        if (success) {
+            String statusText = status == 1 ? "启用" : "禁用";
+            return ResponseResult.okResult("用户已" + statusText);
+        }
+        return ResponseResult.errorResult(500, "状态更新失败");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseResult deleteUser(Long userId) {
+        // 1. 查询用户
+        User user = this.getById(userId);
+        if (user == null) {
+            return ResponseResult.errorResult(404, "用户不存在");
+        }
+
+        // 2. 软删除：设置 is_deleted = 1
+        user.setIsDeleted(1);
+        user.setUpdateTime(LocalDateTime.now());
+
+        boolean success = this.updateById(user);
+        if (success) {
+            // 可选：同时删除用户角色关联
+            QueryWrapper<UserRole> roleWrapper = new QueryWrapper<>();
+            roleWrapper.eq("user_id", userId);
+            userRoleMapper.delete(roleWrapper);
+
+            return ResponseResult.okResult("用户删除成功");
+        }
+        return ResponseResult.errorResult(500, "用户删除失败");
+    }
 
 }
+

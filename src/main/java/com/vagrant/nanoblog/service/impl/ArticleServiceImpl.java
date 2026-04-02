@@ -439,4 +439,66 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         result.setRecords(voList);
         return result;
     }
+    @Override
+    public IPage<ArticleManageVO> getAllArticles(Integer page, Integer size, Integer status, String title) {
+        if (page == null || page < 1) page = 1;
+        if (size == null || size < 1 || size > 100) size = 10;
+
+        Page<Article> pageInfo = new Page<>(page, size);
+        QueryWrapper<Article> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("is_deleted", 0); // 只查询未删除的文章
+
+        // 状态筛选
+        if (status != null) {
+            queryWrapper.eq("status", status);
+        }
+
+        // 标题模糊搜索
+        if (StringUtils.hasText(title)) {
+            queryWrapper.like("article_title", title);
+        }
+
+        // 按创建时间降序
+        queryWrapper.orderByDesc("create_time");
+
+        IPage<Article> articlePage = this.page(pageInfo, queryWrapper);
+        return convertToManageVO(articlePage);
+    }
+
+    @Override
+    public void updateArticleStatus(Long articleId, Integer status) {
+        Article article = this.getById(articleId);
+        if (article == null) {
+            throw new RuntimeException("文章不存在");
+        }
+
+        article.setStatus(status);
+        article.setUpdateTime(LocalDateTime.now());
+
+        // 如果是发布状态，设置发布时间
+        if (status == 1 && article.getPublishTime() == null) {
+            article.setPublishTime(LocalDateTime.now());
+        }
+
+        this.updateById(article);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void adminDeleteArticle(Long articleId) {
+        Article article = this.getById(articleId);
+        if (article == null) {
+            throw new RuntimeException("文章不存在");
+        }
+
+        // 软删除
+        article.setIsDeleted(1);
+        article.setUpdateTime(LocalDateTime.now());
+        this.updateById(article);
+
+        // 可选：同时删除文章标签关联
+        QueryWrapper<ArticleTag> tagWrapper = new QueryWrapper<>();
+        tagWrapper.eq("article_id", articleId);
+        articleTagMapper.delete(tagWrapper);
+    }
 }

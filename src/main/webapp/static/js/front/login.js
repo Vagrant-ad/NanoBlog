@@ -53,6 +53,8 @@ document.querySelectorAll('.field-input').forEach(input => {
 });
 
 
+// ... existing code ...
+
 document.getElementById("loginBtn").onclick = function() {
 
     var layer = window.layer;
@@ -76,10 +78,48 @@ document.getElementById("loginBtn").onclick = function() {
             var layer = window.layer;
             var res = JSON.parse(xhr.responseText);
             if (res.code === 200) {
-                layer.msg("登录成功！", {icon: 1, time: 1000}, function() {
-                    sessionStorage.setItem("loginUsername", username);
-                    window.location.href = "/pages/front/index.html";
-                });
+                // 登录成功，获取用户信息和角色
+                var user = res.data;
+
+                // 保存用户信息到 sessionStorage
+                sessionStorage.setItem("loginUsername", username);
+                sessionStorage.setItem("LOGIN_USER", JSON.stringify(user));
+
+                // 获取用户角色信息，判断跳转路径
+                fetch('/user/getProfile')
+                    .then(function(response) {
+                        return response.json();
+                    })
+                    .then(function(profileRes) {
+                        if (profileRes.code === 200) {
+                            var roleId = profileRes.data.roleId;
+
+                            // 根据角色 ID 判断跳转页面
+                            // roleId = 1: 普通用户 -> 前台首页
+                            // roleId = 2: 管理员 -> 后台管理仪表盘
+                            if (roleId == 2) {
+                                layer.msg("管理员登录成功！即将跳转到后台管理系统...", {icon: 1, time: 1500}, function() {
+                                    window.location.href = "/pages/admin/dashboard.html";
+                                });
+                            } else {
+                                layer.msg("登录成功！", {icon: 1, time: 1000}, function() {
+                                    window.location.href = "/pages/front/index.html";
+                                });
+                            }
+                        } else {
+                            // 获取角色失败，默认跳转到前台
+                            layer.msg("登录成功！", {icon: 1, time: 1000}, function() {
+                                window.location.href = "/pages/front/index.html";
+                            });
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('获取用户角色失败:', error);
+                        // 发生错误时默认跳转到前台
+                        layer.msg("登录成功！", {icon: 1, time: 1000}, function() {
+                            window.location.href = "/pages/front/index.html";
+                        });
+                    });
             } else {
                 layer.msg(res.msg, {icon: 2});
             }
@@ -91,3 +131,6 @@ document.getElementById("loginBtn").onclick = function() {
         "&password=" + encodeURIComponent(password) +
         "&captcha=" + encodeURIComponent(captcha));
 };
+
+// ... existing code ...
+
