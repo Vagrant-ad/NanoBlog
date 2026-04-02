@@ -543,21 +543,32 @@ function resetPwdStrength() {
 
 /* 注销账号 Modal*/
 function openDeleteConfirm() {
-    /* 重置弹窗内容为注销账号样式 */
+    // 每次打开时清空密码输入框
+    var inp = document.getElementById('deleteConfirmPassword');
+    if (inp) inp.value = '';
+
+    // 恢复弹窗内容为注销账号样式（防止被删文章弹窗逻辑覆盖）
     var body = document.querySelector('#deleteModal .confirm-body');
     if (body) {
         body.innerHTML =
             '<div class="confirm-icon" style="background:#fef2f2;color:#dc2626;">'
-            + '<i class="fas fa-sign-out-alt"></i></div>'
+            + '<i class="fas fa-user-times"></i></div>'
             + '<h4>确认注销账号？</h4>'
-            + '<p>你将退出当前账号登录，账号及数据<strong>不会被删除</strong>，下次可继续使用密码登录。</p>';
+            + '<p>此操作将<strong>永久删除</strong>你的账号及所有数据，无法恢复。请输入密码确认。</p>'
+            + '<div class="modal-field" style="margin-top:16px;text-align:left;">'
+            + '<label style="font-size:0.72rem;font-weight:700;color:#dc2626;'
+            + 'letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:6px;">'
+            + '验证当前密码</label>'
+            + '<div class="modal-field-wrap">'
+            + '<input type="password" id="deleteConfirmPassword" placeholder="输入密码以确认注销">'
+            + '</div></div>';
     }
 
-    /* 绑定确认按钮 */
+    // 绑定确认按钮为注销逻辑
     var confirmBtn = document.querySelector('#deleteModal .btn-danger');
     if (confirmBtn) {
-        confirmBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> 确认注销';
-        confirmBtn.onclick   = submitLogout;
+        confirmBtn.innerHTML = '<i class="fas fa-user-times"></i> 确认注销';
+        confirmBtn.onclick   = submitDeleteAccount;
     }
 
     document.getElementById('deleteModal').classList.add('active');
@@ -568,38 +579,55 @@ function closeDeleteConfirm() {
     _pendingDeleteId = null;
 }
 
-/* 调用后端 /user/logout 退出登录，然后跳转到登录页 */
-function submitLogout() {
+/* 调用 POST /user/deleteAccount，软删除用户（is_deleted=1），成功后跳登录页 */
+function submitDeleteAccount() {
+    var inp = document.getElementById('deleteConfirmPassword');
+    var pwd = inp ? inp.value.trim() : '';
+
+    if (!pwd) {
+        showToast('请输入密码以确认注销', 'error');
+        return;
+    }
+
     var confirmBtn = document.querySelector('#deleteModal .btn-danger');
     if (confirmBtn) {
         confirmBtn.disabled = true;
         confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 注销中...';
     }
 
-    fetch('/user/logout', {
+    fetch('/user/deleteAccount', {
         method:      'POST',
-        credentials: 'same-origin'
+        credentials: 'same-origin',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ password: pwd })
     })
         .then(function (r) { return r.json(); })
         .then(function (res) {
-            /* 无论接口是否返回 200，都清理前端状态并跳转 */
-            closeDeleteConfirm();
-            showToast('已成功注销，即将跳转...', 'info');
-            setTimeout(function () {
-                window.location.href = '/pages/front/login.html';
-            }, 1200);
+            if (res.code === 200) {
+                closeDeleteConfirm();
+                showToast('账号已注销，感谢使用', 'info');
+                setTimeout(function () {
+                    window.location.href = '/pages/front/login.html';
+                }, 1500);
+            } else {
+                showToast(res.msg || '注销失败，请检查密码', 'error');
+                // 恢复按钮
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = '<i class="fas fa-user-times"></i> 确认注销';
+                }
+            }
         })
         .catch(function () {
-            /* 网络异常也强制跳转，保证用户退出 */
-            closeDeleteConfirm();
-            showToast('注销中，即将跳转...', 'info');
-            setTimeout(function () {
-                window.location.href = '/pages/front/login.html';
-            }, 1200);
+            showToast('网络异常，请稍后再试', 'error');
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fas fa-user-times"></i> 确认注销';
+            }
         });
 }
 
-/* 兼容旧接口 */
-function submitDeleteAccount() {
-    submitLogout();
+/* submitLogout 保留空实现，防止旧代码引用报错 */
+function submitLogout() {
+    openDeleteConfirm();
 }
