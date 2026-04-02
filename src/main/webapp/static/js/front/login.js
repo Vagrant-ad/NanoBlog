@@ -76,22 +76,25 @@ document.getElementById("loginBtn").onclick = function() {
             if (res.code === 200) {
                 // 登录成功，记录用户名
                 sessionStorage.setItem("loginUsername", username);
-                var rId = res.data.roleId;
 
                 // 登录成功后请求 /user/getProfile 获取 roleId，再决定跳转目标
                 var profileXhr = new XMLHttpRequest();
                 profileXhr.onreadystatechange = function() {
                     if (profileXhr.readyState === 4 && profileXhr.status === 200) {
                         var profileRes = JSON.parse(profileXhr.responseText);
+
+                        var redirectUrl = '/pages/front/index.html';
+
                         if (profileRes.code === 200 && profileRes.data) {
+
                             var roleId = profileRes.data.roleId;
-                            if (rId == 2) {
-                                // 管理员跳转到后台 dashboard
+
+                            if (roleId == 2) {
                                 redirectUrl = '/pages/admin/dashboard.html';
-                            }else{
-                                var redirectUrl = '/pages/front/index.html'; // 默认跳首页
                             }
                         }
+
+
                         layer.msg("登录成功！", {icon: 1, time: 1000}, function() {
                             window.location.href = redirectUrl;
                         });
