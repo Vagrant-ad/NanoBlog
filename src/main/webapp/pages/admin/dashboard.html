@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NanoBlog - 后台仪表盘</title>
-    <!-- 引入Bootstrap样式 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 引入Font Awesome图标 -->
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <!-- 引入ECharts -->
+    <title>NanoBlog - 后台管理系统</title>
+    <!-- 引入 Layui 样式 -->
+    <link rel="stylesheet" href="../../static/lib/layui/css/layui.css">
+    <!-- 引入 ECharts -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <style>
         /* 全局样式 */
         body {
-            font-family: "Microsoft YaHei", sans-serif;
-            background-color: #f8f9fa;
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            background-color: #f2f2f2;
             margin: 0;
             padding: 0;
         }
@@ -25,335 +23,521 @@
             top: 0;
             left: 0;
             bottom: 0;
-            width: 200px;
-            background-color: #212529;
-            padding-top: 60px;
+            width: 220px;
+            background-color: #393D49;
             z-index: 999;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.15);
         }
 
-        .sidebar .nav-link {
-            color: #adb5bd;
-            padding: 12px 20px;
-            border-left: 3px solid transparent;
-        }
-
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
+        .sidebar .logo {
+            height: 60px;
+            line-height: 60px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
             color: #fff;
-            background-color: #343a40;
-            border-left-color: #0d6efd;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
-        .sidebar .nav-link i {
-            margin-right: 8px;
+        .sidebar .nav-menu {
+            padding-top: 10px;
+        }
+
+        .sidebar .nav-item {
+            display: block;
+            padding: 15px 20px;
+            color: #adb5bd;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar .nav-item:hover,
+        .sidebar .nav-item.active {
+            color: #fff;
+            background-color: #009688;
+            border-left-color: #009688;
+        }
+
+        .sidebar .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* 主内容区 */
+        .main-container {
+            margin-left: 220px;
+            min-height: 100vh;
         }
 
         /* 顶部导航栏 */
-        .top-nav {
-            position: fixed;
-            top: 0;
-            left: 200px;
-            right: 0;
+        .top-header {
             height: 60px;
             background-color: #fff;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid #e6e6e6;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
-            z-index: 998;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
-        .top-nav .title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #212529;
+        .top-header .breadcrumb {
+            font-size: 14px;
+            color: #666;
         }
 
-        .top-nav .user-info {
+        .top-header .user-panel {
             display: flex;
             align-items: center;
         }
 
-        .top-nav .user-info span {
+        .top-header .user-panel .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #009688;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .top-header .user-panel span {
             margin-right: 15px;
-            color: #495057;
+            color: #333;
         }
 
-        /* 主内容区 */
-        .main-content {
-            margin-left: 200px;
-            padding: 70px 20px 20px;
-        }
-
-        /* 统计卡片样式 */
-        .stat-card {
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        /* 内容区域 */
+        .content-body {
             padding: 20px;
-            background-color: #fff;
+        }
+
+        /* 统计卡片行 */
+        .stat-row {
+            display: flex;
+            gap: 20px;
             margin-bottom: 20px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background-color: #fff;
+            border-radius: 4px;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .stat-card .icon-box {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .stat-card .icon-box i {
+            font-size: 30px;
+            color: #fff;
+        }
+
+        .stat-card .stat-info {
+            flex: 1;
         }
 
         .stat-card .stat-num {
             font-size: 28px;
-            font-weight: 700;
-            color: #212529;
-            margin: 10px 0;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
         }
 
         .stat-card .stat-desc {
-            color: #6c757d;
-            font-size: 14px;
+            color: #999;
+            font-size: 13px;
         }
 
-        .stat-card .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
+        /* 颜色主题 */
+        .theme-article .icon-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
-        .icon-article {
-            background-color: #e8f4fd;
-            color: #0d6efd;
+        .theme-comment .icon-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
 
-        .icon-comment {
-            background-color: #f0f8fb;
-            color: #198754;
+        .theme-user .icon-box {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
 
-        .icon-user {
-            background-color: #fef7fb;
-            color: #dc3545;
+        .theme-visit .icon-box {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
         }
 
-        .icon-visit {
-            background-color: #fff7e8;
-            color: #ffc107;
-        }
-
-        /* 列表模块样式 */
-        .list-module {
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        /* 图表和列表容器 */
+        .panel-container {
             background-color: #fff;
-            padding: 20px;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
 
-        .list-module .module-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #212529;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .list-module .list-item {
-            padding: 10px 0;
-            border-bottom: 1px dashed #f1f3f5;
-        }
-
-        .list-module .list-item:last-child {
-            border-bottom: none;
-        }
-
-        .list-module .item-title {
-            color: #495057;
-            font-weight: 500;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .list-module .item-meta {
-            color: #6c757d;
-            font-size: 12px;
-            margin-top: 5px;
+        .panel-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e6e6e6;
             display: flex;
+            align-items: center;
             justify-content: space-between;
         }
 
+        .panel-header .panel-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* 列表项样式 */
+        .data-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .data-list .list-item {
+            padding: 12px 0;
+            border-bottom: 1px dashed #e6e6e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .data-list .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .data-list .item-main {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .data-list .item-title {
+            font-size: 14px;
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-bottom: 5px;
+        }
+
+        .data-list .item-meta {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .data-list .item-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            background-color: #f2f2f2;
+            color: #666;
+        }
+
         /* 图表容器 */
-        .chart-container {
-            height: 300px;
+        .chart-wrapper {
+            height: 350px;
             width: 100%;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+
+            .sidebar .logo,
+            .sidebar .nav-item span {
+                display: none;
+            }
+
+            .sidebar .nav-item {
+                padding: 15px;
+                text-align: center;
+            }
+
+            .sidebar .nav-item i {
+                margin-right: 0;
+            }
+
+            .main-container {
+                margin-left: 60px;
+            }
+
+            .stat-row {
+                flex-wrap: wrap;
+            }
+
+            .stat-card {
+                width: calc(50% - 10px);
+            }
         }
     </style>
 </head>
 <body>
 <!-- 侧边栏 -->
 <div class="sidebar">
-    <nav class="nav flex-column">
-        <a class="nav-link active" href="dashboard.html">
-            <i class="fa fa-dashboard"></i> 仪表盘
+    <div class="logo">NanoBlog</div>
+    <div class="nav-menu">
+        <a href="dashboard.html" class="nav-item active">
+            <i class="layui-icon layui-icon-home"></i>
+            <span>仪表盘</span>
         </a>
-        <a class="nav-link" href="article-content/index.html">
-            <i class="fa fa-file-text"></i> 文章内容管理
+        <a href="post.html" class="nav-item">
+            <i class="layui-icon layui-icon-file"></i>
+            <span>文章管理</span>
         </a>
-        <a class="nav-link" href="#">
-            <i class="fa fa-list"></i> 文章分类管理
+        <a href="user.html" class="nav-item">
+            <i class="layui-icon layui-icon-user"></i>
+            <span>用户管理</span>
         </a>
-        <a class="nav-link" href="#">
-            <i class="fa fa-comments"></i> 评论管理
+        <a href="category.html" class="nav-item">
+            <i class="layui-icon layui-icon-list"></i>
+            <span>分类管理</span>
         </a>
-        <a class="nav-link" href="#">
-            <i class="fa fa-users"></i> 用户管理
+        <a href="comment.html" class="nav-item">
+            <i class="layui-icon layui-icon-dialogue"></i>
+            <span>评论管理</span>
         </a>
-        <a class="nav-link" href="#">
-            <i class="fa fa-cog"></i> 系统设置
-        </a>
-    </nav>
-</div>
-
-<!-- 顶部导航栏 -->
-<div class="top-nav">
-    <div class="title">NanoBlog 后台管理系统</div>
-    <div class="user-info">
-        <span>管理员</span>
-        <a href="#" class="text-danger"><i class="fa fa-sign-out"></i> 退出</a>
     </div>
 </div>
 
-<!-- 主内容区 -->
-<div class="main-content">
-    <!-- 统计卡片行 -->
-    <div class="row">
-        <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-                <div class="stat-icon icon-article">
-                    <i class="fa fa-file-text-o fa-2x"></i>
-                </div>
-                <div class="stat-num" id="totalArticle">0</div>
-                <div class="stat-desc">总文章数</div>
-            </div>
+<!-- 主容器 -->
+<div class="main-container">
+    <!-- 顶部导航 -->
+    <div class="top-header">
+        <div class="breadcrumb">
+            <i class="layui-icon layui-icon-home"></i> 首页 / 仪表盘
         </div>
-        <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-                <div class="stat-icon icon-comment">
-                    <i class="fa fa-comments-o fa-2x"></i>
-                </div>
-                <div class="stat-num" id="totalComment">0</div>
-                <div class="stat-desc">总评论数</div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-                <div class="stat-icon icon-user">
-                    <i class="fa fa-user-o fa-2x"></i>
-                </div>
-                <div class="stat-num" id="totalUser">0</div>
-                <div class="stat-desc">总用户数</div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-                <div class="stat-icon icon-visit">
-                    <i class="fa fa-eye fa-2x"></i>
-                </div>
-                <div class="stat-num" id="todayVisit">0</div>
-                <div class="stat-desc">今日访问量</div>
-            </div>
+        <div class="user-panel">
+            <div class="avatar" id="userAvatar">管</div>
+            <span id="currentUserName">管理员</span>
+            <a href="javascript:void(0);" onclick="doLogout()" style="color: #ff5722; text-decoration: none;">
+                <i class="layui-icon layui-icon-logout"></i> 退出
+            </a>
         </div>
     </div>
 
-    <!-- 图表 + 列表行 -->
-    <div class="row">
-        <!-- 访问量趋势图表 -->
-        <div class="col-md-8">
-            <div class="list-module">
-                <div class="module-title">近7日访问量趋势</div>
-                <div id="visitChart" class="chart-container"></div>
+    <!-- 内容区域 -->
+    <div class="content-body">
+        <!-- 统计卡片区 -->
+        <div class="stat-row">
+            <div class="stat-card theme-article">
+                <div class="icon-box">
+                    <i class="layui-icon layui-icon-file-b"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-num" id="totalArticle">0</div>
+                    <div class="stat-desc">总文章数</div>
+                </div>
+            </div>
+
+            <div class="stat-card theme-comment">
+                <div class="icon-box">
+                    <i class="layui-icon layui-icon-dialogue"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-num" id="totalComment">0</div>
+                    <div class="stat-desc">总评论数</div>
+                </div>
+            </div>
+
+            <div class="stat-card theme-user">
+                <div class="icon-box">
+                    <i class="layui-icon layui-icon-user"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-num" id="totalUser">0</div>
+                    <div class="stat-desc">总用户数</div>
+                </div>
+            </div>
+
+            <div class="stat-card theme-visit">
+                <div class="icon-box">
+                    <i class="layui-icon layui-icon-chart"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-num" id="todayVisit">0</div>
+                    <div class="stat-desc">今日访问量</div>
+                </div>
             </div>
         </div>
 
-        <!-- 最近文章列表 -->
-        <div class="col-md-4">
-            <div class="list-module">
-                <div class="module-title">最近发布的文章</div>
-                <div id="recentArticleList">
-                    <!-- 动态加载的文章列表 -->
-                    <div class="list-item">
-                        <div class="item-title">暂无文章数据</div>
-                        <div class="item-meta">
-                            <span>--</span>
-                            <span>--</span>
+        <!-- 图表和列表区 -->
+        <div class="layui-row layui-col-space20">
+            <!-- 访问趋势图表 -->
+            <div class="layui-col-md8">
+                <div class="panel-container">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="layui-icon layui-icon-chart"></i> 近 7 日访问量趋势
                         </div>
+                    </div>
+                    <div class="panel-body">
+                        <div id="visitChart" class="chart-wrapper"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 最近文章 -->
+            <div class="layui-col-md4">
+                <div class="panel-container">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="layui-icon layui-icon-file"></i> 最近文章
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <ul class="data-list" id="recentArticleList">
+                            <li class="empty-state">
+                                <i class="layui-icon layui-icon-face-surprised"></i>
+                                <div>暂无文章数据</div>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 最近评论列表 -->
-    <div class="row">
-        <div class="col-md-12">
-            <div class="list-module">
-                <div class="module-title">最近评论</div>
-                <div id="recentCommentList">
-                    <!-- 动态加载的评论列表 -->
-                    <div class="list-item">
-                        <div class="item-title">暂无评论数据</div>
-                        <div class="item-meta">
-                            <span>--</span>
-                            <span>--</span>
-                        </div>
-                    </div>
+        <!-- 最近评论 -->
+        <div class="panel-container">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="layui-icon layui-icon-dialogue"></i> 最近评论
                 </div>
+            </div>
+            <div class="panel-body">
+                <ul class="data-list" id="recentCommentList">
+                    <li class="empty-state">
+                        <i class="layui-icon layui-icon-face-surprised"></i>
+                        <div>暂无评论数据</div>
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 引入jQuery -->
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
-<!-- 引入Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- JS 依赖 -->
+<script src="../../static/lib/layui/layui.js"></script>
 <script>
-    $(function() {
-        // 1. 模拟加载统计数据（实际项目中替换为AJAX请求后端接口）
+    layui.use(['layer', 'element'], function() {
+        var layer = layui.layer;
+        var element = layui.element;
+
+        // 初始化加载
         loadStatData();
-        // 2. 初始化访问量图表
         initVisitChart();
-        // 3. 加载最近文章列表
         loadRecentArticles();
-        // 4. 加载最近评论列表
         loadRecentComments();
+        loadUserInfo();
     });
+
+    /**
+     * 加载用户信息
+     */
+    function loadUserInfo() {
+        $.get('/user/getProfile', function(res) {
+            if (res.code === 200 && res.data) {
+                var user = res.data.user;
+                var roleId = res.data.roleId;
+                var roleName = roleId == 2 ? '管理员' : '用户';
+                var username = user.nickname || user.username || roleName;
+
+                $('#currentUserName').text(username);
+                $('#userAvatar').text(username.charAt(0));
+            }
+        }).fail(function() {
+            console.error('加载用户信息失败');
+        });
+    }
 
     /**
      * 加载统计数据
      */
     function loadStatData() {
-        // 模拟AJAX请求 - 实际项目中替换为真实接口
-        // $.get("/admin/dashboard/stat", function(res) {
-        //     if (res.code === 200) {
-        //         $("#totalArticle").text(res.data.totalArticle);
-        //         $("#totalComment").text(res.data.totalComment);
-        //         $("#totalUser").text(res.data.totalUser);
-        //         $("#todayVisit").text(res.data.todayVisit);
-        //     }
-        // });
+        $.get("/admin/dashboard/stat", function(res) {
+            if (res.code === 200 && res.data) {
+                animateNumber("totalArticle", res.data.articleCount || 0);
+                animateNumber("totalComment", res.data.commentCount || 0);
+                animateNumber("totalUser", res.data.userCount || 0);
 
-        // 模拟数据
-        $("#totalArticle").text("128");
-        $("#totalComment").text("356");
-        $("#totalUser").text("89");
-        $("#todayVisit").text("2568");
+                // 今日访问量
+                var todayVisit = 0;
+                if (res.data.trend && res.data.trend.length > 0) {
+                    todayVisit = res.data.trend[res.data.trend.length - 1].views;
+                } else {
+                    todayVisit = res.data.totalViews || 0;
+                }
+                animateNumber("todayVisit", todayVisit);
+            }
+        }).fail(function() {
+            console.error('加载统计数据失败');
+        });
     }
 
     /**
-     * 初始化访问量趋势图表
+     * 数字动画效果
+     */
+    function animateNumber(elementId, target) {
+        var obj = document.getElementById(elementId);
+        var current = 0;
+        var increment = target / 50;
+        var timer = setInterval(function() {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            obj.innerText = Math.floor(current).toLocaleString();
+        }, 30);
+    }
+
+    /**
+     * 初始化访问趋势图表
      */
     function initVisitChart() {
         var chartDom = document.getElementById('visitChart');
         var myChart = echarts.init(chartDom);
+
         var option = {
             tooltip: {
                 trigger: 'axis',
@@ -367,137 +551,180 @@
             },
             xAxis: {
                 type: 'category',
-                data: ['7天前', '6天前', '5天前', '4天前', '3天前', '2天前', '昨天', '今天']
+                data: [],
+                axisLine: { lineStyle: { color: '#ddd' } }
             },
             yAxis: {
                 type: 'value',
-                name: '访问量'
+                name: '访问量',
+                axisLine: { lineStyle: { color: '#ddd' } },
+                splitLine: { lineStyle: { color: '#f2f2f2' } }
             },
             series: [{
                 name: '访问量',
                 type: 'bar',
-                data: [1890, 2150, 1980, 2300, 2450, 2200, 2680, 2568],
+                barWidth: '40%',
+                data: [],
                 itemStyle: {
-                    color: '#0d6efd'
-                },
-                emphasis: {
-                    itemStyle: {
-                        color: '#084298'
-                    }
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: '#83bff6' },
+                        { offset: 0.5, color: '#188df0' },
+                        { offset: 1, color: '#188df0' }
+                    ])
                 }
             }]
         };
-        myChart.setOption(option);
-        // 自适应窗口大小
+
+        // 获取数据
+        $.get("/admin/dashboard/visit/trend", function(res) {
+            if (res.code === 200 && res.data && res.data.trend) {
+                var trendData = res.data.trend;
+                option.xAxis.data = trendData.map(item => item.date.substring(5));
+                option.series[0].data = trendData.map(item => item.views);
+            }
+            myChart.setOption(option);
+        }).fail(function() {
+            myChart.setOption({
+                title: {
+                    text: '暂无数据',
+                    left: 'center',
+                    top: 'center',
+                    textStyle: { color: '#999' }
+                }
+            });
+        });
+
         window.addEventListener('resize', function() {
             myChart.resize();
         });
     }
 
     /**
-     * 加载最近文章列表
+     * 加载最近文章
      */
     function loadRecentArticles() {
-        // 模拟AJAX请求 - 实际项目中替换为真实接口
-        // $.get("/admin/dashboard/recentArticles", function(res) {
-        //     if (res.code === 200) {
-        //         renderArticleList(res.data);
-        //     }
-        // });
-
-        // 模拟数据
-        var articleList = [
-            { title: 'Spring Boot 整合MyBatis-Plus实战', createTime: '2026-03-20', author: '管理员' },
-            { title: 'NanoBlog 博客系统设计思路', createTime: '2026-03-19', author: '管理员' },
-            { title: 'Bootstrap 后台仪表盘样式优化', createTime: '2026-03-18', author: '管理员' },
-            { title: 'ECharts 数据可视化入门教程', createTime: '2026-03-17', author: '管理员' },
-            { title: 'Java 通用返回结果封装实践', createTime: '2026-03-16', author: '管理员' }
-        ];
-        renderArticleList(articleList);
+        $.get("/admin/dashboard/recent/articles", function(res) {
+            if (res.code === 200 && res.data && res.data.length > 0) {
+                renderArticleList(res.data);
+            } else {
+                showEmptyState('recentArticleList', '暂无文章数据');
+            }
+        }).fail(function() {
+            showEmptyState('recentArticleList', '加载失败');
+        });
     }
 
     /**
      * 渲染文章列表
      */
     function renderArticleList(list) {
-        if (list.length === 0) {
-            $("#recentArticleList").html(`
-                    <div class="list-item">
-                        <div class="item-title">暂无文章数据</div>
-                        <div class="item-meta">
-                            <span>--</span>
-                            <span>--</span>
-                        </div>
-                    </div>
-                `);
-            return;
-        }
         var html = '';
-        list.forEach(item => {
-            html += `
-                    <div class="list-item">
-                        <div class="item-title">${item.title}</div>
-                        <div class="item-meta">
-                            <span>${item.createTime}</span>
-                            <span>${item.author}</span>
-                        </div>
-                    </div>
-                `;
+        list.forEach(function(item) {
+            var date = item.publishTime || item.createTime || '--';
+            if (date && date.length > 10) {
+                date = date.substring(0, 10);
+            }
+            var author = item.authorName || '未知作者';
+            var title = item.articleTitle || item.title || '无标题';
+
+            html += '<li class="list-item">' +
+                '<div class="item-main">' +
+                '<div class="item-title" title="' + title + '">' + title + '</div>' +
+                '<div class="item-meta">' +
+                '<i class="layui-icon layui-icon-user"></i> ' + author +
+                '&nbsp;&nbsp;' +
+                '<i class="layui-icon layui-icon-date"></i> ' + date +
+                '</div>' +
+                '</div>' +
+                '<span class="item-badge">已发布</span>' +
+                '</li>';
         });
-        $("#recentArticleList").html(html);
+        document.getElementById('recentArticleList').innerHTML = html;
     }
 
     /**
-     * 加载最近评论列表
+     * 加载最近评论
      */
     function loadRecentComments() {
-        // 模拟AJAX请求 - 实际项目中替换为真实接口
-        // $.get("/admin/dashboard/recentComments", function(res) {
-        //     if (res.code === 200) {
-        //         renderCommentList(res.data);
-        //     }
-        // });
-
-        // 模拟数据
-        var commentList = [
-            { content: '这篇文章写得太棒了，收获很多！', createTime: '2026-03-20 15:30', user: '游客123' },
-            { content: '请问MyBatis-Plus分页怎么配置？', createTime: '2026-03-20 14:20', user: '小明' },
-            { content: '希望能出更多Spring Boot相关的教程', createTime: '2026-03-20 10:15', user: '小李' },
-            { content: '博客界面很美观，点赞！', createTime: '2026-03-19 18:45', user: '小红' },
-            { content: '请问这个系统支持Markdown编辑吗？', createTime: '2026-03-19 16:20', user: '小张' }
-        ];
-        renderCommentList(commentList);
+        $.get("/admin/dashboard/recent/comments", function(res) {
+            if (res.code === 200 && res.data && res.data.length > 0) {
+                renderCommentList(res.data);
+            } else {
+                showEmptyState('recentCommentList', '暂无评论数据');
+            }
+        }).fail(function() {
+            showEmptyState('recentCommentList', '加载失败');
+        });
     }
 
     /**
      * 渲染评论列表
      */
     function renderCommentList(list) {
-        if (list.length === 0) {
-            $("#recentCommentList").html(`
-                    <div class="list-item">
-                        <div class="item-title">暂无评论数据</div>
-                        <div class="item-meta">
-                            <span>--</span>
-                            <span>--</span>
-                        </div>
-                    </div>
-                `);
-            return;
-        }
         var html = '';
-        list.forEach(item => {
-            html += `
-                    <div class="list-item">
-                        <div class="item-title">${item.content}</div>
-                        <div class="item-meta">
-                            <span>${item.createTime}</span>
-                            <span>${item.user}</span>
-                        </div>
-                    </div>
-                `;
+        list.forEach(function(item) {
+            var date = item.createTime || '--';
+            if (date && date.length > 19) {
+                date = date.substring(0, 16);
+            }
+            var userName = item.authorNickname || item.userName || '匿名用户';
+            var content = item.commentContent || '无内容';
+            if (content.length > 80) {
+                content = content.substring(0, 80) + '...';
+            }
+
+            html += '<li class="list-item">' +
+                '<div class="item-main">' +
+                '<div class="item-title" style="white-space: normal;" title="' + content + '">' + content + '</div>' +
+                '<div class="item-meta">' +
+                '<i class="layui-icon layui-icon-user"></i> ' + userName +
+                '&nbsp;&nbsp;' +
+                '<i class="layui-icon layui-icon-date"></i> ' + date +
+                '</div>' +
+                '</div>' +
+                '</li>';
         });
-        $("#recentCommentList").html(html);
+        document.getElementById('recentCommentList').innerHTML = html;
+    }
+
+    /**
+     * 显示空状态
+     */
+    function showEmptyState(elementId, message) {
+        var html = '<li class="empty-state">' +
+            '<i class="layui-icon layui-icon-face-surprised"></i>' +
+            '<div>' + message + '</div>' +
+            '</li>';
+        document.getElementById(elementId).innerHTML = html;
+    }
+
+    /**
+     * 退出登录
+     */
+    function doLogout() {
+        layer.confirm('确定要退出登录吗？', {
+            icon: 3,
+            title: '提示'
+        }, function(index) {
+            $.ajax({
+                url: '/user/logout',
+                method: 'POST',
+                success: function(res) {
+                    if (res.code === 200) {
+                        layer.msg('退出成功', {icon: 1});
+                        setTimeout(function() {
+                            window.location.href = '/pages/front/login.html';
+                        }, 1000);
+                    } else {
+                        layer.msg('退出失败：' + (res.msg || ''), {icon: 2});
+                    }
+                },
+                error: function() {
+                    layer.msg('网络异常，请重试', {icon: 2});
+                }
+            });
+            layer.close(index);
+        });
     }
 </script>
 </body>
