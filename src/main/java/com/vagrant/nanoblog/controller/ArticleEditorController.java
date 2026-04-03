@@ -50,6 +50,7 @@ public class ArticleEditorController {
             result.put("authorId", article.getAuthorId());
 
             // 获取文章内容
+
             ArticleContent content = articleContentService.getByArticleId(id);
             if (content != null) {
                 result.put("content", content.getContentMd());

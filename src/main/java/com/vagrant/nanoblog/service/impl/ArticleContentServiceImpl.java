@@ -24,4 +24,5 @@ public class ArticleContentServiceImpl extends ServiceImpl<ArticleContentMapper,
         wrapper.eq("article_id", articleId);
         return this.getOne(wrapper);
     }
+
 }

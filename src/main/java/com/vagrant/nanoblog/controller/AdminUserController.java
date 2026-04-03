@@ -92,4 +92,5 @@ public class AdminUserController {
 
         return userService.deleteUser(userId);
     }
+
 }

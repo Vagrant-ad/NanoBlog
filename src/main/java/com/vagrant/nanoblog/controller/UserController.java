@@ -156,6 +156,7 @@ public class UserController {
                 new QueryWrapper<UserRole>().eq("user_id", user.getId())
         );
 
+
         // 4. 将数据封装进 Map
         Map<String, Object> result = new HashMap<>();
         result.put("user", user); // 放入用户基本信息

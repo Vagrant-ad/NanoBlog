@@ -10,6 +10,7 @@ public class ArticleDetailVO {
 
     private Long id;
     private String title;
+
     private String content;       // HTML，供详情页渲染
     private String contentMd;     // Markdown，供编辑器回填
 

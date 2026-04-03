@@ -44,6 +44,7 @@ public class AttachmentController {
         }
         return loginUser.getId();
     }
+
     /**
      * 图片上传接口
      * POST /upload/image

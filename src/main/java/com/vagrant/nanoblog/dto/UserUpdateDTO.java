@@ -9,4 +9,5 @@ public class UserUpdateDTO {
     private String avatarUrl;
     private String bio;
     private String email;
+
 }

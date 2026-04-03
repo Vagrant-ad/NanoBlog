@@ -15,4 +15,5 @@ public interface DashboardService {
 
     // 获取近 7 日访问趋势
     Map<String, Object> getVisitTrend();
+
 }

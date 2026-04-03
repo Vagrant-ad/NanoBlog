@@ -41,6 +41,7 @@ public class ArticlePublishDTO {
         return articleTitle;
     }
 
+
     public void setArticleTitle(String articleTitle) {
         this.articleTitle = articleTitle;
     }

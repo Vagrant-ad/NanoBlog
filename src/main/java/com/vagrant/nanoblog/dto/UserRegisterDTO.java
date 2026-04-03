@@ -9,4 +9,5 @@ public class UserRegisterDTO {
     private String nickname;  // 昵称
     private String email;     // 邮箱
     private Long roleId;     // 角色ID
+
 }

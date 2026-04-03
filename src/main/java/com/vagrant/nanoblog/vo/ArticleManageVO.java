@@ -10,6 +10,7 @@ import java.util.List;
  */
 @Data
 public class ArticleManageVO {
+
     private Long id;
     private String articleTitle;
     private String articleSummary;

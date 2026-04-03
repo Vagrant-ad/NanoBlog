@@ -47,6 +47,7 @@ public class DashboardController {
     }
 
     // 获取近 7 日访问趋势
+
     @GetMapping("/visit/trend")
     public ResponseResult<Map<String, Object>> getVisitTrend() {
         Map<String, Object> trendMap = dashboardService.getVisitTrend();

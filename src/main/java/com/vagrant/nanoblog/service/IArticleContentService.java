@@ -18,4 +18,5 @@ public interface IArticleContentService extends IService<ArticleContent> {
      * @return 文章内容
      */
     ArticleContent getByArticleId(Long articleId);
+
 }
