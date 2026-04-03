@@ -1,7 +1,6 @@
 package com.vagrant.nanoblog.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.vagrant.nanoblog.dto.ArticlePublishDTO;
 import com.vagrant.nanoblog.pojo.Article;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -26,7 +25,8 @@ public interface IArticleService extends IService<Article> {
     void saveArticleTags(Long articleId, List<String> tagNames);
     IPage<ArticleListVO> getArticleList(Integer page, Integer size);
     ArticleDetailVO getArticleDetail(Long id);
-    IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size, String keyword, String sortBy);
+    // 修改后的方法（加上categoryId）
+    IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size, String keyword, String sortBy, Long categoryId);
     //个人中心相关
     /** 查询某用户的已发布文章列表 */
     IPage<ArticleManageVO> getMyPublished(Long userId, Integer page, Integer size);
@@ -38,4 +38,9 @@ public interface IArticleService extends IService<Article> {
     void deleteArticle(Long articleId, Long userId);
     /** 草稿直接发布 */
     void publishDraft(Long articleId, Long userId);
+
+    IPage<ArticleListVO> listByCategory(Long categoryId, Integer pageNum, Integer pageSize);
+
+    // ===================== 【新增：按标签查询文章】 =====================
+    IPage<ArticleHomeVO> listByTag(Long tagId, Integer pageNum, Integer pageSize);
 }

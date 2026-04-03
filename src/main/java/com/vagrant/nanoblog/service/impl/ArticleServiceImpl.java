@@ -240,14 +240,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
-    public IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size,String keyword,String sortBy) {
+    public IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size,String keyword,String sortBy,Long categoryId) {
         if (page == null || page < 1) page = 1;
         if (size == null || size < 1 || size > 100) size = 8;
 
         Page<ArticleHomeVO> pageInfo = new Page<>(page, size);
 
         // 1. 查首页文章基础数据
-        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo,keyword, sortBy);
+        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo,keyword, sortBy,categoryId);
 
         if (records == null || records.isEmpty()) {
             pageInfo.setRecords(records);
@@ -394,6 +394,47 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         article.setStatus(1);
         article.setPublishTime(LocalDateTime.now());
         this.updateById(article);
+    }
+
+    @Override
+    public IPage<ArticleListVO> listByCategory(Long categoryId, Integer pageNum, Integer pageSize) {
+        Page<Article> page = new Page<>(pageNum, pageSize);
+
+        QueryWrapper<Article> wrapper = new QueryWrapper<Article>()
+                .eq("status", 1)
+                .eq("is_deleted", 0)
+                .eq("category_id", categoryId)
+                .orderByDesc("publish_time");
+
+        IPage<Article> articlePage = this.page(page, wrapper);
+
+        List<ArticleListVO> voList = articlePage.getRecords().stream().map(article -> {
+            ArticleListVO vo = new ArticleListVO();
+            vo.setId(article.getId());
+            vo.setArticleTitle(article.getArticleTitle());
+            vo.setArticleSummary(article.getArticleSummary());
+            vo.setCategoryId(article.getCategoryId());
+            vo.setViewCount(article.getViewCount());
+            vo.setLikeCount(article.getLikeCount());
+            vo.setCommentCount(article.getCommentCount());
+            vo.setPublishTime(article.getPublishTime());
+            return vo;
+        }).collect(Collectors.toList());
+
+        Page<ArticleListVO> resultPage = new Page<>();
+        resultPage.setRecords(voList);
+        resultPage.setTotal(articlePage.getTotal());
+        resultPage.setSize(articlePage.getSize());
+        resultPage.setCurrent(articlePage.getCurrent());
+
+        return resultPage;
+    }
+
+    @Override
+    public IPage<ArticleHomeVO> listByTag(Long tagId, Integer pageNum, Integer pageSize) {
+        Page<ArticleHomeVO> page = new Page<>(pageNum, pageSize);
+        articleMapper.getArticlePageByTagId(page, tagId);
+        return page;
     }
 
     /**
