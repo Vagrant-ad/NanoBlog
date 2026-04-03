@@ -1,7 +1,8 @@
 package com.vagrant.nanoblog.service.impl;
 
-import com.vagrant.nanoblog.pojo.ArticleContent;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.vagrant.nanoblog.mapper.ArticleContentMapper;
+import com.vagrant.nanoblog.pojo.ArticleContent;
 import com.vagrant.nanoblog.service.IArticleContentService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
@@ -17,4 +18,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class ArticleContentServiceImpl extends ServiceImpl<ArticleContentMapper, ArticleContent> implements IArticleContentService {
 
+    @Override
+    public ArticleContent getByArticleId(Long articleId) {
+        QueryWrapper<ArticleContent> wrapper = new QueryWrapper<>();
+        wrapper.eq("article_id", articleId);
+        return this.getOne(wrapper);
+    }
 }

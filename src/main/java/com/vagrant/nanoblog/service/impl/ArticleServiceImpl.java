@@ -501,4 +501,123 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         tagWrapper.eq("article_id", articleId);
         articleTagMapper.delete(tagWrapper);
     }
+    @Override
+    public Article publishArticle(ArticlePublishDTO dto) {
+        // 构建文章对象
+        Article article = new Article();
+        article.setArticleTitle(dto.getArticleTitle());
+        article.setCategoryId(dto.getCategoryId());
+        article.setArticleSummary(dto.getArticleSummary());
+        article.setCoverImageUrl(dto.getCoverImageUrl());
+        article.setStatus(dto.getStatus() != null ? dto.getStatus() : 0);
+        article.setIsTop(dto.getIsTop() != null ? dto.getIsTop() : 0);
+        article.setIsFeatured(dto.getIsFeatured() != null ? dto.getIsFeatured() : 0);
+        article.setAuthorId(dto.getAuthorId());
+        article.setViewCount(0L);
+        article.setLikeCount(0L);
+        article.setCommentCount(0L);
+        article.setFavoriteCount(0L);
+
+        if (dto.getStatus() == 1) {
+            article.setPublishTime(LocalDateTime.now());
+        }
+
+        // 保存文章
+        save(article);
+
+        // 保存文章内容
+        if (StringUtils.hasText(dto.getContent())) {
+            ArticleContent content = new ArticleContent();
+            content.setArticleId(article.getId());
+            content.setContentMd(dto.getContent());
+            content.setContentHtml(dto.getContentHtml());
+            articleContentMapper.insert(content);
+        } else if (StringUtils.hasText(dto.getContentMd())) {
+            // 兼容 contentMd 字段
+            String html = HTML_RENDERER.render(MD_PARSER.parse(dto.getContentMd()));
+            ArticleContent content = new ArticleContent();
+            content.setArticleId(article.getId());
+            content.setContentMd(dto.getContentMd());
+            content.setContentHtml(html);
+            articleContentMapper.insert(content);
+        }
+
+        // 处理标签
+        if (dto.getTags() != null && !dto.getTags().isEmpty()) {
+            saveArticleTags(article.getId(), dto.getTags());
+        }
+
+        return article;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Article updateArticle(ArticlePublishDTO dto) {
+        if (dto.getId() == null) {
+            throw new RuntimeException("文章 ID 不能为空");
+        }
+
+        Article article = getById(dto.getId());
+        if (article == null || article.getIsDeleted() == 1) {
+            throw new RuntimeException("文章不存在");
+        }
+
+        // 更新文章信息
+        article.setArticleTitle(dto.getArticleTitle());
+        article.setCategoryId(dto.getCategoryId());
+        article.setArticleSummary(dto.getArticleSummary());
+        article.setCoverImageUrl(dto.getCoverImageUrl());
+        article.setStatus(dto.getStatus() != null ? dto.getStatus() : article.getStatus());
+        article.setIsTop(dto.getIsTop() != null ? dto.getIsTop() : 0);
+        article.setIsFeatured(dto.getIsFeatured() != null ? dto.getIsFeatured() : 0);
+
+        if (dto.getStatus() == 1 && article.getPublishTime() == null) {
+            article.setPublishTime(LocalDateTime.now());
+        }
+
+        updateById(article);
+
+        // 更新文章内容
+        if (StringUtils.hasText(dto.getContent())) {
+            String html = HTML_RENDERER.render(MD_PARSER.parse(dto.getContent()));
+            ArticleContent content = articleContentMapper.selectById(dto.getId());
+            if (content != null) {
+                content.setContentMd(dto.getContent());
+                content.setContentHtml(html);
+                articleContentMapper.updateById(content);
+            } else {
+                content = new ArticleContent();
+                content.setArticleId(dto.getId());
+                content.setContentMd(dto.getContent());
+                content.setContentHtml(html);
+                articleContentMapper.insert(content);
+            }
+        } else if (StringUtils.hasText(dto.getContentMd())) {
+            // 兼容 contentMd 字段
+            String html = HTML_RENDERER.render(MD_PARSER.parse(dto.getContentMd()));
+            ArticleContent content = articleContentMapper.selectById(dto.getId());
+            if (content != null) {
+                content.setContentMd(dto.getContentMd());
+                content.setContentHtml(html);
+                articleContentMapper.updateById(content);
+            } else {
+                content = new ArticleContent();
+                content.setArticleId(dto.getId());
+                content.setContentMd(dto.getContentMd());
+                content.setContentHtml(html);
+                articleContentMapper.insert(content);
+            }
+        }
+
+        // 更新标签：先删旧关联，再写新关联
+        QueryWrapper<ArticleTag> tagWrapper = new QueryWrapper<>();
+        tagWrapper.eq("article_id", dto.getId());
+        articleTagMapper.delete(tagWrapper);
+
+        if (dto.getTags() != null && !dto.getTags().isEmpty()) {
+            saveArticleTags(dto.getId(), dto.getTags());
+        }
+
+        return article;
+    }
 }

@@ -47,4 +47,17 @@ public interface IArticleService extends IService<Article> {
 
     /** 管理员删除文章（不受归属限制） */
     void adminDeleteArticle(Long articleId);
+    /**
+     * 发布文章
+     * @param dto 文章发布 DTO
+     * @return 发布的文章
+     */
+    Article publishArticle(ArticlePublishDTO dto);
+
+    /**
+     * 更新文章
+     * @param dto 文章发布 DTO
+     * @return 更新后的文章
+     */
+    Article updateArticle(ArticlePublishDTO dto);
 }

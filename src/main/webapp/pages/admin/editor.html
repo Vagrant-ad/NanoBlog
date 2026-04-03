@@ -2,9 +2,595 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章编辑 - NanoBlog 后台</title>
+    <!-- 引入 Layui 样式 -->
+    <link rel="stylesheet" href="../../static/lib/layui/css/layui.css">
+    <!-- 引入 Editor.md 样式 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/css/editormd.min.css">
+    <style>
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 220px;
+            background-color: #393D49;
+            z-index: 999;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+        }
+
+        .sidebar .logo {
+            height: 60px;
+            line-height: 60px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: #fff;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar .nav-menu {
+            padding-top: 10px;
+        }
+
+        .sidebar .nav-item {
+            display: block;
+            padding: 15px 20px;
+            color: #adb5bd;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar .nav-item:hover,
+        .sidebar .nav-item.active {
+            color: #fff;
+            background-color: #009688;
+            border-left-color: #009688;
+        }
+
+        .sidebar .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .main-container {
+            margin-left: 220px;
+            min-height: 100vh;
+        }
+
+        .top-header {
+            height: 60px;
+            background-color: #fff;
+            border-bottom: 1px solid #e6e6e6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .top-header .breadcrumb {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .top-header .user-panel {
+            display: flex;
+            align-items: center;
+        }
+
+        .top-header .user-panel .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #009688;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .top-header .user-panel span {
+            margin-right: 15px;
+            color: #333;
+        }
+
+        .content-body {
+            padding: 20px;
+        }
+
+        .form-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e6e6e6;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-group.full-width {
+            flex: 1 1 100%;
+        }
+
+        .layui-form-label {
+            width: 100px;
+            font-weight: bold;
+        }
+
+        .layui-input-inline {
+            margin-left: 120px;
+        }
+
+        .editor-wrapper {
+            margin-top: 20px;
+        }
+
+        #editor {
+            margin: 0 auto;
+        }
+
+        .form-actions {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .btn-save {
+            margin-right: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+
+            .sidebar .logo,
+            .sidebar .nav-item span {
+                display: none;
+            }
+
+            .sidebar .nav-item {
+                padding: 15px;
+                text-align: center;
+            }
+
+            .sidebar .nav-item i {
+                margin-right: 0;
+            }
+
+            .main-container {
+                margin-left: 60px;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .layui-input-inline {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
+<!-- 侧边栏 -->
+<div class="sidebar">
+    <div class="logo">NanoBlog</div>
+    <div class="nav-menu">
+        <a href="dashboard.html" class="nav-item">
+            <i class="layui-icon layui-icon-home"></i>
+            <span>仪表盘</span>
+        </a>
+        <a href="post.html" class="nav-item active">
+            <i class="layui-icon layui-icon-file"></i>
+            <span>文章管理</span>
+        </a>
+        <a href="user.html" class="nav-item">
+            <i class="layui-icon layui-icon-user"></i>
+            <span>用户管理</span>
+        </a>
+        <a href="category.html" class="nav-item">
+            <i class="layui-icon layui-icon-list"></i>
+            <span>分类管理</span>
+        </a>
+        <a href="comment.html" class="nav-item">
+            <i class="layui-icon layui-icon-dialogue"></i>
+            <span>评论管理</span>
+        </a>
+    </div>
+</div>
 
+<!-- 主容器 -->
+<div class="main-container">
+    <!-- 顶部导航 -->
+    <div class="top-header">
+        <div class="breadcrumb">
+            <i class="layui-icon layui-icon-home"></i> 首页 / 文章管理 / 编辑文章
+        </div>
+        <div class="user-panel">
+            <div class="avatar" id="userAvatar">管</div>
+            <span id="currentUserName">管理员</span>
+            <a href="javascript:void(0);" onclick="doLogout()" style="color: #ff5722; text-decoration: none;">
+                <i class="layui-icon layui-icon-logout"></i> 退出
+            </a>
+        </div>
+    </div>
+
+    <!-- 内容区域 -->
+    <div class="content-body">
+        <div class="form-container">
+            <div class="form-title">编辑文章</div>
+
+            <form class="layui-form" id="articleForm" lay-filter="articleForm">
+                <input type="hidden" name="id" id="articleId">
+
+                <!-- 第一行：文章标题和分类 -->
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label class="layui-form-label required">文章标题</label>
+                        <div class="layui-input-inline" style="flex: 1;">
+                            <input type="text" name="articleTitle" id="articleTitle" required lay-verify="required"
+                                   placeholder="请输入文章标题" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第二行：分类和标签 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="layui-form-label required">文章分类</label>
+                        <div class="layui-input-inline">
+                            <select name="categoryId" id="categoryId" required lay-verify="required">
+                                <option value="">请选择分类</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="layui-form-label">文章标签</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="tags" id="tags" placeholder="多个标签用逗号分隔" class="layui-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第三行：摘要和封面图 -->
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label class="layui-form-label">文章摘要</label>
+                        <div class="layui-input-inline" style="flex: 1;">
+                            <textarea name="articleSummary" id="articleSummary" placeholder="请输入文章摘要（选填）"
+                                      class="layui-textarea" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="layui-form-label">封面图片 URL</label>
+                        <div class="layui-input-inline" style="flex: 1;">
+                            <input type="text" name="coverImageUrl" id="coverImageUrl" placeholder="请输入封面图片 URL" class="layui-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第四行：Markdown 编辑器 -->
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label class="layui-form-label required">文章内容</label>
+                        <div class="layui-input-inline" style="flex: 1;">
+                            <div id="editor" class="editor-wrapper"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第五行：高级选项 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="layui-form-label">是否置顶</label>
+                        <div class="layui-input-inline">
+                            <input type="checkbox" name="isTop" lay-skin="switch" lay-text="是|否" value="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="layui-form-label">是否推荐</label>
+                        <div class="layui-input-inline">
+                            <input type="checkbox" name="isFeatured" lay-skin="switch" lay-text="是|否" value="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="layui-form-label">状态</label>
+                        <div class="layui-input-inline">
+                            <select name="status" id="status">
+                                <option value="0">草稿</option>
+                                <option value="1" selected>已发布</option>
+                                <option value="2">已归档</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 提交按钮 -->
+                <div class="form-actions">
+                    <button type="submit" class="layui-btn layui-btn-normal btn-save" lay-submit lay-filter="submitBtn">
+                        <i class="layui-icon layui-icon-ok-circle"></i> 保存文章
+                    </button>
+                    <button type="button" class="layui-btn layui-btn-primary" onclick="backToList()">
+                        <i class="layui-icon layui-icon-return"></i> 返回列表
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JS 依赖 -->
+<script src="../../static/lib/layui/layui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/editormd.min.js"></script>
+<script>
+    var editor;
+
+    layui.use(['form', 'layer', 'jquery'], function() {
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+
+        // 初始化 Markdown 编辑器
+        editor = editormd("editor", {
+            width: "100%",
+            height: 640,
+            syncScrolling: "single",
+            path: "https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/",
+            placeholder: "请输入文章内容...",
+            markdown: "",
+            codeFold: true,
+            saveHTMLToTextarea: true,
+            searchReplace: true,
+            watch: true,
+            htmlDecode: "style,script,iframe|on*",
+            toolbarMode: "full",
+            emoji: true,
+            taskList: true,
+            tocm: true,
+            tex: true,
+            flowChart: true,
+            sequenceDiagram: true,
+            imageUpload: true,
+            imageFormats: ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
+            imageUploadURL: "/admin/article/upload/image",
+            onload: function() {
+                console.log('Editor.md loaded successfully');
+            }
+        });
+
+        // 加载分类列表
+        loadCategories();
+
+        // 获取文章 ID 参数
+        var articleId = getQueryParam('id');
+        if (articleId) {
+            $('#articleId').val(articleId);
+            loadArticleData(articleId);
+        }
+
+        // 监听表单提交
+        form.on('submit(submitBtn)', function(data) {
+            var formData = data.field;
+
+            // 获取编辑器内容
+            var mdContent = editor.getMarkdown();
+            var htmlContent = editor.getHTML();
+
+            if (!mdContent.trim()) {
+                layer.msg('请输入文章内容', {icon: 2});
+                return false;
+            }
+
+            // 构建提交数据
+            var submitData = {
+                id: formData.id || null,
+                articleTitle: formData.articleTitle,
+                categoryId: formData.categoryId,
+                articleSummary: formData.articleSummary || '',
+                coverImageUrl: formData.coverImageUrl || '',
+                status: parseInt(formData.status),
+                isTop: formData.isTop === 'on' ? 1 : 0,
+                isFeatured: formData.isFeatured === 'on' ? 1 : 0,
+                content: mdContent,
+                contentHtml: htmlContent
+            };
+
+            // 处理标签
+            if (formData.tags && formData.tags.trim()) {
+                submitData.tags = formData.tags.split(/[,,]/).map(t => t.trim()).filter(t => t);
+            }
+
+            // 提交到后端
+            saveArticle(submitData);
+
+            return false;
+        });
+
+        // 加载用户信息
+        loadUserInfo();
+    });
+
+    /**
+     * 加载分类列表
+     */
+    function loadCategories() {
+        $.get('/category/list', function(res) {
+            if (res.code === 200 && res.data) {
+                var options = '<option value="">请选择分类</option>';
+                res.data.forEach(function(cat) {
+                    options += '<option value="' + cat.id + '">' + cat.categoryName + '</option>';
+                });
+                $('#categoryId').html(options);
+                layui.form.render('select');
+            }
+        }).fail(function() {
+            console.error('加载分类失败');
+        });
+    }
+
+    /**
+     * 加载文章数据
+     */
+    function loadArticleData(id) {
+        $.get('/admin/article/' + id, function(res) {
+            if (res.code === 200 && res.data) {
+                var article = res.data;
+
+                // 填充表单数据
+                $('#articleTitle').val(article.articleTitle);
+                $('#categoryId').val(article.categoryId);
+                $('#articleSummary').val(article.articleSummary || '');
+                $('#coverImageUrl').val(article.coverImageUrl || '');
+                $('#status').val(article.status);
+
+                // 设置复选框
+                if (article.isTop === 1) {
+                    $('input[name="isTop"]').prop('checked', true);
+                }
+                if (article.isFeatured === 1) {
+                    $('input[name="isFeatured"]').prop('checked', true);
+                }
+
+                // 填充编辑器内容
+                if (res.data.content) {
+                    editor.setMarkdown(res.data.content);
+                }
+
+                layui.form.render();
+            }
+        }).fail(function() {
+            layer.msg('加载文章数据失败', {icon: 2});
+        });
+    }
+
+    /**
+     * 保存文章
+     */
+    function saveArticle(data) {
+        var url = data.id ? '/admin/article/update' : '/admin/article/publish';
+        var method = data.id ? 'PUT' : 'POST';
+
+        $.ajax({
+            url: url,
+            method: method,
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(res) {
+                if (res.code === 200) {
+                    layer.msg(data.id ? '更新成功' : '发布成功', {icon: 1});
+                    setTimeout(function() {
+                        backToList();
+                    }, 1000);
+                } else {
+                    layer.msg('保存失败：' + (res.msg || ''), {icon: 2});
+                }
+            },
+            error: function() {
+                layer.msg('网络异常，请重试', {icon: 2});
+            }
+        });
+    }
+
+    /**
+     * 返回文章列表
+     */
+    function backToList() {
+        window.location.href = 'post.html';
+    }
+
+    /**
+     * 获取 URL 参数
+     */
+    function getQueryParam(name) {
+        var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)');
+        var r = window.location.search.substr(1).match(reg);
+        if (r != null) return decodeURIComponent(r[2]);
+        return null;
+    }
+
+    /**
+     * 加载用户信息
+     */
+    function loadUserInfo() {
+        $.get('/user/getProfile', function(res) {
+            if (res.code === 200 && res.data) {
+                var user = res.data.user;
+                var roleId = res.data.roleId;
+                var roleName = roleId == 2 ? '管理员' : '用户';
+                var username = user.nickname || user.username || roleName;
+
+                $('#currentUserName').text(username);
+                $('#userAvatar').text(username.charAt(0));
+            }
+        }).fail(function() {
+            console.error('加载用户信息失败');
+        });
+    }
+
+    /**
+     * 退出登录
+     */
+    function doLogout() {
+        layui.layer.confirm('确定要退出登录吗？', {
+            icon: 3,
+            title: '提示'
+        }, function(index) {
+            $.ajax({
+                url: '/user/logout',
+                method: 'POST',
+                success: function(res) {
+                    if (res.code === 200) {
+                        layui.layer.msg('退出成功', {icon: 1});
+                        setTimeout(function() {
+                            window.location.href = '/pages/front/login.html';
+                        }, 1000);
+                    } else {
+                        layui.layer.msg('退出失败：' + (res.msg || ''), {icon: 2});
+                    }
+                },
+                error: function() {
+                    layui.layer.msg('网络异常，请重试', {icon: 2});
+                }
+            });
+            layui.layer.close(index);
+        });
+    }
+</script>
 </body>
 </html>
