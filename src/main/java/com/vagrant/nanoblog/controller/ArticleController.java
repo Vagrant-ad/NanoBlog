@@ -57,9 +57,10 @@ public class ArticleController {
             @RequestParam(defaultValue = "8") Integer size,
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "time") String sortBy,
-            @RequestParam(required = false) Long categoryId
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long tagId
     ) {
-        return ResponseResult.okResult(articleService.getHomeArticleList(page, size, keyword, sortBy, categoryId));
+        return ResponseResult.okResult(articleService.getHomeArticleList(page, size, keyword, sortBy, categoryId, tagId));
     }
 
     // 按分类查询文章
@@ -80,7 +81,7 @@ public class ArticleController {
         return ResponseResult.okResult(articleService.listByTag(tagId, pageNum, pageSize));
     }
 
-    // ===================== 个人中心相关接口 =====================
+    //个人中心相关接口
     @GetMapping("/my/published")
     public ResponseResult<IPage<ArticleManageVO>> myPublished(
             @RequestParam(defaultValue = "1") Integer page,

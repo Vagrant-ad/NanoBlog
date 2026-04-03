@@ -223,12 +223,72 @@
             `;
             });
     };
+    //初始化分类多级菜单
+    NanoBlog.initCategoryMenu = function () {
+        const dropdown = document.getElementById('categoryDropdown');
+        if (!dropdown) return;
+
+        fetch('/category/tree')
+            .then(res => res.json())
+            .then(result => {
+                if (result.code !== 200 || !result.data) return;
+                const categories = result.data;
+
+                dropdown.innerHTML = categories.map(parent => {
+                    const hasChildren = parent.children && parent.children.length > 0;
+
+                    const subItems = hasChildren
+                        ? parent.children.map(child => `
+                        <li class="dropdown-subitem"
+                            onclick="location.href='/pages/front/index.html?categoryId=${child.id}'">
+                            ${child.categoryName}
+                        </li>`).join('')
+                        : '';
+
+                    const submenu = hasChildren
+                        ? `<ul class="dropdown-submenu">${subItems}</ul>`
+                        : '';
+
+                    const arrow = hasChildren ? `<span class="arrow">▶</span>` : '';
+
+                    return `
+                    <li class="dropdown-item"
+                        onclick="${!hasChildren ? `location.href='/pages/front/index.html?categoryId=${parent.id}'` : ''}">
+                        ${parent.categoryName}
+                        ${arrow}
+                        ${submenu}
+                    </li>`;
+                }).join('');
+            });
+    };
+    //初始化标签菜单
+    NanoBlog.initTagMenu = function () {
+        const container = document.getElementById('tagDropdown');
+        if (!container) return;
+
+        fetch('/tag/list')
+            .then(res => res.json())
+            .then(result => {
+                if (result.code !== 200 || !result.data) return;
+                //只取前15个热门标签显示在导航栏
+                const tags = result.data.slice(0, 15);
+                container.innerHTML = tags.map(tag => `
+                <a class="tag-cloud-item" 
+                   href="/pages/front/index.html?tagId=${tag.id}"
+                   style="${tag.tagColor ? 'border-color:' + tag.tagColor : ''}">
+                    ${tag.tagName}
+                    <span class="tag-count">${tag.articleCount || 0}</span>
+                </a>
+            `).join('');
+            });
+    };
 
     // 页面初始化入口
     NanoBlog.init = function () {
         NanoBlog.setActiveNav();
         NanoBlog.bindNavbarScrollEffect();
         NanoBlog.initNavUser();
+        NanoBlog.initCategoryMenu();
     };
 
     window.NanoBlog = NanoBlog;

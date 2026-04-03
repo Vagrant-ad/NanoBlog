@@ -204,3 +204,40 @@
     background-color: #89e2c2 !important;
     box-shadow: 0 8px 20px rgba(167, 243, 208, 0.5);
 }
+
+/*当前筛选状态标签*/
+.filter-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--brand-mint-light);
+    border: 1px solid var(--brand-mint);
+    border-radius: var(--radius-pill);
+    margin-top: 12px;
+    font-size: 0.88rem;
+}
+
+.filter-badge-type {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.filter-badge-name {
+    color: var(--brand-blue);
+    font-weight: 600;
+}
+
+.filter-badge-clear {
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    text-decoration: none !important;
+    transition: color 0.2s;
+}
+
+.filter-badge-clear:hover {
+    color: #ef4444;
+}

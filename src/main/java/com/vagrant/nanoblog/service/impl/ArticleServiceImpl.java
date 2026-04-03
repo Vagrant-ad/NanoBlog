@@ -240,14 +240,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
-    public IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size,String keyword,String sortBy,Long categoryId) {
+    public IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size,String keyword,String sortBy,Long categoryId,Long tagId) {
         if (page == null || page < 1) page = 1;
         if (size == null || size < 1 || size > 100) size = 8;
 
         Page<ArticleHomeVO> pageInfo = new Page<>(page, size);
 
         // 1. 查首页文章基础数据
-        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo,keyword, sortBy,categoryId);
+        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo,keyword, sortBy,categoryId,tagId);
 
         if (records == null || records.isEmpty()) {
             pageInfo.setRecords(records);

@@ -26,7 +26,7 @@ public interface IArticleService extends IService<Article> {
     IPage<ArticleListVO> getArticleList(Integer page, Integer size);
     ArticleDetailVO getArticleDetail(Long id);
     // 修改后的方法（加上categoryId）
-    IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size, String keyword, String sortBy, Long categoryId);
+    IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size, String keyword, String sortBy, Long categoryId,Long tagId);
     //个人中心相关
     /** 查询某用户的已发布文章列表 */
     IPage<ArticleManageVO> getMyPublished(Long userId, Integer page, Integer size);
