@@ -10,6 +10,9 @@
     let currentKeyword = '';
     //排序模式
     let currentSort = 'time';
+    //分类&标签id
+    let currentCategoryId = NanoBlog.getQueryParam('categoryId') || '';
+    let currentTagId = NanoBlog.getQueryParam('tagId') || '';
 
     const articleGrid = document.querySelector('.article-grid');
     const searchInput = document.getElementById('searchInput');
@@ -28,6 +31,10 @@
         if (sort) {
             params.set('sortBy', sort);
         }
+        if (currentCategoryId)
+            params.set('categoryId', currentCategoryId);
+        if (currentTagId)
+            params.set('tagId', currentTagId);
         return `/article/home?${params.toString()}`;
     }
     //渲染空状态
@@ -215,11 +222,48 @@
             searchInput.focus();
         });
     }
+    //筛选条件
+    function renderFilterBadge() {
+        const header = document.querySelector('.section-header');
+        if (!header) return;
+
+        if (currentCategoryId) {
+            // 查分类名称
+            fetch('/category/list')
+                .then(res => res.json())
+                .then(result => {
+                    if (result.code !== 200) return;
+                    const cat = result.data.find(c => String(c.id) === currentCategoryId);
+                    if (cat) showFilterBadge('分类', cat.categoryName, header);
+                });
+        } else if (currentTagId) {
+            fetch('/tag/list')
+                .then(res => res.json())
+                .then(result => {
+                    if (result.code !== 200) return;
+                    const tag = result.data.find(t => String(t.id) === currentTagId);
+                    if (tag) showFilterBadge('标签', tag.tagName, header);
+                });
+        }
+    }
+
+    function showFilterBadge(type, name, header) {
+        const badge = document.createElement('div');
+        badge.className = 'filter-badge';
+        badge.innerHTML = `
+        <span class="filter-badge-type">${type}</span>
+        <span class="filter-badge-name">${name}</span>
+        <a href="/pages/front/index.html" class="filter-badge-clear" title="清除筛选">×</a>
+    `;
+        header.appendChild(badge);
+    }
+
     //初始化
     function init() {
         bindSearch();
         bindSortTabs();
         bindSearchBoxFocus();
+        renderFilterBadge();
         loadArticles(1, '');
     }
 

@@ -39,7 +39,6 @@
         LEFT JOIN user u ON a.author_id = u.id
         LEFT JOIN category c ON a.category_id = c.id
         WHERE a.status = 1 AND a.is_deleted = 0
-
         <if test="keyword != null and keyword != ''">
             AND (
             a.article_title LIKE CONCAT('%', #{keyword}, '%')
@@ -57,7 +56,12 @@
         <if test="categoryId != null and categoryId != ''">
             AND a.category_id = #{categoryId}
         </if>
-
+        <if test="tagId != null">
+            AND EXISTS (
+            SELECT 1 FROM article_tag at
+            WHERE at.article_id = a.id AND at.tag_id = #{tagId}
+            )
+        </if>
         ORDER BY a.is_top DESC,
         <choose>
             <when test="sortBy == 'view'">a.view_count DESC</when>
@@ -66,7 +70,7 @@
         </choose>
     </select>
 
-    <!-- ===================== 【新增】按标签ID查询文章 ===================== -->
+    <!--按标签ID查询文章-->
     <select id="getArticlePageByTagId" resultType="com.vagrant.nanoblog.vo.ArticleHomeVO">
         SELECT
             a.id,
