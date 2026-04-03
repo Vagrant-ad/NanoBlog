@@ -103,13 +103,13 @@
                                 </div>
 
                                 <div class="card-stats">
-                                    <span>${publishTime}</span>
+                                    <span><i class="fas fa-clock"></i> ${publishTime}</span>
                                     <span>·</span>
-                                    <span>${viewCount} 浏览</span>
+                                    <span><i class="fas fa-eye"></i> ${viewCount}</span>
                                     <span>·</span>
-                                    <span>${likeCount} 赞</span>
+                                    <span><i class="fas fa-thumbs-up"></i> ${likeCount}</span>
                                     <span>·</span>
-                                    <span>${commentCount} 评论</span>
+                                    <span><i class="fas fa-comment"></i> ${commentCount}</span>
                                 </div>
                             </div>
                         </div>
