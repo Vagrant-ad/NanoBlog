@@ -1,16 +1,17 @@
 package com.vagrant.nanoblog.mapper;
 
-import com.vagrant.nanoblog.pojo.Tag;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.vagrant.nanoblog.pojo.Tag;
+import com.vagrant.nanoblog.vo.TagVO;
+import java.util.List;
 
 /**
- * <p>
- * 标签表 Mapper 接口
- * </p>
- *
- * @author vagrant
- * @since 2026-03-21
+ * 标签 Mapper 接口
  */
 public interface TagMapper extends BaseMapper<Tag> {
 
+    /**
+     * 查询所有标签（按文章数降序，用于热门标签云）
+     */
+    List<TagVO> getTagsWithCount();
 }
