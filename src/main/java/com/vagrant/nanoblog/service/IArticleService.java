@@ -43,4 +43,14 @@ public interface IArticleService extends IService<Article> {
 
     // ===================== 【新增：按标签查询文章】 =====================
     IPage<ArticleHomeVO> listByTag(Long tagId, Integer pageNum, Integer pageSize);
+
+    // ===================== 【后台管理相关方法】 =====================
+    /** 管理员视角的全量文章列表，支持按状态/标题筛选 */
+    IPage<ArticleManageVO> getAdminArticleList(Integer page, Integer size, Integer status, String title);
+    
+    /** 管理员修改文章状态（下架改为 status=2 归档） */
+    void updateArticleStatusByAdmin(Long articleId, Integer status);
+    
+    /** 管理员删除文章（跳过归属校验） */
+    void deleteArticleByAdmin(Long articleId);
 }

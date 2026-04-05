@@ -1,6 +1,8 @@
 package com.vagrant.nanoblog.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.vagrant.nanoblog.common.ResponseResult;
 import com.vagrant.nanoblog.dto.UserUpdateDTO;
 import com.vagrant.nanoblog.mapper.UserRoleMapper;
@@ -14,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 
@@ -195,6 +198,47 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             return ResponseResult.okResult();
         }
         return ResponseResult.errorResult(500, "注销失败，请稍后再试");
+    }
+
+    // ===================== 【后台管理相关方法实现】 =====================
+    
+    @Override
+    public IPage<User> getUserList(Integer page, Integer size, String username) {
+        Page<User> userPage = new Page<>(page, size);
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("is_deleted", 0); // 只查未删除的用户
+        
+        // 支持按用户名搜索
+        if (StringUtils.hasText(username)) {
+            wrapper.like("username", username);
+        }
+        
+        wrapper.orderByDesc("create_time");
+        return this.page(userPage, wrapper);
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void toggleUserStatus(Long userId, Integer status) {
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        user.setStatus(status);
+        user.setUpdateTime(LocalDateTime.now());
+        this.updateById(user);
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteUserByAdmin(Long userId) {
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        user.setIsDeleted(1);
+        user.setUpdateTime(LocalDateTime.now());
+        this.updateById(user);
     }
 
 }
