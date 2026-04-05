@@ -1,4 +1,5 @@
 package com.vagrant.nanoblog.service.impl;
+
 import com.vagrant.nanoblog.pojo.Comment;
 import com.vagrant.nanoblog.mapper.CommentMapper;
 import com.vagrant.nanoblog.service.ICommentService;
@@ -36,27 +37,31 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
     @Override
     public List<CommentVO> getCommentTree(Long articleId) {
-        // 1. 查根评论（parent_id = 0）
+        //查根评论（parent_id = 0）
         List<Comment> roots = this.list(
-            new QueryWrapper<Comment>()
-                .eq("article_id", articleId)
-                .eq("parent_id", 0)
-                .eq("is_deleted", 0)
-                .orderByAsc("create_time")
+                new QueryWrapper<Comment>()
+                        .eq("article_id", articleId)
+                        .eq("parent_id", 0)
+                        .eq("is_deleted", 0)
+                        .orderByAsc("create_time")
         );
 
-        // 2. 查所有回复（parent_id != 0）
+        //查所有回复（parent_id != 0）
         List<Comment> replies = this.list(
-            new QueryWrapper<Comment>()
-                .eq("article_id", articleId)
-                .ne("parent_id", 0)
-                .eq("is_deleted", 0)
+                new QueryWrapper<Comment>()
+                        .eq("article_id", articleId)
+                        .ne("parent_id", 0)
+                        .eq("is_deleted", 0)
+                        .orderByAsc("create_time")
         );
 
-        // 3. 收集所有用户 ID，批量查询用户信息（避免 N+1 问题）
+        //收集所有用户ID，批量查询用户信息
         Set<Long> userIds = new HashSet<>();
         roots.forEach(c -> userIds.add(c.getUserId()));
-        replies.forEach(c -> userIds.add(c.getUserId()));
+        replies.forEach(c -> {
+            userIds.add(c.getUserId());
+            if (c.getReplyToUserId() != null) userIds.add(c.getReplyToUserId());
+        });
 
         Map<Long, User> userMap;
         if (!userIds.isEmpty()) {
@@ -67,14 +72,14 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             userMap = new HashMap<>();
         }
 
-        // 4. 按 parentId 分组回复 - 修复 lambda 表达式变量问题
+        //按parentId分组回复
         Map<Long, List<CommentVO>> replyMap = replies.stream()
                 .collect(Collectors.groupingBy(
-                    Comment::getParentId,
-                    Collectors.mapping((Comment c) -> toVO(c, userMap), Collectors.toList())
+                        Comment::getParentId,
+                        Collectors.mapping((Comment c) -> toVO(c, userMap), Collectors.toList())
                 ));
 
-        // 5. 组装树形结构
+        //组装树形结构
         return roots.stream().map(r -> {
             CommentVO vo = toVO(r, userMap);
             vo.setReplies(replyMap.getOrDefault(r.getId(), Collections.emptyList()));
@@ -85,22 +90,23 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addComment(Long articleId, Long userId, String content, Long parentId) {
-        // 1. 写入评论
+    public void addComment(Long articleId, Long userId, String content, Long parentId, Long replyToUserId) {
+        //写入评论
         Comment comment = new Comment();
         comment.setArticleId(articleId);
         comment.setUserId(userId);
         comment.setCommentContent(content);
         comment.setParentId(parentId != null ? parentId : 0);
+        comment.setReplyToUserId(replyToUserId);
         comment.setStatus(1);
         comment.setLikeCount(0L);
         this.save(comment);
 
-        // 2. 文章评论数 +1
+        //文章评论数 +1
         articleMapper.update(null,
-            new UpdateWrapper<Article>()
-                .eq("id", articleId)
-                .setSql("comment_count = comment_count + 1")
+                new UpdateWrapper<Article>()
+                        .eq("id", articleId)
+                        .setSql("comment_count = comment_count + 1")
         );
     }
 
@@ -118,12 +124,35 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         // 软删除
         comment.setIsDeleted(1);
         this.updateById(comment);
+        //如果是父评论删除所有子评论
+        if (comment.getParentId() == null || comment.getParentId() == 0L) {
+            //查出所有子评论
+            List<Comment> children = this.list(
+                    new QueryWrapper<Comment>()
+                            .eq("parent_id", commentId)
+                            .eq("is_deleted", 0)
+            );
+            if (!children.isEmpty()) {
+                //批量软删除
+                children.forEach(c -> c.setIsDeleted(1));
+                this.updateBatchById(children);
 
-        // 文章评论数 -1
+                //评论数减去1+children.size()
+                long deleteCount = 1L + children.size();
+                articleMapper.update(null,
+                        new UpdateWrapper<Article>()
+                                .eq("id", comment.getArticleId())
+                                .setSql("comment_count = comment_count - " + deleteCount)
+                );
+                return; //直接返回
+            }
+        }
+
+        //无子评论情况文章评论数 -1
         articleMapper.update(null,
-            new UpdateWrapper<Article>()
-                .eq("id", comment.getArticleId())
-                .setSql("comment_count = comment_count - 1")
+                new UpdateWrapper<Article>()
+                        .eq("id", comment.getArticleId())
+                        .setSql("comment_count = comment_count - 1")
         );
     }
 
@@ -137,13 +166,18 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         vo.setCommentContent(comment.getCommentContent());
         vo.setCreateTime(comment.getCreateTime());
         vo.setLikeCount(comment.getLikeCount());
+        vo.setReplyToUserId(comment.getReplyToUserId());
 
         User user = userMap.get(comment.getUserId());
         if (user != null) {
             vo.setNickname(user.getNickname());
             vo.setAvatarUrl(user.getAvatarUrl());
         }
-
+        //查回复人昵称
+        if (comment.getReplyToUserId() != null) {
+            User replyTo = userMap.get(comment.getReplyToUserId());
+            if (replyTo != null) vo.setReplyToNickname(replyTo.getNickname());
+        }
         return vo;
     }
 }

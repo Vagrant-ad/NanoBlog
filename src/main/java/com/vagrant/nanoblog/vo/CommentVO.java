@@ -12,6 +12,9 @@ public class CommentVO {
     private String commentContent;
     private LocalDateTime createTime;
     private Long likeCount;
+    //回复用户字段
+    private Long replyToUserId;
+    private String replyToNickname;
     private List<CommentVO> replies;
 }
 

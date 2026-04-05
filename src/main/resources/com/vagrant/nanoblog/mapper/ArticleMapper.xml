@@ -52,7 +52,7 @@
             )
             )
         </if>
-
+        /*使用IN，包含子分类id*/
         <if test="categoryIds != null and categoryIds.size() > 0">
             AND a.category_id IN
             <foreach collection="categoryIds" item="id" open="(" separator="," close=")">

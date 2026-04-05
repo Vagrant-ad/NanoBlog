@@ -14,6 +14,6 @@ import java.util.List;
  */
 public interface ICommentService extends IService<Comment> {
     List<CommentVO> getCommentTree(Long articleId);
-    void addComment(Long articleId, Long userId, String content, Long parentId);
+    void addComment(Long articleId, Long userId, String content, Long parentId,Long replyToUserId);
     void deleteComment(Long commentId, Long userId);
 }
