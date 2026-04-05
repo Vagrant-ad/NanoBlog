@@ -207,14 +207,13 @@
     }
 
     function renderReplyItem(reply) {
-        const canDelete = state.currentUserId && String(reply.userId) === String(state.currentUserId);
-        //回复前缀（回复 @replyToNickname）
+        const canDelete = state.currentUserId &&
+            String(reply.userId) === String(state.currentUserId);
+        //回复前缀
         const prefix = reply.replyToNickname
-            ? `<span style="color:var(--brand-blue);font-weight:600;">
-               回复 @${escHtml(reply.replyToNickname)}：
-           </span>`
+            ? `<span style="color:var(--brand-blue);font-weight:600;">回复 @${escHtml(reply.replyToNickname)}：</span>`
             : '';
-        //拼接
+
         return `
         <div class="reply-item" id="comment-${reply.id}">
             <div class="reply-item-header">
@@ -229,8 +228,11 @@
                 <div class="comment-actions">
                     ${state.currentUserId ? `
                     <button class="btn-comment-action btn-reply"
-                            id="replyBtn-sub-${reply.id}"
-                            onclick="CommentModule.toggleSubReply(${reply.parentId}, ${reply.id}, '${escHtml(reply.nickname)}', ${reply.userId})">
+                            data-parent-id="${reply.parentId}"
+                            data-reply-id="${reply.id}"
+                            data-reply-nickname="${escHtml(reply.nickname || '')}"
+                            data-reply-user-id="${reply.userId}"
+                            onclick="CommentModule.handleSubReplyClick(this)">
                         回复
                     </button>` : ''}
                     ${canDelete ? `
@@ -371,7 +373,7 @@
             toast('请先登录后再回复');
             return;
         }
-
+        const wrap = document.getElementById(`replyEditor-${parentId}`);
         const input = document.getElementById(`replyInput-${parentId}`);
         const content = input ? input.value.trim() : '';
 
@@ -478,6 +480,14 @@
             CommentModule.toggleReplyEditor(parentId);
         }
         setTimeout(() => ta.focus(), 50);
+    };
+
+    CommentModule.handleSubReplyClick = function (btn) {
+        const parentId = btn.dataset.parentId;
+        const replyId = btn.dataset.replyId;
+        const replyNickname = btn.dataset.replyNickname;
+        const replyUserId = btn.dataset.replyUserId;
+        CommentModule.toggleSubReply(parentId, replyId, replyNickname, replyUserId);
     };
     // 入口: 在 post.js 初始化后调用
     CommentModule.init = function (articleId) {

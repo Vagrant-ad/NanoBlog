@@ -163,6 +163,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         CommentVO vo = new CommentVO();
         vo.setId(comment.getId());
         vo.setUserId(comment.getUserId());
+        vo.setParentId(comment.getParentId());
         vo.setCommentContent(comment.getCommentContent());
         vo.setCreateTime(comment.getCreateTime());
         vo.setLikeCount(comment.getLikeCount());
