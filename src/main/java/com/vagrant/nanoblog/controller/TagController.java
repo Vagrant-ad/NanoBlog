@@ -3,6 +3,7 @@ package com.vagrant.nanoblog.controller;
 import com.vagrant.nanoblog.common.ResponseResult;
 import com.vagrant.nanoblog.pojo.Tag;
 import com.vagrant.nanoblog.service.ITagService;
+import com.vagrant.nanoblog.vo.TagVO;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,8 +28,7 @@ public class TagController {
      * 获取所有标签（给标签云/标签页面使用）
      */
     @GetMapping("/list")
-    public ResponseResult<List<Tag>> getTagList() {
-        // 直接返回 Tag 列表，类型匹配
-        return ResponseResult.okResult(tagService.list());
+    public ResponseResult<List<TagVO>> getTagList() {
+        return ResponseResult.okResult(tagService.getTagsWithCount());
     }
 }

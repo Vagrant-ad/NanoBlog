@@ -29,8 +29,22 @@
       </a>
       <nav class="navbar-menu">
         <a href="/pages/front/index.html">首页</a>
-        <a href="#">分类</a>
-        <a href="#">标签</a>
+        <!-- 分类多级下拉 -->
+        <div class="nav-dropdown" id="categoryMenu">
+          <a href="#" class="nav-dropdown-trigger">
+            分类 <i class="layui-icon layui-icon-triangle-d" style="font-size:12px;"></i>
+          </a>
+          <ul class="dropdown-menu" id="categoryDropdown"></ul>
+        </div>
+
+
+        <!-- 标签云下拉 -->
+        <div class="nav-dropdown" id="tagMenu">
+          <a href="#" class="nav-dropdown-trigger">
+            标签 <i class="layui-icon layui-icon-triangle-d" style="font-size:12px;"></i>
+          </a>
+          <div class="dropdown-menu tag-cloud-menu" id="tagDropdown"></div>
+        </div>
       </nav>
     </div>
 

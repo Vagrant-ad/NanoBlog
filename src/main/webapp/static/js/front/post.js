@@ -51,6 +51,7 @@ layui.use(['layer', 'element'], function () {
 
                 renderArticle(articleData);
                 closeLoading();
+                CommentModule.init(state.articleId);
             })
             .fail(function () {
                 closeLoading();
@@ -145,7 +146,7 @@ layui.use(['layer', 'element'], function () {
         const title       = data.title || data.articleTitle || data.article_title || '未命名文章';
         const publishTime = formatTime(data.publishTime || data.publish_time);
         const viewCount   = data.viewCount ?? data.view_count ?? 0;
-        const tags        = data.tags || [];
+        const tags= data.tags || [];
 
         //优先用categoryId命中本地分类缓存
         const categoryId  = data.categoryId || data.category_id;

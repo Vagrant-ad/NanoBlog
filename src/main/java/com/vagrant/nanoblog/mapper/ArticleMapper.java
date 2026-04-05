@@ -29,7 +29,7 @@ public interface ArticleMapper extends BaseMapper<Article> {
     List<ArticleHomeVO> getHomeArticlePage(Page<ArticleHomeVO> page,
                                            @Param("keyword") String keyword,
                                            @Param("sortBy") String sortBy,
-                                           @Param("categoryId") Long categoryId,
+                                           @Param("categoryIds") List<Long> categoryIds,
                                            @Param("tagId") Long tagId);
 
     // 批量查文章标签，返回 articleId+tagName

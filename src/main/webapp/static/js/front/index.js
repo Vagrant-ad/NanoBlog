@@ -236,7 +236,8 @@
                     const cat = result.data.find(c => String(c.id) === currentCategoryId);
                     if (cat) showFilterBadge('分类', cat.categoryName, header);
                 });
-        } else if (currentTagId) {
+        }
+        if (currentTagId) {
             fetch('/tag/list')
                 .then(res => res.json())
                 .then(result => {
@@ -246,14 +247,20 @@
                 });
         }
     }
-
+    //显示筛选条件
     function showFilterBadge(type, name, header) {
+        //构建清除当前筛选条件后的URL
+        const params = new URLSearchParams(window.location.search);
+        const paramKey = type === '分类' ? 'categoryId' : 'tagId';
+        params.delete(paramKey);
+        const clearUrl = '/pages/front/index.html' + (params.toString() ? '?' + params.toString() : '');
+        //渲染
         const badge = document.createElement('div');
         badge.className = 'filter-badge';
         badge.innerHTML = `
         <span class="filter-badge-type">${type}</span>
         <span class="filter-badge-name">${name}</span>
-        <a href="/pages/front/index.html" class="filter-badge-clear" title="清除筛选">×</a>
+        <a href="${clearUrl}" class="filter-badge-clear" title="清除筛选">×</a>
     `;
         header.appendChild(badge);
     }

@@ -13,12 +13,15 @@
     <!--引入mono字体样式-->
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono/index.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!--font-awesome图标-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- KaTeX 数学公式样式 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
 
-    <!-- 引入通用样式与文章专属样式 -->
+    <!-- 引入通用样式与专属样式 -->
     <link rel="stylesheet" href="../../static/css/common/common.css">
     <link rel="stylesheet" href="../../static/css/front/post.css">
+    <link rel="stylesheet" href="../../static/css/front/comment.css">
 </head>
 <body>
 
@@ -32,8 +35,22 @@
             </a>
             <nav class="navbar-menu">
                 <a href="/pages/front/index.html">首页</a>
-                <a href="#">分类</a>
-                <a href="#">标签</a>
+                <!-- 分类多级下拉 -->
+                <div class="nav-dropdown" id="categoryMenu">
+                    <a href="#" class="nav-dropdown-trigger">
+                        分类 <i class="layui-icon layui-icon-triangle-d" style="font-size:12px;"></i>
+                    </a>
+                    <ul class="dropdown-menu" id="categoryDropdown"></ul>
+                </div>
+
+
+                <!-- 标签云下拉 -->
+                <div class="nav-dropdown" id="tagMenu">
+                    <a href="#" class="nav-dropdown-trigger">
+                        标签 <i class="layui-icon layui-icon-triangle-d" style="font-size:12px;"></i>
+                    </a>
+                    <div class="dropdown-menu tag-cloud-menu" id="tagDropdown"></div>
+                </div>
             </nav>
         </div>
 
@@ -71,7 +88,7 @@
                 <span class="meta-divider"></span>
                 <span class="meta-item" id="category"></span>
                 <span class="meta-divider"></span>
-                <span class="meta-item"><span id="viewCount"></span> 阅读</span>
+                <span class="meta-item"><i class="fas fa-clock"></i><span id="viewCount"></span></span>
             </div>
 
             <div class="article-tags" id="tags"></div>
@@ -83,12 +100,21 @@
         <!-- 底部：文章导航 -->
         <footer class="article-footer">
             <div class="post-navigation">
-                <!-- 注意：修改了 class，避免和 navbar 的 nav-link 冲突 -->
                 <a href="#" id="prev-post" class="post-nav-btn">← 上一篇</a>
                 <a href="#" id="next-post" class="post-nav-btn">下一篇 →</a>
             </div>
         </footer>
+        <!--评论区-->
+        <section class="comment-section">
+            <div class="comment-section-header">
+                <h2>评论</h2>
+                <span class="comment-total-badge" id="commentTotalBadge">0</span>
+            </div>
+            <div id="commentEditorWrap"></div>
+            <div id="commentList" class="comment-list"></div>
+        </section>
     </article>
+
 
     <!-- 右侧：固定侧边栏目录 -->
     <aside class="article-sidebar">
@@ -119,6 +145,6 @@
 <!-- 引入文章专属 JS -->
 <script src="/static/js/common/common.js"></script>
 <script src="/static/js/front/post.js"></script>
-
+<script src="/static/js/front/comment.js"></script>
 </body>
 </html>

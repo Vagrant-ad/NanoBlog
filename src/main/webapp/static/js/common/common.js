@@ -240,7 +240,7 @@
                     const subItems = hasChildren
                         ? parent.children.map(child => `
                         <li class="dropdown-subitem"
-                            onclick="location.href='/pages/front/index.html?categoryId=${child.id}'">
+                            data-category-id="${child.id}">
                             ${child.categoryName}
                         </li>`).join('')
                         : '';
@@ -252,13 +252,41 @@
                     const arrow = hasChildren ? `<span class="arrow">▶</span>` : '';
 
                     return `
-                    <li class="dropdown-item"
-                        onclick="${!hasChildren ? `location.href='/pages/front/index.html?categoryId=${parent.id}'` : ''}">
+                    <li class="dropdown-item" data-category-id="${parent.id}">
                         ${parent.categoryName}
                         ${arrow}
                         ${submenu}
                     </li>`;
                 }).join('');
+
+                // 统一用事件委托处理点击，点击时动态读取当前URL参数
+                dropdown.addEventListener('click', function (e) {
+                    const target = e.target.closest('[data-category-id]');
+                    if (!target) return;
+                    // 判断子父分类项
+                    const isSubItem = target.classList.contains('dropdown-subitem');
+                    const isParentItem = target.classList.contains('dropdown-item');
+
+                    if (!isSubItem && !isParentItem) return;
+
+                    //子分类直接用自身的categoryId跳转
+                    if (isSubItem) {
+                        const categoryId = target.dataset.categoryId;
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('categoryId', categoryId);
+                        location.href = '/pages/front/index.html?' + params.toString();
+                        return;
+                    }
+
+                    //父分类确保点击的不是箭头展开区域以外的子菜单触发
+                    // 点到.dropdown-item就跳转
+                    if (isParentItem && !e.target.closest('.dropdown-submenu')) {
+                        const categoryId = target.dataset.categoryId;
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('categoryId', categoryId);
+                        location.href = '/pages/front/index.html?' + params.toString();
+                    }
+                });
             });
     };
     //初始化标签菜单
@@ -270,17 +298,38 @@
             .then(res => res.json())
             .then(result => {
                 if (result.code !== 200 || !result.data) return;
-                //只取前15个热门标签显示在导航栏
                 const tags = result.data.slice(0, 15);
                 container.innerHTML = tags.map(tag => `
-                <a class="tag-cloud-item" 
-                   href="/pages/front/index.html?tagId=${tag.id}"
+                <a class="tag-cloud-item"
+                   data-tag-id="${tag.id}"
                    style="${tag.tagColor ? 'border-color:' + tag.tagColor : ''}">
                     ${tag.tagName}
                     <span class="tag-count">${tag.articleCount || 0}</span>
                 </a>
             `).join('');
+
+                // 点击时动态读取当前URL参数
+                container.addEventListener('click', function (e) {
+                    const target = e.target.closest('[data-tag-id]');
+                    if (!target) return;
+                    const tagId = target.dataset.tagId;
+                    const params = new URLSearchParams(window.location.search);
+                    params.set('tagId', tagId);
+                    location.href = '/pages/front/index.html?' + params.toString();
+                });
             });
+    };
+    // 工具函数构建筛选跳转URL，保留已有参数并合并新参数
+    NanoBlog.buildFilterUrl = function (newParams) {
+        const params = new URLSearchParams(window.location.search);
+        Object.entries(newParams).forEach(([key, value]) => {
+            if (value !== null && value !== undefined) {
+                params.set(key, value);
+            } else {
+                params.delete(key);
+            }
+        });
+        return '/pages/front/index.html?' + params.toString();
     };
 
     // 页面初始化入口
@@ -289,6 +338,7 @@
         NanoBlog.bindNavbarScrollEffect();
         NanoBlog.initNavUser();
         NanoBlog.initCategoryMenu();
+        NanoBlog.initTagMenu();
     };
 
     window.NanoBlog = NanoBlog;

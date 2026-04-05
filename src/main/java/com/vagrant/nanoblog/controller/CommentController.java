@@ -46,6 +46,7 @@ public class CommentController {
      *   "articleId": 1,
      *   "commentContent": "这是评论内容",
      *   "parentId": 0  (可选，根评论传 0 或不传，子评论传父评论 ID)
+     *   "replyToUserId: 0
      * }
      */
     @PostMapping("/add")
@@ -58,8 +59,9 @@ public class CommentController {
         String content = (String) params.get("commentContent");
         Long parentId = params.get("parentId") != null ? 
                          Long.valueOf(params.get("parentId").toString()) : 0;
-        
-        commentService.addComment(articleId, userId, content, parentId);
+        Long replyToUserId = params.get("replyToUserId") != null
+                ? Long.valueOf(params.get("replyToUserId").toString()) : null;
+        commentService.addComment(articleId, userId, content, parentId,replyToUserId);
         return ResponseResult.okResult();
     }
 
