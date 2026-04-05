@@ -263,12 +263,29 @@
                 dropdown.addEventListener('click', function (e) {
                     const target = e.target.closest('[data-category-id]');
                     if (!target) return;
-                    //子菜单点击事件不触发父分类跳转
-                    if (e.target.closest('.dropdown-submenu')) return;
-                    const categoryId = target.dataset.categoryId;
-                    const params = new URLSearchParams(window.location.search);
-                    params.set('categoryId', categoryId);
-                    location.href = '/pages/front/index.html?' + params.toString();
+                    // 判断子父分类项
+                    const isSubItem = target.classList.contains('dropdown-subitem');
+                    const isParentItem = target.classList.contains('dropdown-item');
+
+                    if (!isSubItem && !isParentItem) return;
+
+                    //子分类直接用自身的categoryId跳转
+                    if (isSubItem) {
+                        const categoryId = target.dataset.categoryId;
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('categoryId', categoryId);
+                        location.href = '/pages/front/index.html?' + params.toString();
+                        return;
+                    }
+
+                    //父分类确保点击的不是箭头展开区域以外的子菜单触发
+                    // 点到.dropdown-item就跳转
+                    if (isParentItem && !e.target.closest('.dropdown-submenu')) {
+                        const categoryId = target.dataset.categoryId;
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('categoryId', categoryId);
+                        location.href = '/pages/front/index.html?' + params.toString();
+                    }
                 });
             });
     };

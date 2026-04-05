@@ -4,14 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.vagrant.nanoblog.dto.ArticlePublishDTO;
-import com.vagrant.nanoblog.mapper.ArticleContentMapper;
-import com.vagrant.nanoblog.mapper.ArticleTagMapper;
-import com.vagrant.nanoblog.mapper.TagMapper;
-import com.vagrant.nanoblog.pojo.Article;
-import com.vagrant.nanoblog.mapper.ArticleMapper;
-import com.vagrant.nanoblog.pojo.ArticleContent;
-import com.vagrant.nanoblog.pojo.ArticleTag;
-import com.vagrant.nanoblog.pojo.Tag;
+import com.vagrant.nanoblog.mapper.*;
+import com.vagrant.nanoblog.pojo.*;
 import com.vagrant.nanoblog.service.IArticleService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.vagrant.nanoblog.vo.ArticleDetailVO;
@@ -32,10 +26,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -55,7 +46,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private final TagMapper tagMapper;
     @Getter
     private final ArticleTagMapper articleTagMapper;
-
+    @Getter
+    private final CategoryMapper categoryMapper;
     private static final Parser MD_PARSER = Parser.builder()
             .extensions(Arrays.asList(
                     TablesExtension.create(),
@@ -245,9 +237,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (size == null || size < 1 || size > 100) size = 8;
 
         Page<ArticleHomeVO> pageInfo = new Page<>(page, size);
-
+        //包含自身及其子分类的列表
+        List<Long> categoryIds = null;
+        if (categoryId != null) {
+            categoryIds = buildCategoryIdList(categoryId);
+        }
         // 1. 查首页文章基础数据
-        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo,keyword, sortBy,categoryId,tagId);
+        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo,keyword, sortBy,categoryIds,tagId);
 
         if (records == null || records.isEmpty()) {
             pageInfo.setRecords(records);
@@ -400,10 +396,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public IPage<ArticleListVO> listByCategory(Long categoryId, Integer pageNum, Integer pageSize) {
         Page<Article> page = new Page<>(pageNum, pageSize);
 
+        // 查询该分类下的所有子分类ID
+        List<Long> categoryIds = buildCategoryIdList(categoryId);
+
         QueryWrapper<Article> wrapper = new QueryWrapper<Article>()
                 .eq("status", 1)
                 .eq("is_deleted", 0)
-                .eq("category_id", categoryId)
+                .in("category_id", categoryIds) //IN查询
                 .orderByDesc("publish_time");
 
         IPage<Article> articlePage = this.page(page, wrapper);
@@ -428,6 +427,23 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         resultPage.setCurrent(articlePage.getCurrent());
 
         return resultPage;
+    }
+
+    //构建分类ID列表：包含自身及所有子分类ID
+    private List<Long> buildCategoryIdList(Long categoryId) {
+        List<Long> ids = new ArrayList<>();
+        ids.add(categoryId);
+
+        // 查子分类（category表中 parent_id = categoryId 且未删除的）
+        List<Category> children = categoryMapper.selectList(
+                new QueryWrapper<Category>()
+                        .eq("parent_id", categoryId)
+                        .eq("is_deleted", 0)
+                        .eq("status", 1)
+        );
+
+        children.forEach(c -> ids.add(c.getId()));
+        return ids;
     }
 
     @Override
