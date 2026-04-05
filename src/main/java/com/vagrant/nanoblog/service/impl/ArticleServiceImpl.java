@@ -496,4 +496,99 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         result.setRecords(voList);
         return result;
     }
+
+    // ===================== 【后台管理相关方法实现】 =====================
+    
+    @Override
+    public IPage<ArticleManageVO> getAdminArticleList(Integer page, Integer size, Integer status, String title) {
+        if (page == null || page < 1) page = 1;
+        if (size == null || size < 1 || size > 100) size = 10;
+        
+        Page<Article> articlePage = new Page<>(page, size);
+        QueryWrapper<Article> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("is_deleted", 0); // 只查未删除的
+        
+        // 按状态筛选
+        if (status != null) {
+            queryWrapper.eq("status", status);
+        }
+        
+        // 按标题搜索
+        if (StringUtils.hasText(title)) {
+            queryWrapper.like("article_title", title);
+        }
+        
+        queryWrapper.orderByDesc("create_time");
+        IPage<Article> articlePageResult = this.page(articlePage, queryWrapper);
+        
+        // 转换为 VO
+        Page<ArticleManageVO> result = new Page<>();
+        result.setTotal(articlePageResult.getTotal());
+        result.setCurrent(articlePageResult.getCurrent());
+        result.setSize(articlePageResult.getSize());
+        
+        if (articlePageResult.getRecords().isEmpty()) {
+            result.setRecords(Collections.emptyList());
+            return result;
+        }
+        
+        // 批量查标签
+        List<Long> ids = articlePageResult.getRecords().stream()
+                .map(Article::getId).collect(Collectors.toList());
+        List<Map<String, Object>> tagRows = articleMapper.getTagsByArticleIds(ids);
+        Map<Long, List<String>> tagMap = tagRows.stream().collect(Collectors.groupingBy(
+                row -> ((Number) row.get("articleId")).longValue(),
+                Collectors.mapping(row -> (String) row.get("tagName"), Collectors.toList())
+        ));
+        
+        List<ArticleManageVO> voList = articlePageResult.getRecords().stream().map(a -> {
+            ArticleManageVO vo = new ArticleManageVO();
+            vo.setId(a.getId());
+            vo.setArticleTitle(a.getArticleTitle());
+            vo.setArticleSummary(a.getArticleSummary());
+            vo.setCoverImageUrl(a.getCoverImageUrl());
+            vo.setStatus(a.getStatus());
+            vo.setCategoryId(a.getCategoryId());
+            vo.setViewCount(a.getViewCount());
+            vo.setLikeCount(a.getLikeCount());
+            vo.setCommentCount(a.getCommentCount());
+            vo.setCreateTime(a.getCreateTime());
+            vo.setPublishTime(a.getPublishTime());
+            vo.setTags(tagMap.getOrDefault(a.getId(), Collections.emptyList()));
+            return vo;
+        }).collect(Collectors.toList());
+        
+        result.setRecords(voList);
+        return result;
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateArticleStatusByAdmin(Long articleId, Integer status) {
+        Article article = this.getById(articleId);
+        if (article == null) {
+            throw new RuntimeException("文章不存在");
+        }
+        article.setStatus(status);
+        article.setUpdateTime(LocalDateTime.now());
+        
+        // 如果发布，设置发布时间
+        if (status == 1 && article.getPublishTime() == null) {
+            article.setPublishTime(LocalDateTime.now());
+        }
+        
+        this.updateById(article);
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteArticleByAdmin(Long articleId) {
+        Article article = this.getById(articleId);
+        if (article == null) {
+            throw new RuntimeException("文章不存在");
+        }
+        article.setIsDeleted(1);
+        article.setUpdateTime(LocalDateTime.now());
+        this.updateById(article);
+    }
 }

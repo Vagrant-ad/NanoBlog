@@ -1,5 +1,7 @@
 package com.vagrant.nanoblog.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.vagrant.nanoblog.pojo.Comment;
 import com.vagrant.nanoblog.mapper.CommentMapper;
 import com.vagrant.nanoblog.service.ICommentService;
@@ -11,6 +13,7 @@ import com.vagrant.nanoblog.mapper.ArticleMapper;
 import com.vagrant.nanoblog.mapper.UserMapper;
 import com.vagrant.nanoblog.pojo.Article;
 import com.vagrant.nanoblog.pojo.User;
+import com.vagrant.nanoblog.vo.CommentManageVO;
 import com.vagrant.nanoblog.vo.CommentVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -180,5 +183,104 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             if (replyTo != null) vo.setReplyToNickname(replyTo.getNickname());
         }
         return vo;
+    }
+
+    // ===================== 【后台管理相关方法实现】 =====================
+    
+    @Override
+    public IPage<CommentManageVO> getAdminCommentList(Integer page, Integer size, Long articleId) {
+        if (page == null || page < 1) page = 1;
+        if (size == null || size < 1 || size > 100) size = 10;
+        
+        Page<Comment> commentPage = new Page<>(page, size);
+        QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("is_deleted", 0); // 只查未删除的
+        
+        // 支持按文章 ID 筛选
+        if (articleId != null) {
+            queryWrapper.eq("article_id", articleId);
+        }
+        
+        queryWrapper.orderByDesc("create_time");
+        IPage<Comment> commentPageResult = this.page(commentPage, queryWrapper);
+        
+        // 转换为 VO（需要 JOIN user 和 article 表）
+        Page<CommentManageVO> result = new Page<>();
+        result.setTotal(commentPage.getTotal());
+        result.setCurrent(commentPage.getCurrent());
+        result.setSize(commentPage.getSize());
+        
+        if (commentPageResult.getRecords().isEmpty()) {
+            result.setRecords(Collections.emptyList());
+            return result;
+        }
+        
+        // 批量查询用户信息和文章信息
+        Set<Long> userIds = commentPageResult.getRecords().stream()
+                .map(Comment::getUserId).collect(Collectors.toSet());
+        Set<Long> articleIds = commentPageResult.getRecords().stream()
+                .map(Comment::getArticleId).collect(Collectors.toSet());
+        
+        final Map<Long, User> userMapFinal;
+        Map<Long, User> userMap = new HashMap<>();
+        if (!userIds.isEmpty()) {
+            List<User> users = userMapper.selectBatchIds(userIds);
+            userMap = users.stream().collect(Collectors.toMap(User::getId, u -> u));
+        }
+        userMapFinal = userMap;
+        
+        final Map<Long, Article> articleMapFinal;
+        Map<Long, Article> articleMap = new HashMap<>();
+        if (!articleIds.isEmpty()) {
+            List<Article> articles = articleMapper.selectBatchIds(articleIds);
+            articleMap = articles.stream().collect(Collectors.toMap(Article::getId, a -> a));
+        }
+        articleMapFinal = articleMap;
+        
+        List<CommentManageVO> voList = commentPageResult.getRecords().stream().map(c -> {
+            CommentManageVO vo = new CommentManageVO();
+            vo.setId(c.getId());
+            vo.setCommentContent(c.getCommentContent());
+            vo.setCreateTime(c.getCreateTime());
+            vo.setStatus(c.getStatus());
+            vo.setArticleId(c.getArticleId());
+            
+            // 设置评论者昵称
+            User user = userMapFinal.get(c.getUserId());
+            if (user != null) {
+                vo.setAuthorNickname(user.getNickname());
+            }
+            
+            // 设置文章标题
+            Article article = articleMapFinal.get(c.getArticleId());
+            if (article != null) {
+                vo.setArticleTitle(article.getArticleTitle());
+            }
+            
+            return vo;
+        }).collect(Collectors.toList());
+        
+        result.setRecords(voList);
+        return result;
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteCommentByAdmin(Long commentId) {
+        Comment comment = this.getById(commentId);
+        if (comment == null || comment.getIsDeleted() == 1) {
+            throw new RuntimeException("评论不存在");
+        }
+        
+        // 软删除
+        comment.setIsDeleted(1);
+        this.updateById(comment);
+        
+        // 文章评论数 -1
+        articleMapper.update(null,
+            new UpdateWrapper<Article>()
+                .eq("id", comment.getArticleId())
+                .setSql("comment_count = comment_count - 1")
+        );
     }
 }
