@@ -659,3 +659,18 @@ a {
 .nav-dropdown:hover .dropdown-menu.tag-cloud-menu {
     display: flex;
 }
+
+/*标签云下拉查看全部链接*/
+.tag-cloud-all {
+    font-size: 0.78rem !important;
+    color: var(--text-muted) !important;
+    border-color: #e2e8f0 !important;
+    background: transparent !important;
+    pointer-events: auto;
+}
+.tag-cloud-all:hover {
+    background: var(--brand-mint-light) !important;
+    color: var(--brand-blue) !important;
+    border-color: var(--brand-mint) !important;
+    opacity: 1 !important;
+}
