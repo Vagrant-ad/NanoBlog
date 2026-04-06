@@ -34,7 +34,7 @@
                 <!-- 分类多级下拉 -->
                 <div class="nav-dropdown" id="categoryMenu">
                     <a href="#" class="nav-dropdown-trigger">
-                        分类 <i class="layui-icon layui-icon-triangle-d" style="font-size:12px;"></i>
+                        分类
                     </a>
                     <ul class="dropdown-menu" id="categoryDropdown"></ul>
                 </div>
@@ -42,8 +42,8 @@
 
                 <!-- 标签云下拉 -->
                 <div class="nav-dropdown" id="tagMenu">
-                    <a href="#" class="nav-dropdown-trigger">
-                        标签 <i class="layui-icon layui-icon-triangle-d" style="font-size:12px;"></i>
+                    <a href="/pages/front/tags.html" class="nav-dropdown-trigger">
+                        标签
                     </a>
                     <div class="dropdown-menu tag-cloud-menu" id="tagDropdown"></div>
                 </div>
@@ -70,6 +70,50 @@
         </div>
     </div>
 </header>
+
+<section class="index-hero">
+    <div class="index-hero-inner">
+        <!-- 左侧文字 -->
+        <div class="index-hero-text">
+            <p class="index-hero-badge">
+                <i class="fas fa-pen-nib"></i> Stay Hungry · Stay Hardcore
+            </p>
+            <h1 class="index-hero-title">
+                连接技术碎片<br>
+                <span>共建知识图谱</span>
+            </h1>
+            <p class="index-hero-sub">
+                跨越全栈视界，捕捉前沿灵感<br>
+                让优质的文字，连接每一位纯粹的开发者
+            </p>
+        </div>
+
+        <!-- 右侧统计卡片 -->
+        <div class="index-hero-stats">
+            <div class="hero-stat-card">
+                <div class="hero-stat-icon"><i class="fas fa-file-alt"></i></div>
+                <div class="hero-stat-num" id="heroArticleCount">--</div>
+                <div class="hero-stat-label">篇文章</div>
+            </div>
+            <div class="hero-stat-card">
+                <div class="hero-stat-icon"><i class="fas fa-users"></i></div>
+                <div class="hero-stat-num" id="heroUserCount">--</div>
+                <div class="hero-stat-label">位作者</div>
+            </div>
+            <div class="hero-stat-card">
+                <div class="hero-stat-icon"><i class="fas fa-tags"></i></div>
+                <div class="hero-stat-num" id="heroTagCount">--</div>
+                <div class="hero-stat-label">个标签</div>
+            </div>
+            <div class="hero-stat-card">
+                <div class="hero-stat-icon"><i class="fas fa-comments"></i></div>
+                <div class="hero-stat-num" id="heroCommentCount">--</div>
+                <div class="hero-stat-label">条评论</div>
+            </div>
+        </div>
+    </div>
+
+</section>
 
 <!-- 主体 -->
 <main class="page-main">
