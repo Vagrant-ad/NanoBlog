@@ -241,4 +241,28 @@ public class UserController {
         return result;
     }
 
+    /**
+     * 获取用户公开资料（访客可访问，不返回敏感字段）
+     * GET /user/publicProfile?id=xxx
+     */
+    @GetMapping("/publicProfile")
+    @ResponseBody
+    public ResponseResult getPublicProfile(@RequestParam Long id) {
+        User user = userService.getById(id);
+        if (user == null || user.getIsDeleted() == 1) {
+            return ResponseResult.errorResult(404, "用户不存在");
+        }
+        // 脱敏：清除密码哈希
+        user.setPasswordHash(null);
+
+        UserRole userRole = userRoleMapper.selectOne(
+                new QueryWrapper<UserRole>().eq("user_id", id)
+        );
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("user", user);
+        result.put("roleId", userRole != null ? userRole.getRoleId() : 1);
+        return ResponseResult.okResult(result);
+    }
+
 }

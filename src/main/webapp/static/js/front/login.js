@@ -103,6 +103,7 @@ document.getElementById("loginBtn").onclick = function() {
                 profileXhr.open("GET", "/user/getProfile", true);
                 profileXhr.send();
 
+
             } else {
                 layer.msg(res.msg, {icon: 2});
             }

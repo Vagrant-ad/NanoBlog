@@ -85,9 +85,15 @@ public class ArticleController {
     @GetMapping("/my/published")
     public ResponseResult<IPage<ArticleManageVO>> myPublished(
             @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer size, HttpSession session) {
-        Long userId = getCurrentUserId(session);
-        return ResponseResult.okResult(articleService.getMyPublished(userId, page, size));
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) Long userId,   // 新增：访客查看他人时传入
+            HttpSession session) {
+        Long targetUserId = userId;
+        if (targetUserId == null) {
+            // 未传 userId，使用当前登录用户
+            targetUserId = getCurrentUserId(session);
+        }
+        return ResponseResult.okResult(articleService.getMyPublished(targetUserId, page, size));
     }
 
     @GetMapping("/my/drafts")
