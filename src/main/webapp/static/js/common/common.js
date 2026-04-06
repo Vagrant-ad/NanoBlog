@@ -1,9 +1,26 @@
 (function (window, document) {
     'use strict';
 
+    function detectApiBase() {
+        const fallback = '';
+        const script = document.currentScript
+            || Array.from(document.getElementsByTagName('script'))
+                .find(s => (s.src || '').includes('/static/js/common/common.js'));
+
+        if (!script || !script.src) return fallback;
+
+        try {
+            const pathname = new URL(script.src, window.location.origin).pathname;
+            const staticIndex = pathname.indexOf('/static/');
+            return staticIndex > 0 ? pathname.substring(0, staticIndex) : fallback;
+        } catch (e) {
+            return fallback;
+        }
+    }
+
     // 前端通用工具
     const NanoBlog = {
-        apiBase: ''
+        apiBase: detectApiBase()
     };
 
     // 统一请求封装
@@ -163,32 +180,33 @@
         const container = document.getElementById('navUserArea');
         if (!container) return;
 
-        fetch('/user/getProfile', { credentials: 'same-origin' })
+        fetch(NanoBlog.apiBase + '/user/getProfile', { credentials: 'same-origin' })
             .then(res => res.json())
             .then(result => {
                 if (result.code === 200 && result.data) {
                     const user = result.data.user;
-                    const avatar = user.avatarUrl || '/static/images/avatar-default.png';
+                    const defaultAvatar = NanoBlog.apiBase + '/static/images/avatar-default.png';
+                    const avatar = user.avatarUrl || defaultAvatar;
                     const nickname = user.nickname || user.username || '用户';
 
                     container.innerHTML = `
                     <div class="nav-user-dropdown">
                         <img class="nav-avatar" src="${avatar}" alt="${nickname}"
-                             onerror="this.src='/static/images/avatar-default.png'">
+                             onerror="this.src='${defaultAvatar}'">
                         <div class="nav-user-menu">
                             <div class="nav-user-info">
                                 <img src="${avatar}" alt="${nickname}"
-                                     onerror="this.src='/static/images/avatar-default.png'">
+                                     onerror="this.src='${defaultAvatar}'">
                                 <div>
                                     <div class="nav-user-name">${nickname}</div>
                                     <div class="nav-user-username">@${user.username}</div>
                                 </div>
                             </div>
                             <div class="nav-menu-divider"></div>
-                            <a class="nav-menu-item" href="/pages/front/profile.html">
+                            <a class="nav-menu-item" href="${NanoBlog.apiBase}/pages/front/profile.html">
                                 <i class="layui-icon layui-icon-username"></i> 个人资料
                             </a>
-                            <a class="nav-menu-item" href="/pages/front/editor.html">
+                            <a class="nav-menu-item" href="${NanoBlog.apiBase}/pages/front/editor.html">
                                 <i class="layui-icon layui-icon-edit"></i> 写文章
                             </a>
                             <div class="nav-menu-divider"></div>
@@ -201,25 +219,25 @@
 
                     // 退出登录
                     document.getElementById('navLogoutBtn').addEventListener('click', function () {
-                        fetch('/user/logout', { method: 'POST', credentials: 'same-origin' })
+                        fetch(NanoBlog.apiBase + '/user/logout', { method: 'POST', credentials: 'same-origin' })
                             .then(() => {
-                                window.location.href = '/pages/front/index.html';
+                                window.location.href = NanoBlog.apiBase + '/pages/front/index.html';
                             });
                     });
 
                 } else {
                     // 未登录时显示登录/注册入口
                     container.innerHTML = `
-                    <a href="/pages/front/login.html" class="nav-link">登录</a>
-                    <a href="/pages/front/register.html" class="nav-button">注册</a>
+                    <a href="${NanoBlog.apiBase}/pages/front/login.html" class="nav-link">登录</a>
+                    <a href="${NanoBlog.apiBase}/pages/front/register.html" class="nav-button">注册</a>
                 `;
                 }
             })
             .catch(() => {
                 // 获取用户信息失败时按未登录处理
                 container.innerHTML = `
-                <a href="/pages/front/login.html" class="nav-link">登录</a>
-                <a href="/pages/front/register.html" class="nav-button">注册</a>
+                <a href="${NanoBlog.apiBase}/pages/front/login.html" class="nav-link">登录</a>
+                <a href="${NanoBlog.apiBase}/pages/front/register.html" class="nav-button">注册</a>
             `;
             });
     };
@@ -228,7 +246,7 @@
         const dropdown = document.getElementById('categoryDropdown');
         if (!dropdown) return;
 
-        fetch('/category/tree')
+        fetch(NanoBlog.apiBase + '/category/tree')
             .then(res => res.json())
             .then(result => {
                 if (result.code !== 200 || !result.data) return;
@@ -274,7 +292,7 @@
                         const categoryId = target.dataset.categoryId;
                         const params = new URLSearchParams(window.location.search);
                         params.set('categoryId', categoryId);
-                        location.href = '/pages/front/index.html?' + params.toString();
+                        location.href = NanoBlog.apiBase + '/pages/front/index.html?' + params.toString();
                         return;
                     }
 
@@ -284,7 +302,7 @@
                         const categoryId = target.dataset.categoryId;
                         const params = new URLSearchParams(window.location.search);
                         params.set('categoryId', categoryId);
-                        location.href = '/pages/front/index.html?' + params.toString();
+                        location.href = NanoBlog.apiBase + '/pages/front/index.html?' + params.toString();
                     }
                 });
             });
@@ -294,7 +312,7 @@
         const container = document.getElementById('tagDropdown');
         if (!container) return;
 
-        fetch('/tag/list')
+        fetch(NanoBlog.apiBase + '/tag/list')
             .then(res => res.json())
             .then(result => {
                 if (result.code !== 200 || !result.data) return;
@@ -307,7 +325,7 @@
                     <span class="tag-count">${tag.articleCount || 0}</span>
                 </a>
             `).join('') + `
-                <a href="/pages/front/tags.html"
+                <a href="${NanoBlog.apiBase}/pages/front/tags.html"
                     class="tag-cloud-item tag-cloud-all"
                     style="border-style:dashed; opacity:0.75; width:100%; justify-content:center; margin-top:4px;">
                     <i class="layui-icon layui-icon-more" style="font-size:0.8rem;"></i>
@@ -321,7 +339,7 @@
                     const tagId = target.dataset.tagId;
                     const params = new URLSearchParams(window.location.search);
                     params.set('tagId', tagId);
-                    location.href = '/pages/front/index.html?' + params.toString();
+                    location.href = NanoBlog.apiBase + '/pages/front/index.html?' + params.toString();
                 });
             });
     };
@@ -335,7 +353,7 @@
                 params.delete(key);
             }
         });
-        return '/pages/front/index.html?' + params.toString();
+        return NanoBlog.apiBase + '/pages/front/index.html?' + params.toString();
     };
 
     // 页面初始化入口

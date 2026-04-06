@@ -86,7 +86,7 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
     function initCoverUpload() {
         upload.render({
             elem: '#coverUploadBtn',
-            url: '/attachment/upload/image',
+            url: NanoBlog.apiBase + '/attachment/upload/image',
             accept: 'images',
             done: function(res) {
                 if (res.code === 200 || res.code === 0) {
@@ -131,7 +131,7 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
 
         const loadIdx = layer.load(2);
         //根据是否有 EDIT_ID 决定走新建还是更新
-        const url    = EDIT_ID ? '/article/' + EDIT_ID : '/article/publish';
+        const url    = EDIT_ID ? (NanoBlog.apiBase + '/article/' + EDIT_ID) : (NanoBlog.apiBase + '/article/publish');
         const method = EDIT_ID ? 'PUT' : 'POST';
         $.ajax({
             url: url,
@@ -143,7 +143,7 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
                 if (res.code === 200) {
                     easyMDE.clearAutosavedValue();
                     if (status === 1) {
-                        layer.msg('发布成功！', {icon: 1}, () => location.href = '/pages/front/index.html');
+                        layer.msg('发布成功！', {icon: 1}, () => location.href = NanoBlog.apiBase + '/pages/front/index.html');
                     } else {
                         layer.msg('草稿已保存', {icon: 1});
                     }
@@ -161,7 +161,7 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
     function loadArticleForEdit(id) {
         const loadIdx = layer.load(2);
         $.ajax({
-            url: '/article/' + id,
+            url: NanoBlog.apiBase + '/article/' + id,
             type: 'GET',
             success: function(res) {
                 layer.close(loadIdx);
@@ -221,7 +221,7 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
     }
     function loadCategories() {
         $.ajax({
-            url: '/category/list',
+            url: NanoBlog.apiBase + '/category/list',
             type: 'GET',
             success: function(res) {
                 if (res.code === 200 && res.data) {

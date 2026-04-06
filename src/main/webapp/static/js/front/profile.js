@@ -51,6 +51,17 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
+function resolveApiBase() {
+    if (window.NanoBlog && typeof window.NanoBlog.apiBase === 'string') {
+        return window.NanoBlog.apiBase;
+    }
+    var path = window.location.pathname || '';
+    var idx = path.indexOf('/pages/');
+    return idx > 0 ? path.substring(0, idx) : '';
+}
+
+var API_BASE = resolveApiBase();
+
 /* ================================================================
    页面初始化
 ================================================================ */
@@ -65,7 +76,7 @@ window.onload = function () {
    个人资料
 ================================================================ */
 function fetchProfile() {
-    fetch('/user/getProfile')
+    fetch(API_BASE + '/user/getProfile')
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.code === 200) {
@@ -127,7 +138,7 @@ function submitUpdate() {
         bio:       document.getElementById('bioInput').value,
         avatarUrl: document.getElementById('avatarDisplay').src
     };
-    fetch('/user/updateProfile', {
+    fetch(API_BASE + '/user/updateProfile', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(updateData)
@@ -147,7 +158,7 @@ function uploadAvatar(input) {
     if (!input.files || !input.files[0]) return;
     var fd = new FormData();
     fd.append('file', input.files[0]);
-    fetch('/user/uploadAvatar', { method: 'POST', body: fd })
+    fetch(API_BASE + '/user/uploadAvatar', { method: 'POST', body: fd })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.code === 200) {
@@ -163,7 +174,7 @@ function uploadAvatar(input) {
    统计数据
 ================================================================ */
 function fetchStats() {
-    fetch('/user/getStats')
+    fetch(API_BASE + '/user/getStats')
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.code === 200) {
@@ -196,7 +207,7 @@ function loadPublishedArticles(page) {
     var container = document.getElementById('publishedList');
     container.innerHTML = '<div class="articles-loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>';
 
-    fetch('/article/my/published?page=' + page + '&size=' + publishedPageSize)
+    fetch(API_BASE + '/article/my/published?page=' + page + '&size=' + publishedPageSize)
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.code === 200 && res.data) {
@@ -224,7 +235,7 @@ function loadDraftArticles(page) {
     var container = document.getElementById('draftsList');
     container.innerHTML = '<div class="articles-loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>';
 
-    fetch('/article/my/drafts?page=' + page + '&size=' + draftsPageSize)
+    fetch(API_BASE + '/article/my/drafts?page=' + page + '&size=' + draftsPageSize)
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.code === 200 && res.data) {
@@ -341,12 +352,12 @@ function renderPagination(elId, total, currentPage, pageSize, callbackName) {
 
 /* 查看详情 */
 function goToArticleDetail(id) {
-    window.open('/pages/front/post.html?id=' + id, '_blank');
+    window.open(API_BASE + '/pages/front/post.html?id=' + id, '_blank');
 }
 
 /* 编辑：跳转到写文章页面，editor.js 通过 ?id= 参数回填数据 */
 function openEditArticle(id) {
-    window.location.href = '/pages/front/editor.html?id=' + id;
+    window.location.href = API_BASE + '/pages/front/editor.html?id=' + id;
 }
 
 function closeEditArticle() {
@@ -387,7 +398,7 @@ function doPublishDraft() {
         confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 发布中...';
     }
 
-    fetch('/article/' + id + '/publish', { method: 'POST' })
+    fetch(API_BASE + '/article/' + id + '/publish', { method: 'POST' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             closePublishDraftModal();
@@ -449,7 +460,7 @@ function doDeleteArticle() {
         confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 删除中...';
     }
 
-    fetch('/article/' + id, { method: 'DELETE' })
+    fetch(API_BASE + '/article/' + id, { method: 'DELETE' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             closeDeleteConfirm();
@@ -497,7 +508,7 @@ function submitChangePassword() {
     if (newPwd !== confPwd)             { showToast('两次输入的新密码不一致', 'error'); return; }
     if (newPwd.length < 6)              { showToast('新密码长度不能少于 6 位', 'error'); return; }
 
-    fetch('/user/updatePassword', {
+    fetch(API_BASE + '/user/updatePassword', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd })
@@ -595,7 +606,7 @@ function submitDeleteAccount() {
         confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 注销中...';
     }
 
-    fetch('/user/deleteAccount', {
+    fetch(API_BASE + '/user/deleteAccount', {
         method:      'POST',
         credentials: 'same-origin',
         headers:     { 'Content-Type': 'application/json' },
@@ -607,7 +618,7 @@ function submitDeleteAccount() {
                 closeDeleteConfirm();
                 showToast('账号已注销，感谢使用', 'info');
                 setTimeout(function () {
-                    window.location.href = '/pages/front/login.html';
+                    window.location.href = API_BASE + '/pages/front/login.html';
                 }, 1500);
             } else {
                 showToast(res.msg || '注销失败，请检查密码', 'error');

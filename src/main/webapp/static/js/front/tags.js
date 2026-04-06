@@ -75,7 +75,7 @@
             return `
                 <a class="tag-pill${isHot ? ' is-hot' : ''}"
                    style="--pill-font-size:${fontSize};"
-                   href="/pages/front/index.html?tagId=${tag.id}"
+                   href="${NanoBlog.apiBase}/pages/front/index.html?tagId=${tag.id}"
                    title="${escHtml(tag.tagName)} · ${tag.articleCount || 0} 篇文章">
                     ${hotIcon}
                     <span class="tag-name">${displayName}</span>
@@ -120,7 +120,7 @@
 
     /*加载标签数据*/
     function loadTags() {
-        fetch('/tag/list', { credentials: 'same-origin' })
+        fetch(NanoBlog.apiBase + '/tag/list', { credentials: 'same-origin' })
             .then(r => r.json())
             .then(res => {
                 if (res.code !== 200 || !res.data) {
@@ -202,7 +202,7 @@
     if (navSearch) {
         navSearch.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' && this.value.trim()) {
-                location.href = '/pages/front/index.html?keyword='
+                location.href = NanoBlog.apiBase + '/pages/front/index.html?keyword='
                     + encodeURIComponent(this.value.trim());
             }
         });
@@ -211,7 +211,7 @@
         navSearchBtn.addEventListener('click', function () {
             const val = navSearch ? navSearch.value.trim() : '';
             if (val) {
-                location.href = '/pages/front/index.html?keyword='
+                location.href = NanoBlog.apiBase + '/pages/front/index.html?keyword='
                     + encodeURIComponent(val);
             }
         });
