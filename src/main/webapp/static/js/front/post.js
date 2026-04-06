@@ -3,8 +3,8 @@ layui.use(['layer', 'element'], function () {
     const element = layui.element;
     const $ = layui.$;
 
-    const API_BASE = '/article';
-    const CATEGORY_API = '/category/list';
+    const API_BASE = NanoBlog.apiBase + '/article';
+    const CATEGORY_API = NanoBlog.apiBase + '/category/list';
 
     const state = {
         articleId: getQueryParam('id'),
@@ -159,21 +159,21 @@ layui.use(['layer', 'element'], function () {
 
         const authorId = data.authorId;
         const authorNickname = data.authorNickname || '匿名作者';
-        const authorAvatar = data.authorAvatar || '/static/images/avatar-default.png';
+        const authorAvatar = data.authorAvatar || (NanoBlog.apiBase + '/static/images/avatar-default.png');
 
         $('#title').text(title);
         $('#publishTime').text(publishTime);
         $('#category').text(category);
         $('#viewCount').text(viewCount);
         $('#article-author').html(`
-  <a href="/pages/front/profile.html?id=${authorId}" class="article-author-link" title="查看作者主页">
-    <img class="article-author-avatar"
-         src="${authorAvatar}"
-         alt="${authorNickname}"
-         onerror="this.src='/static/images/avatar-default.png'">
-    <span class="article-author-name">${authorNickname}</span>
-  </a>
-`);
+        <a href="${NanoBlog.apiBase}/pages/front/profile.html?id=${authorId}" class="article-author-link" title="查看作者主页">
+            <img class="article-author-avatar"
+                 src="${authorAvatar}"
+                 alt="${authorNickname}"
+                 onerror="this.src='${NanoBlog.apiBase}/static/images/avatar-default.png'">
+            <span class="article-author-name">${authorNickname}</span>
+        </a>
+        `);
         renderTags(tags);
         renderContent(mdContent, htmlContent);
         renderPrevNext();
