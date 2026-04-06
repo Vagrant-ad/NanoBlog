@@ -48,6 +48,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private final ArticleTagMapper articleTagMapper;
     @Getter
     private final CategoryMapper categoryMapper;
+    @Getter
+    private final UserMapper userMapper;
+
     private static final Parser MD_PARSER = Parser.builder()
             .extensions(Arrays.asList(
                     TablesExtension.create(),
@@ -227,6 +230,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (content != null) {
             vo.setContent(content.getContentHtml());
             vo.setContentMd(content.getContentMd());
+        }
+
+        User author = userMapper.selectById(article.getAuthorId());
+        if (author != null) {
+            vo.setAuthorId(author.getId());
+            vo.setAuthorNickname(author.getNickname());
+            vo.setAuthorAvatar(author.getAvatarUrl());
         }
         return vo;
     }
