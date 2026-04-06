@@ -2,8 +2,8 @@
     'use strict';
 
     const PAGE_SIZE = 8;
-    const DEFAULT_COVER = '/static/images/demo-cover.jpg';
-    const DEFAULT_AVATAR = '/static/images/avatar-default.png';
+    const DEFAULT_COVER = NanoBlog.apiBase + '/static/images/demo-cover.jpg';
+    const DEFAULT_AVATAR = NanoBlog.apiBase + '/static/images/avatar-default.png';
 
     let currentPage = 1;
     //排序关键字
@@ -82,7 +82,7 @@
 
             return `
                 <article class="article-card">
-                    <a class="card-link" href="/pages/front/post.html?id=${id}">
+                    <a class="card-link" href="${NanoBlog.apiBase}/pages/front/post.html?id=${id}">
                         <div class="card-cover">
                             <img src="${coverUrl}" alt="${title} 封面" loading="lazy" onerror="this.src='${DEFAULT_COVER}'">
                             <div class="card-badges">
@@ -229,7 +229,7 @@
 
         if (currentCategoryId) {
             // 查分类名称
-            fetch('/category/list')
+            fetch(NanoBlog.apiBase + '/category/list')
                 .then(res => res.json())
                 .then(result => {
                     if (result.code !== 200) return;
@@ -238,7 +238,7 @@
                 });
         }
         if (currentTagId) {
-            fetch('/tag/list')
+            fetch(NanoBlog.apiBase + '/tag/list')
                 .then(res => res.json())
                 .then(result => {
                     if (result.code !== 200) return;
@@ -253,7 +253,7 @@
         const params = new URLSearchParams(window.location.search);
         const paramKey = type === '分类' ? 'categoryId' : 'tagId';
         params.delete(paramKey);
-        const clearUrl = '/pages/front/index.html' + (params.toString() ? '?' + params.toString() : '');
+        const clearUrl = NanoBlog.apiBase + '/pages/front/index.html' + (params.toString() ? '?' + params.toString() : '');
         //渲染
         const badge = document.createElement('div');
         badge.className = 'filter-badge';
@@ -274,10 +274,10 @@
     }
 
     function loadHeroStats() {
-        // heroArticleCount / heroUserCount / heroCommentCount 由 /admin/stats 提供
+        // heroArticleCount / heroUserCount / heroCommentCount 由 /article/stats 提供
         // heroTagCount 由 /tag/list 提供
         // 两个请求并行，各自静默失败不影响页面其余功能
-        fetch('/admin/stats', { credentials: 'same-origin' })
+        fetch(NanoBlog.apiBase + '/article/stats', { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
             .then(function (res) {
                 if (res.code === 200 && res.data) {
@@ -288,7 +288,7 @@
             })
             .catch(function () {});
 
-        fetch('/tag/list', { credentials: 'same-origin' })
+        fetch(NanoBlog.apiBase + '/tag/list', { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
             .then(function (res) {
                 if (res.code === 200 && res.data) {

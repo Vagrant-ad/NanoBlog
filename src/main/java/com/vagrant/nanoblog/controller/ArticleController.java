@@ -5,6 +5,8 @@ import com.vagrant.nanoblog.common.ResponseResult;
 import com.vagrant.nanoblog.dto.ArticlePublishDTO;
 import com.vagrant.nanoblog.pojo.User;
 import com.vagrant.nanoblog.service.IArticleService;
+import com.vagrant.nanoblog.service.ICommentService;
+import com.vagrant.nanoblog.service.IUserService;
 import com.vagrant.nanoblog.vo.ArticleDetailVO;
 import com.vagrant.nanoblog.vo.ArticleHomeVO;
 import com.vagrant.nanoblog.vo.ArticleListVO;
@@ -13,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/article")
@@ -20,6 +24,8 @@ import javax.servlet.http.HttpSession;
 public class ArticleController {
 
     private final IArticleService articleService;
+    private final IUserService userService;
+    private final ICommentService commentService;
 
     // 获取登录用户id
     private Long getCurrentUserId(HttpSession session) {
@@ -61,6 +67,19 @@ public class ArticleController {
             @RequestParam(required = false) Long tagId
     ) {
         return ResponseResult.okResult(articleService.getHomeArticleList(page, size, keyword, sortBy, categoryId, tagId));
+    }
+
+    // 首页公开统计（不需要管理员权限）
+    @GetMapping("/stats")
+    public ResponseResult<Map<String, Object>> homeStats() {
+        Map<String, Object> stats = new HashMap<>();
+        long userCount = userService.lambdaQuery().eq(User::getIsDeleted, 0).count();
+        long articleCount = articleService.lambdaQuery().eq(com.vagrant.nanoblog.pojo.Article::getIsDeleted, 0).count();
+        long commentCount = commentService.lambdaQuery().eq(com.vagrant.nanoblog.pojo.Comment::getIsDeleted, 0).count();
+        stats.put("userCount", userCount);
+        stats.put("articleCount", articleCount);
+        stats.put("commentCount", commentCount);
+        return ResponseResult.okResult(stats);
     }
 
     // 按分类查询文章

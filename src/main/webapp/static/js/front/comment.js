@@ -1,8 +1,19 @@
 (function (window, document) {
     'use strict';
 
+    function resolveApiBase() {
+        if (window.NanoBlog && typeof window.NanoBlog.apiBase === 'string') {
+            return window.NanoBlog.apiBase;
+        }
+        const path = window.location.pathname || '';
+        const idx = path.indexOf('/pages/');
+        return idx > 0 ? path.substring(0, idx) : '';
+    }
+
+    const API_BASE = resolveApiBase();
+
     //常量和运行状态
-    const DEFAULT_AVATAR = '/static/images/avatar-default.png';
+    const DEFAULT_AVATAR = API_BASE + '/static/images/avatar-default.png';
     const MAX_LEN = 500;
 
     const state = {
@@ -48,7 +59,7 @@
 
     //获取当前登录用户
     function fetchCurrentUser() {
-        return fetch('/user/getProfile', {credentials: 'same-origin'})
+        return fetch(API_BASE + '/user/getProfile', {credentials: 'same-origin'})
             .then(r => r.json())
             .then(res => {
                 if (res.code === 200 && res.data) {
@@ -103,7 +114,7 @@
         if (!state.currentUserId) {
             wrap.innerHTML = `
                 <div class="comment-login-tip">
-                    请先 <a href="/pages/front/login.html">登录</a> 后再发表评论
+                    请先 <a href="${API_BASE}/pages/front/login.html">登录</a> 后再发表评论
                 </div>
             `;
             return;
@@ -269,7 +280,7 @@
         if (!state.articleId) return;
         renderSkeleton();
 
-        fetch(`/comment/list/${state.articleId}`, {credentials: 'same-origin'})
+        fetch(`${API_BASE}/comment/list/${state.articleId}`, {credentials: 'same-origin'})
             .then(r => r.json())
             .then(res => {
                 if (res.code === 200) {
@@ -310,7 +321,7 @@
             btn.textContent = '发送中...';
         }
 
-        fetch('/comment/add', {
+        fetch(API_BASE + '/comment/add', {
             method: 'POST',
             credentials: 'same-origin',
             headers: {'Content-Type': 'application/json'},
@@ -390,7 +401,7 @@
             ? Number(wrap.dataset.replyToUserId)
             : null;
 
-        fetch('/comment/add', {
+        fetch(API_BASE + '/comment/add', {
             method: 'POST',
             credentials: 'same-origin',
             headers: {'Content-Type': 'application/json'},
@@ -438,7 +449,7 @@
     };
 
     function doDelete(id, label) {
-        fetch(`/comment/${id}`, {
+        fetch(`${API_BASE}/comment/${id}`, {
             method: 'DELETE',
             credentials: 'same-origin'
         })

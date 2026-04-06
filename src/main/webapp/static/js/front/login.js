@@ -53,6 +53,10 @@ document.querySelectorAll('.field-input').forEach(input => {
 
 document.getElementById("loginBtn").onclick = function() {
 
+    var apiBase = (window.NanoBlog && typeof window.NanoBlog.apiBase === 'string')
+        ? window.NanoBlog.apiBase
+        : '';
+
     var layer = window.layer;
 
     var username = document.getElementById("username").value;
@@ -83,14 +87,14 @@ document.getElementById("loginBtn").onclick = function() {
                     if (profileXhr.readyState === 4 && profileXhr.status === 200) {
                         var profileRes = JSON.parse(profileXhr.responseText);
 
-                        var redirectUrl = '/pages/front/index.html';
+                        var redirectUrl = apiBase + '/pages/front/index.html';
 
                         if (profileRes.code === 200 && profileRes.data) {
 
                             var roleId = profileRes.data.roleId;
 
-                            if (roleId == 2) {
-                                redirectUrl = '/pages/admin/dashboard.html';
+                            if (Number(roleId) === 2) {
+                                redirectUrl = apiBase + '/pages/admin/dashboard.html';
                             }
                         }
 
@@ -100,7 +104,7 @@ document.getElementById("loginBtn").onclick = function() {
                         });
                     }
                 };
-                profileXhr.open("GET", "/user/getProfile", true);
+                profileXhr.open("GET", apiBase + "/user/getProfile", true);
                 profileXhr.send();
 
             } else {
@@ -108,7 +112,7 @@ document.getElementById("loginBtn").onclick = function() {
             }
         }
     };
-    xhr.open("POST", "/user/doLogin", true);
+    xhr.open("POST", apiBase + "/user/doLogin", true);
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     xhr.send("username=" + encodeURIComponent(username) +
         "&password=" + encodeURIComponent(password) +

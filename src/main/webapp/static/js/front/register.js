@@ -66,6 +66,16 @@ document.querySelectorAll('.field-input').forEach(input => {
     });
 });
 
+function resolveApiBase() {
+    if (window.NanoBlog && typeof window.NanoBlog.apiBase === 'string') {
+        return window.NanoBlog.apiBase;
+    }
+    var path = window.location.pathname || '';
+    var idx = path.indexOf('/pages/');
+    return idx > 0 ? path.substring(0, idx) : '';
+}
+
+var apiBase = resolveApiBase();
 
 $("#regBtn").click(function() {
     var username = $("#username").val();
@@ -87,7 +97,7 @@ $("#regBtn").click(function() {
     }
 
     $.ajax({
-        url: "/user/doRegister",
+        url: apiBase + "/user/doRegister",
         type: "POST",
         contentType: "application/json",
         data: JSON.stringify({
