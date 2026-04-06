@@ -1,9 +1,9 @@
 /* 全局状态*/
-var _profileUserId  = null;   // 当前正在查看的用户ID
-var _currentLoginId = null;   // 当前登录用户ID（null = 未登录）
-var _isOwner        = false;  // 是否是自己的主页
+var _profileUserId  = null;
+var _currentLoginId = null;
+var _isOwner        = false;
 
-/*工具函数 */
+/* 工具函数 */
 function showToast(msg, type) {
     type = type || 'info';
     var t = document.getElementById('toast');
@@ -31,6 +31,7 @@ function handleOverlayClick(e, modalId) {
         if (modalId === 'deleteModal')       closeDeleteConfirm();
         if (modalId === 'editArticleModal')  closeEditArticle();
         if (modalId === 'publishDraftModal') closePublishDraftModal();
+        // userDeletedModal 点击遮罩不关闭，强制用户选择按钮
     }
 }
 
@@ -60,11 +61,21 @@ function getQueryParam(name) {
     return new URLSearchParams(window.location.search).get(name);
 }
 
-/* 页面初始化：先获取登录态，再决定展示模式*/
+/* 热门文章跳转（弹窗内按钮使用） */
+function goToHotArticlesFromModal() {
+    window.location.href = '/pages/front/index.html?sortBy=view';
+}
+
+/* 打开用户已注销弹窗 */
+function openUserDeletedModal() {
+    var modal = document.getElementById('userDeletedModal');
+    if (modal) modal.classList.add('active');
+}
+
+/* 页面初始化 */
 window.onload = function () {
     var urlId = getQueryParam('id');
 
-    // 先尝试获取当前登录用户
     fetch('/user/getProfile', { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
@@ -76,75 +87,145 @@ window.onload = function () {
         .finally(function () {
             if (urlId) {
                 _profileUserId = urlId;
-                // 有登录且id等于自己才是owner
                 _isOwner = (_currentLoginId !== null && _currentLoginId === String(urlId));
             } else {
-                // 没有id参数：必须登录，查看自己
                 if (_currentLoginId) {
                     _profileUserId = _currentLoginId;
                     _isOwner = true;
                     history.replaceState(null, '', '/pages/front/profile.html?id=' + _currentLoginId);
                 } else {
-                    // 未登录且没有id，跳转登录
                     window.location.href = '/pages/front/login.html';
                     return;
                 }
             }
 
-            initPageByMode();
+            // 访问他人主页时，先校验该用户是否已注销
+            if (!_isOwner && _profileUserId) {
+                checkUserDeletedThenInit(_profileUserId);
+            } else {
+                initPageByMode();
+            }
         });
 };
+
+/**
+ * 访问他人主页时，先请求 publicProfile 判断是否已注销
+ * 若已注销：渲染骨架页面后弹出提示弹窗
+ * 若正常：直接进入 visitor 模式
+ */
+function checkUserDeletedThenInit(userId) {
+    fetch('/user/publicProfile?id=' + userId, { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.code === 200 && res.data) {
+                // 用户正常，走正常 visitor 流程
+                initPageByMode();
+            } else {
+                // 用户已注销或不存在：渲染骨架，然后弹窗
+                initPageByModeDeleted();
+            }
+        })
+        .catch(function () {
+            initPageByModeDeleted();
+        });
+}
+
+/**
+ * 已注销用户：渲染空壳骨架页面，然后弹出提示弹窗
+ */
+function initPageByModeDeleted() {
+    document.getElementById('ownerActions').style.display   = 'none';
+    document.getElementById('visitorActions').style.display = 'none';
+    document.getElementById('avatarMaskLabel').style.display = 'none';
+    document.getElementById('draftsTabBtn').style.display   = 'none';
+    document.getElementById('dangerZoneCard').style.display = 'none';
+    document.getElementById('articleCardTitle').innerText   = 'TA 的文章';
+
+    renderDeletedUserSkeleton();
+    openUserDeletedModal();
+}
+
+/**
+ * 渲染已注销用户的骨架占位信息
+ */
+function renderDeletedUserSkeleton() {
+    var nicknameEl = document.getElementById('nicknameDisplay');
+    var usernameEl = document.getElementById('usernameDisplay');
+    var statusEl   = document.getElementById('statusBadge');
+    var bioEl      = document.getElementById('bioDisplay');
+    var emailEl    = document.getElementById('emailDisplay');
+    var roleEl     = document.getElementById('roleDisplay');
+    var createEl   = document.getElementById('createTimeDisplay');
+    var loginEl    = document.getElementById('lastLoginDisplay');
+    var updateEl   = document.getElementById('updateTimeDisplay');
+    var userIdEl   = document.getElementById('userId');
+
+    if (nicknameEl) nicknameEl.innerText = '已注销用户';
+    if (usernameEl) usernameEl.innerText = '@unknown';
+    if (statusEl) {
+        statusEl.innerText = '已注销';
+        statusEl.className = 'status-badge status-error';
+    }
+    if (bioEl)    bioEl.innerText    = '该账号已注销。';
+    if (emailEl)  emailEl.innerText  = '---';
+    if (roleEl)   roleEl.innerText   = '---';
+    if (createEl) createEl.innerText = '---';
+    if (loginEl)  loginEl.innerText  = '---';
+    if (updateEl) updateEl.innerText = '---';
+    if (userIdEl) userIdEl.value     = _profileUserId || '';
+
+    var statFollow  = document.getElementById('statFollow');
+    var statView    = document.getElementById('statView');
+    var statLike    = document.getElementById('statLike');
+    var statComment = document.getElementById('statComment');
+    if (statFollow)  statFollow.innerText  = '--';
+    if (statView)    statView.innerText    = '--';
+    if (statLike)    statLike.innerText    = '--';
+    if (statComment) statComment.innerText = '--';
+
+    var publishedList = document.getElementById('publishedList');
+    if (publishedList) {
+        publishedList.innerHTML =
+            '<div class="articles-empty"><i class="fas fa-file-alt"></i><span>暂无内容</span></div>';
+    }
+    var publishedCount = document.getElementById('publishedCount');
+    if (publishedCount) publishedCount.innerText = 0;
+}
 
 /* 根据 owner/visitor 模式初始化页面 */
 function initPageByMode() {
     if (_isOwner) {
-        // ── owner 模式 ──
-        // 显示编辑按钮，隐藏关注按钮
-        document.getElementById('ownerActions').style.display  = 'flex';
+        document.getElementById('ownerActions').style.display   = 'flex';
         document.getElementById('visitorActions').style.display = 'none';
-        // 显示头像上传遮罩
         document.getElementById('avatarMaskLabel').style.display = '';
-        // 显示草稿 Tab
-        document.getElementById('draftsTabBtn').style.display = '';
-        // 显示危险区域
+        document.getElementById('draftsTabBtn').style.display   = '';
         document.getElementById('dangerZoneCard').style.display = '';
-        // 文章卡片标题
-        document.getElementById('articleCardTitle').innerText = '文章管理';
-        // 加载数据
+        document.getElementById('articleCardTitle').innerText   = '文章管理';
         fetchProfileOwner();
         fetchStats();
         loadPublishedArticles(1);
         loadDraftArticles(1);
     } else {
-        // ── visitor 模式 ──
-        // 隐藏编辑按钮，显示关注按钮
-        document.getElementById('ownerActions').style.display  = 'none';
+        document.getElementById('ownerActions').style.display   = 'none';
         document.getElementById('visitorActions').style.display = 'flex';
-        // 隐藏头像上传遮罩
         document.getElementById('avatarMaskLabel').style.display = 'none';
-        // 隐藏草稿 Tab
-        document.getElementById('draftsTabBtn').style.display = 'none';
-        // 隐藏危险区域
+        document.getElementById('draftsTabBtn').style.display   = 'none';
         document.getElementById('dangerZoneCard').style.display = 'none';
-        // 文章卡片标题
-        document.getElementById('articleCardTitle').innerText = 'TA 的文章';
-        // 加载数据
+        document.getElementById('articleCardTitle').innerText   = 'TA 的文章';
         fetchProfileVisitor(_profileUserId);
         fetchStats();
         loadPublishedArticles(1);
     }
 }
 
-/* 关注按钮（UI 逻辑，接口待对接）*/
+/* 关注按钮 */
 var _isFollowing = false;
 
 function toggleFollow() {
     if (!_currentLoginId) {
-
         window.location.href = '/pages/front/login.html';
         return;
     }
-    // TODO: 对接关注/取消关注接口
     _isFollowing = !_isFollowing;
     var btn = document.getElementById('followBtn');
     if (_isFollowing) {
@@ -158,7 +239,7 @@ function toggleFollow() {
     }
 }
 
-/* 加载个人资料 —— owner 模式（使用原有 /user/getProfile 接口） */
+/* 加载个人资料 —— owner 模式 */
 function fetchProfileOwner() {
     fetch('/user/getProfile', { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
@@ -192,7 +273,7 @@ function fetchProfileOwner() {
 
                 if (u.avatarUrl) document.getElementById('avatarDisplay').src = u.avatarUrl;
 
-                var badge     = document.getElementById('statusBadge');
+                var badge = document.getElementById('statusBadge');
                 badge.innerText = (u.status === 1) ? '正常' : '已封禁';
                 badge.className = (u.status === 1) ? 'status-badge status-ok' : 'status-badge status-error';
             } else {
@@ -202,7 +283,7 @@ function fetchProfileOwner() {
         .catch(function (err) { console.error('加载个人资料出错:', err); });
 }
 
-/* 加载个人资料 —— visitor 模式（使用 /user/publicProfile 接口） */
+/* 加载个人资料 —— visitor 模式 */
 function fetchProfileVisitor(userId) {
     fetch('/user/publicProfile?id=' + userId, { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
@@ -244,7 +325,7 @@ function renderVisitorProfile(data) {
 
     if (u.avatarUrl) document.getElementById('avatarDisplay').src = u.avatarUrl;
 
-    var badge     = document.getElementById('statusBadge');
+    var badge = document.getElementById('statusBadge');
     badge.innerText = (u.status === 1) ? '正常' : '已封禁';
     badge.className = (u.status === 1) ? 'status-badge status-ok' : 'status-badge status-error';
 }
@@ -271,10 +352,10 @@ function submitUpdate() {
         avatarUrl: document.getElementById('avatarDisplay').src
     };
     fetch('/user/updateProfile', {
-        method:  'POST',
+        method:      'POST',
         credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(updateData)
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify(updateData)
     })
         .then(function (r) { return r.json(); })
         .then(function (res) {
@@ -303,15 +384,16 @@ function uploadAvatar(input) {
         });
 }
 
-/*  统计数据*/
+/* 统计数据 */
 function fetchStats() {
     fetch('/user/getStats', { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.code === 200) {
-                document.getElementById('statFollow').innerText = formatNumber(res.data.followCount);
-                document.getElementById('statView').innerText   = formatNumber(res.data.viewCount);
-                document.getElementById('statLike').innerText   = formatNumber(res.data.likeCount);
+                document.getElementById('statFollow').innerText  = formatNumber(res.data.followCount);
+                document.getElementById('statView').innerText    = formatNumber(res.data.viewCount);
+                document.getElementById('statLike').innerText    = formatNumber(res.data.likeCount);
+                // statComment 待接口对接
             }
         })
         .catch(function () {});
@@ -334,7 +416,6 @@ function loadPublishedArticles(page) {
     var container = document.getElementById('publishedList');
     container.innerHTML = '<div class="articles-loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>';
 
-    // owner 用自己的接口，visitor 传 userId 参数
     var url = _isOwner
         ? ('/article/my/published?page=' + page + '&size=' + publishedPageSize)
         : ('/article/my/published?page=' + page + '&size=' + publishedPageSize + '&userId=' + _profileUserId);
@@ -356,7 +437,7 @@ function loadPublishedArticles(page) {
         .catch(function () { renderEmpty(container, '加载失败，请刷新重试'); });
 }
 
-/* 草稿列表（仅 owner）*/
+/* 草稿列表（仅 owner） */
 var draftsPage     = 1;
 var draftsPageSize = 5;
 
@@ -383,7 +464,7 @@ function loadDraftArticles(page) {
         .catch(function () { renderEmpty(container, '加载失败，请刷新重试'); });
 }
 
-/* 渲染文章列表（isOwnerView 控制是否显示操作按钮） */
+/* 渲染文章列表 */
 function renderArticleItems(container, records, isDraft, isOwnerView) {
     if (!records || records.length === 0) {
         renderEmpty(container, isDraft ? '草稿箱是空的' : '暂无已发布文章');
@@ -410,7 +491,6 @@ function renderArticleItems(container, records, isDraft, isOwnerView) {
         var timeLabel = isDraft ? '创建' : '发布';
         var timeVal   = isDraft ? formatArticleTime(a.createTime) : formatArticleTime(a.publishTime);
 
-        // 操作按钮：仅 owner 视图显示
         var actionHtml = '';
         if (isOwnerView) {
             if (isDraft) {
@@ -455,7 +535,8 @@ function renderArticleItems(container, records, isDraft, isOwnerView) {
 }
 
 function renderEmpty(container, msg) {
-    container.innerHTML = '<div class="articles-empty"><i class="fas fa-file-alt"></i><span>' + msg + '</span></div>';
+    container.innerHTML =
+        '<div class="articles-empty"><i class="fas fa-file-alt"></i><span>' + msg + '</span></div>';
 }
 
 function renderPagination(elId, total, currentPage, pageSize, callbackName) {
@@ -502,7 +583,8 @@ function openPublishDraftModal(id, title) {
     _pendingPublishId = id;
     var desc = document.getElementById('publishDraftDesc');
     if (desc) {
-        desc.innerHTML = '「' + escapeHtml(title) + '」发布后将对<strong>所有人可见</strong>，你仍可随时编辑修改。';
+        desc.innerHTML =
+            '「' + escapeHtml(title) + '」发布后将对<strong>所有人可见</strong>，你仍可随时编辑修改。';
     }
     var confirmBtn = document.getElementById('confirmPublishDraftBtn');
     if (confirmBtn) confirmBtn.onclick = doPublishDraft;
@@ -608,7 +690,7 @@ function doDeleteArticle() {
         });
 }
 
-/* 修改密码 Modal（仅 owner） */
+/* 修改密码 Modal */
 function openChangePassword() {
     document.getElementById('oldPassword').value     = '';
     document.getElementById('newPassword').value     = '';
@@ -628,13 +710,13 @@ function submitChangePassword() {
 
     if (!oldPwd || !newPwd || !confPwd) { showToast('请填写所有密码字段', 'error'); return; }
     if (newPwd !== confPwd)             { showToast('两次输入的新密码不一致', 'error'); return; }
-    if (newPwd.length < 6)              { showToast('新密码长度不能少于 6 位', 'error'); return; }
+    if (newPwd.length < 6)             { showToast('新密码长度不能少于 6 位', 'error'); return; }
 
     fetch('/user/updatePassword', {
-        method:  'POST',
+        method:      'POST',
         credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd })
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd })
     })
         .then(function (r) { return r.json(); })
         .then(function (res) {
@@ -675,7 +757,7 @@ function resetPwdStrength() {
     document.getElementById('pLabel').innerText = '';
 }
 
-/* 注销账号 Modal（仅 owner） */
+/* 注销账号 Modal */
 function openDeleteConfirm() {
     _deleteMode = 'logout';
 

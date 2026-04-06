@@ -100,6 +100,11 @@
                 <div class="stat-label">我的关注</div>
             </div>
             <div class="stat-item">
+                <div class="stat-icon"><i class="fas fa-comment-dots"></i></div>
+                <div class="stat-value" id="statComment">--</div>
+                <div class="stat-label">我的评论</div>
+            </div>
+            <div class="stat-item">
                 <div class="stat-icon"><i class="fas fa-eye"></i></div>
                 <div class="stat-value" id="statView">--</div>
                 <div class="stat-label">总浏览量</div>
@@ -402,6 +407,23 @@
 
 <!-- Toast 提示 -->
 <div id="toast" class="toast"></div>
+
+<!-- 用户已注销提示弹窗 -->
+<div id="userDeletedModal" class="modal-overlay confirm-modal">
+    <div class="modal-box">
+        <div class="confirm-body">
+            <div class="confirm-icon" style="background:#f0f5f8; color:var(--brand-blue);">
+                <i class="fas fa-user-slash"></i>
+            </div>
+            <h4>该用户已注销</h4>
+        </div>
+        <div class="confirm-footer">
+            <a href="/pages/front/index.html" class="btn btn-secondary">
+                <i class="fas fa-home"></i> 返回首页
+            </a>
+        </div>
+    </div>
+</div>
 
 <script src="/static/lib/layui/layui.js"></script>
 <script src="/static/js/common/common.js"></script>
