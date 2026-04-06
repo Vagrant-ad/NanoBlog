@@ -61,10 +61,6 @@ function getQueryParam(name) {
     return new URLSearchParams(window.location.search).get(name);
 }
 
-/* 热门文章跳转（弹窗内按钮使用） */
-function goToHotArticlesFromModal() {
-    window.location.href = '/pages/front/index.html?sortBy=view';
-}
 
 /* 打开用户已注销弹窗 */
 function openUserDeletedModal() {
