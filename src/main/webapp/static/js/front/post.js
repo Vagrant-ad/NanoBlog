@@ -166,14 +166,14 @@ layui.use(['layer', 'element'], function () {
         $('#category').text(category);
         $('#viewCount').text(viewCount);
         $('#article-author').html(`
-  <a href="/pages/front/profile.html" class="article-author-link" title="查看作者主页">
-    <img class="article-author-avatar"
-         src="${authorAvatar}"
-         alt="${authorNickname}"
-         onerror="this.src='/static/images/avatar-default.png'">
-    <span class="article-author-name">${authorNickname}</span>
-  </a>
-`);
+        <a href="/pages/front/profile.html" class="article-author-link" title="查看作者主页">
+            <img class="article-author-avatar"
+                 src="${authorAvatar}"
+                 alt="${authorNickname}"
+                 onerror="this.src='/static/images/avatar-default.png'">
+            <span class="article-author-name">${authorNickname}</span>
+        </a>
+        `);
         renderTags(tags);
         renderContent(mdContent, htmlContent);
         renderPrevNext();

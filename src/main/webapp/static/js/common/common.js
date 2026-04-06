@@ -306,7 +306,13 @@
                     ${tag.tagName}
                     <span class="tag-count">${tag.articleCount || 0}</span>
                 </a>
-            `).join('');
+            `).join('') + `
+                <a href="/pages/front/tags.html"
+                    class="tag-cloud-item tag-cloud-all"
+                    style="border-style:dashed; opacity:0.75; width:100%; justify-content:center; margin-top:4px;">
+                    <i class="layui-icon layui-icon-more" style="font-size:0.8rem;"></i>
+                    查看全部标签
+                </a>`;
 
                 // 点击时动态读取当前URL参数
                 container.addEventListener('click', function (e) {

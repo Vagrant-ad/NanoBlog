@@ -265,6 +265,39 @@
         header.appendChild(badge);
     }
 
+    //hero section统计数据
+    function setStatNum(id, val) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var n = parseInt(val, 10) || 0;
+        el.textContent = n >= 1000 ? (n / 1000).toFixed(1) + 'k' : n;
+    }
+
+    function loadHeroStats() {
+        // heroArticleCount / heroUserCount / heroCommentCount 由 /admin/stats 提供
+        // heroTagCount 由 /tag/list 提供
+        // 两个请求并行，各自静默失败不影响页面其余功能
+        fetch('/admin/stats', { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res.code === 200 && res.data) {
+                    setStatNum('heroArticleCount', res.data.articleCount);
+                    setStatNum('heroUserCount',    res.data.userCount);
+                    setStatNum('heroCommentCount', res.data.commentCount);
+                }
+            })
+            .catch(function () {});
+
+        fetch('/tag/list', { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res.code === 200 && res.data) {
+                    setStatNum('heroTagCount', res.data.length);
+                }
+            })
+            .catch(function () {});
+    }
+
     //初始化
     function init() {
         bindSearch();
@@ -272,6 +305,7 @@
         bindSearchBoxFocus();
         renderFilterBadge();
         loadArticles(1, '');
+        loadHeroStats();
     }
 
     document.addEventListener('DOMContentLoaded', function () {
