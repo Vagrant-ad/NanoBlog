@@ -247,37 +247,5 @@ public class UserController {
         return userService.updatePassword(loginUser.getId(), oldPwd, newPwd);
     }
 
-    /**
-     * 获取用户统计数据（关注数、粉丝数、总获赞、总浏览量）
-     */
-    @GetMapping("/getStats")
-    @ResponseBody
-    public ResponseResult getStats(HttpSession session) {
-        User loginUser = (User) session.getAttribute("LOGIN_USER");
-        if (loginUser == null) {
-            return ResponseResult.errorResult(401, "请先登录");
-        }
-        
-        Long userId = loginUser.getId();
-        
-        // 关注数：我关注了多少人
-        long followingCount = userFollowMapper.selectCount(
-            new QueryWrapper<UserFollow>().eq("follower_id", userId));
-        
-        // 粉丝数：多少人关注了我
-        long fansCount = userFollowMapper.selectCount(
-            new QueryWrapper<UserFollow>().eq("following_id", userId));
-        
-        // 总获赞：查该用户所有文章的 like_count 求和
-        Long totalLike = articleMapper.sumLikeCountByAuthor(userId);
-        
-        Map<String, Object> data = new HashMap<>();
-        data.put("followCount", followingCount);  // profile.js 用的是 followCount
-        data.put("fansCount", fansCount);
-        data.put("viewCount", 0);  // 暂时返回0，后续可扩展
-        data.put("likeCount", totalLike != null ? totalLike : 0);
-        
-        return ResponseResult.okResult(data);
-    }
 
 }
