@@ -272,33 +272,6 @@ LOCK TABLES `comment` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `comment_like`
---
-
-DROP TABLE IF EXISTS `comment_like`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `comment_like` (
-  `user_id` bigint unsigned NOT NULL,
-  `comment_id` bigint unsigned NOT NULL,
-  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`user_id`,`comment_id`),
-  KEY `fk_comment_like_comment` (`comment_id`),
-  CONSTRAINT `fk_comment_like_comment` FOREIGN KEY (`comment_id`) REFERENCES `comment` (`id`),
-  CONSTRAINT `fk_comment_like_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='评论点赞表';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `comment_like`
---
-
-LOCK TABLES `comment_like` WRITE;
-/*!40000 ALTER TABLE `comment_like` DISABLE KEYS */;
-/*!40000 ALTER TABLE `comment_like` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `role`
 --
 

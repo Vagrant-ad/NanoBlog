@@ -113,12 +113,4 @@
         WHERE id = #{id}
     </update>
 
-    <!-- 统计用户所有文章的点赞总数 -->
-    <select id="sumLikeCountByAuthor" resultType="long">
-        SELECT IFNULL(SUM(like_count), 0)
-        FROM article
-        WHERE author_id = #{authorId}
-          AND is_deleted = 0
-    </select>
-
 </mapper>

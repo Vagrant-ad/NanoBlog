@@ -5,12 +5,9 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.vagrant.nanoblog.common.ResponseResult;
 import com.vagrant.nanoblog.dto.UserRegisterDTO;
 import com.vagrant.nanoblog.dto.UserUpdateDTO;
-import com.vagrant.nanoblog.mapper.ArticleMapper;
-import com.vagrant.nanoblog.mapper.UserFollowMapper;
 import com.vagrant.nanoblog.mapper.UserRoleMapper;
 import com.vagrant.nanoblog.pojo.Attachment;
 import com.vagrant.nanoblog.pojo.User;
-import com.vagrant.nanoblog.pojo.UserFollow;
 import com.vagrant.nanoblog.pojo.UserRole;
 import com.vagrant.nanoblog.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,10 +47,13 @@ public class UserController {
     private UserRoleMapper userRoleMapper;
 
     @Autowired
-    private UserFollowMapper userFollowMapper;
+    private AttachmentController attachmentController; // 注入附件控制器
 
     @Autowired
-    private ArticleMapper articleMapper;
+    private com.vagrant.nanoblog.service.IArticleService articleService;
+
+    @Autowired
+    private com.vagrant.nanoblog.service.ICommentService commentService;
 
     // 跳转到注册页面
     @GetMapping("/register")
@@ -221,37 +221,89 @@ public class UserController {
         return userService.updatePassword(loginUser.getId(), oldPwd, newPwd);
     }
 
+    //删除账号
+    @PostMapping("/deleteAccount")
+    @ResponseBody
+    public ResponseResult deleteAccount(@RequestBody Map<String, String> params, HttpSession session) {
+        User loginUser = (User) session.getAttribute("LOGIN_USER");
+        if (loginUser == null) return ResponseResult.errorResult(401, "请先登录");
+
+        String password = params.get("password");
+        if (password == null || password.trim().isEmpty()) {
+            return ResponseResult.errorResult(400, "请输入密码");
+        }
+
+        ResponseResult result = userService.deleteAccount(loginUser.getId(), password);
+        if (result.getCode() == 200) {
+            // 注销成功后清除 Session
+            session.removeAttribute("LOGIN_USER");
+            session.invalidate();
+        }
+        return result;
+    }
+
     /**
-     * 获取用户统计数据（关注数、粉丝数、总获赞、总浏览量）
+     * 获取用户公开资料（访客可访问，不返回敏感字段）
+     * GET /user/publicProfile?id=xxx
+     */
+    @GetMapping("/publicProfile")
+    @ResponseBody
+    public ResponseResult getPublicProfile(@RequestParam Long id) {
+        User user = userService.getById(id);
+        if (user == null || user.getIsDeleted() == 1) {
+            return ResponseResult.errorResult(404, "用户不存在");
+        }
+        // 脱敏：清除密码哈希
+        user.setPasswordHash(null);
+
+        UserRole userRole = userRoleMapper.selectOne(
+                new QueryWrapper<UserRole>().eq("user_id", id)
+        );
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("user", user);
+        result.put("roleId", userRole != null ? userRole.getRoleId() : 1);
+        return ResponseResult.okResult(result);
+    }
+
+    /**
+     * 获取用户统计信息（评论数、总浏览量）
+     * GET /user/getStats?userId=xxx
+     * userId 可选：不传则查当前登录用户，传则查目标用户（访客模式）
      */
     @GetMapping("/getStats")
     @ResponseBody
-    public ResponseResult getStats(HttpSession session) {
-        User loginUser = (User) session.getAttribute("LOGIN_USER");
-        if (loginUser == null) {
-            return ResponseResult.errorResult(401, "请先登录");
+    public ResponseResult getStats(@RequestParam(required = false) Long userId, HttpSession session) {
+        Long targetId = userId;
+        if (targetId == null) {
+            User loginUser = (User) session.getAttribute("LOGIN_USER");
+            if (loginUser == null) return ResponseResult.errorResult(401, "请先登录");
+            targetId = loginUser.getId();
         }
-        
-        Long userId = loginUser.getId();
-        
-        // 关注数：我关注了多少人
-        long followingCount = userFollowMapper.selectCount(
-            new QueryWrapper<UserFollow>().eq("follower_id", userId));
-        
-        // 粉丝数：多少人关注了我
-        long fansCount = userFollowMapper.selectCount(
-            new QueryWrapper<UserFollow>().eq("following_id", userId));
-        
-        // 总获赞：查该用户所有文章的 like_count 求和
-        Long totalLike = articleMapper.sumLikeCountByAuthor(userId);
-        
-        Map<String, Object> data = new HashMap<>();
-        data.put("followCount", followingCount);  // profile.js 用的是 followCount
-        data.put("fansCount", fansCount);
-        data.put("viewCount", 0);  // 暂时返回0，后续可扩展
-        data.put("likeCount", totalLike != null ? totalLike : 0);
-        
-        return ResponseResult.okResult(data);
+
+        // 总浏览量：查该用户所有文章的 view_count 之和
+        Long totalView = articleService.lambdaQuery()
+                .eq(com.vagrant.nanoblog.pojo.Article::getAuthorId, targetId)
+                .eq(com.vagrant.nanoblog.pojo.Article::getIsDeleted, 0)
+                .list()
+                .stream()
+                .mapToLong(a -> a.getViewCount() == null ? 0L : a.getViewCount())
+                .sum();
+
+        // 评论数：查该用户发出的评论总数
+        long commentCount = commentService.lambdaQuery()
+                .eq(com.vagrant.nanoblog.pojo.Comment::getUserId, targetId)
+                .eq(com.vagrant.nanoblog.pojo.Comment::getIsDeleted, 0)
+                .count();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("viewCount", totalView);
+        stats.put("commentCount", commentCount);
+        // followCount 暂无关注表逻辑，返回 0 占位
+        stats.put("followCount", 0);
+        stats.put("likeCount", 0);
+
+        return ResponseResult.okResult(stats);
     }
 
 }
