@@ -1,5 +1,3 @@
-
-//const layer = window.layer;
 // 粒子背景
 (function() {
     const canvas = document.getElementById('particleCanvas');
@@ -52,8 +50,11 @@ document.querySelectorAll('.field-input').forEach(input => {
     });
 });
 
-
 document.getElementById("loginBtn").onclick = function() {
+
+    var apiBase = (window.NanoBlog && typeof window.NanoBlog.apiBase === 'string')
+        ? window.NanoBlog.apiBase
+        : '';
 
     var layer = window.layer;
 
@@ -69,23 +70,22 @@ document.getElementById("loginBtn").onclick = function() {
         layer.msg("请输入验证码！", {icon: 5, shift: 6});
         return;
     }
-
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState === 4 && xhr.status === 200) {
-            var layer = window.layer;
             var res = JSON.parse(xhr.responseText);
             if (res.code === 200) {
+                sessionStorage.setItem("loginUsername", username);
+                // 所有用户统一跳转首页
                 layer.msg("登录成功！", {icon: 1, time: 1000}, function() {
-                    sessionStorage.setItem("loginUsername", username);
-                    window.location.href = "/pages/front/index.html";
+                    window.location.href = apiBase + '/pages/front/index.html';
                 });
             } else {
                 layer.msg(res.msg, {icon: 2});
             }
         }
     };
-    xhr.open("POST", "/user/doLogin", true);
+    xhr.open("POST", apiBase + "/user/doLogin", true);
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     xhr.send("username=" + encodeURIComponent(username) +
         "&password=" + encodeURIComponent(password) +

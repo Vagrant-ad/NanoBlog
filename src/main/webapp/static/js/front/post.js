@@ -3,8 +3,8 @@ layui.use(['layer', 'element'], function () {
     const element = layui.element;
     const $ = layui.$;
 
-    const API_BASE      = '/article';
-    const CATEGORY_API  = '/category/list';
+    const API_BASE = NanoBlog.apiBase + '/article';
+    const CATEGORY_API = NanoBlog.apiBase + '/category/list';
 
     const state = {
         articleId: getQueryParam('id'),
@@ -31,12 +31,12 @@ layui.use(['layer', 'element'], function () {
             .done(function (categoryRes, articleRes) {
                 //$.when参数[data,status,xhr]
                 const categoryData = normalizeResponse(categoryRes[0]);
-                const articleData  = normalizeResponse(articleRes[0]);
+                const articleData = normalizeResponse(articleRes[0]);
 
                 //构建分类映射
                 if (Array.isArray(categoryData)) {
                     categoryData.forEach(cat => {
-                        const id   = cat.id;
+                        const id = cat.id;
                         const name = cat.categoryName || cat.category_name || cat.name || '';
                         if (id && name) state.categoryMap[id] = name;
                     });
@@ -51,6 +51,7 @@ layui.use(['layer', 'element'], function () {
 
                 renderArticle(articleData);
                 closeLoading();
+                CommentModule.init(state.articleId);
             })
             .fail(function () {
                 closeLoading();
@@ -61,13 +62,13 @@ layui.use(['layer', 'element'], function () {
 
     //请求分类列表,返回Deferred供$.when使用
     function loadCategoryList() {
-        return $.ajax({ url: CATEGORY_API, method: 'GET', dataType: 'json' });
+        return $.ajax({url: CATEGORY_API, method: 'GET', dataType: 'json'});
     }
 
     //请求文章详情,返回Deferred供$.when使用
     function loadArticleData(id) {
-        state.loadingIndex = layer.load(2, { shade: [0.08, '#000'] });
-        return $.ajax({ url: `${API_BASE}/${id}`, method: 'GET', dataType: 'json' });
+        state.loadingIndex = layer.load(2, {shade: [0.08, '#000']});
+        return $.ajax({url: `${API_BASE}/${id}`, method: 'GET', dataType: 'json'});
     }
 
     //初始化Markdown渲染器(后端返回contentMd时使用)
@@ -82,10 +83,11 @@ layui.use(['layer', 'element'], function () {
             if (window.hljs) {
                 const validLang = codeLang && hljs.getLanguage(codeLang) ? codeLang : null;
                 const highlighted = validLang
-                    ? hljs.highlight(codeText, { language: validLang }).value
+                    ? hljs.highlight(codeText, {language: validLang}).value
                     : hljs.highlightAuto(codeText).value;
-                return `<pre><code class="hljs language-${validLang || 'plaintext'}">${highlighted}</code></pre>`;            }
-            const escaped = codeText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                return `<pre><code class="hljs language-${validLang || 'plaintext'}">${highlighted}</code></pre>`;
+            }
+            const escaped = codeText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             console.log(codeText);
             return `<pre class="hljs-pre"><code>${escaped}</code></pre>`;
         };
@@ -93,7 +95,7 @@ layui.use(['layer', 'element'], function () {
         renderer.table = function (token) {
             if (token && typeof token === 'object' && Array.isArray(token.header)) {
                 const alignStyle = (i) => token.align && token.align[i] ? ` style="text-align:${token.align[i]}"` : '';
-                const theadRow  = token.header.map((cell, i) => `<th${alignStyle(i)}>${cell.text}</th>`).join('');
+                const theadRow = token.header.map((cell, i) => `<th${alignStyle(i)}>${cell.text}</th>`).join('');
                 const tbodyRows = token.rows.map(row =>
                     '<tr>' + row.map((cell, i) => `<td${alignStyle(i)}>${cell.text}</td>`).join('') + '</tr>'
                 ).join('');
@@ -108,58 +110,70 @@ layui.use(['layer', 'element'], function () {
             if (token && typeof token === 'object') {
                 if (token.task === true) {
                     const checked = token.checked ? 'checked' : '';
-                    const cls     = token.checked ? 'todo-item done' : 'todo-item';
-                    const inner   = (token.text || '').replace(/^<input\b[^>]*>\s*/i, '');
+                    const cls = token.checked ? 'todo-item done' : 'todo-item';
+                    const inner = (token.text || '').replace(/^<input\b[^>]*>\s*/i, '');
                     return `<li class="${cls}"><input type="checkbox" ${checked} disabled> ${inner}</li>\n`;
                 }
                 return `<li>${token.text || ''}</li>\n`;
             }
             const text = String(token);
             if (/^\[x\]\s/i.test(text)) return `<li class="todo-item done"><input type="checkbox" checked disabled> ${text.slice(4)}</li>\n`;
-            if (/^\[ \]\s/.test(text))  return `<li class="todo-item"><input type="checkbox" disabled> ${text.slice(4)}</li>\n`;
+            if (/^\[ \]\s/.test(text)) return `<li class="todo-item"><input type="checkbox" disabled> ${text.slice(4)}</li>\n`;
             return `<li>${text}</li>\n`;
         };
-        renderer.link = function(token) {
+        renderer.link = function (token) {
             const href = token.href || '';
             const text = token.text || href;
             return `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
         };
 
-        renderer.image = function(token) {
+        renderer.image = function (token) {
             const src = token.href || '';
             const alt = token.text || '';
             return `<img src="${src}" alt="${alt}" loading="lazy" style="max-width:100%;">`;
         };
 
-        renderer.list = function(token) {
+        renderer.list = function (token) {
             const tag = token.ordered ? 'ol' : 'ul';
             const body = token.items.map(item => renderer.listitem(item)).join('');
             return `<${tag}>${body}</${tag}>`;
         };
 
-        marked.use({ renderer, gfm: true, breaks: false, pedantic: false });
+        marked.use({renderer, gfm: true, breaks: false, pedantic: false});
     }
 
     //渲染文章
     function renderArticle(data) {
-        const title       = data.title || data.articleTitle || data.article_title || '未命名文章';
+        const title = data.title || data.articleTitle || data.article_title || '未命名文章';
         const publishTime = formatTime(data.publishTime || data.publish_time);
-        const viewCount   = data.viewCount ?? data.view_count ?? 0;
-        const tags        = data.tags || [];
+        const viewCount = data.viewCount ?? data.view_count ?? 0;
+        const tags = data.tags || [];
 
         //优先用categoryId命中本地分类缓存
-        const categoryId  = data.categoryId || data.category_id;
-        const category    = (categoryId && state.categoryMap[categoryId])
+        const categoryId = data.categoryId || data.category_id;
+        const category = (categoryId && state.categoryMap[categoryId])
             || data.categoryName || data.category_name || '未分类';
 
-        const mdContent   = data.contentMd || data.content_md || '';
+        const mdContent = data.contentMd || data.content_md || '';
         const htmlContent = data.contentHtml || data.content_html || data.content || '';
+
+        const authorId = data.authorId;
+        const authorNickname = data.authorNickname || '匿名作者';
+        const authorAvatar = data.authorAvatar || (NanoBlog.apiBase + '/static/images/avatar-default.png');
 
         $('#title').text(title);
         $('#publishTime').text(publishTime);
         $('#category').text(category);
         $('#viewCount').text(viewCount);
-
+        $('#article-author').html(`
+        <a href="${NanoBlog.apiBase}/pages/front/profile.html?id=${authorId}" class="article-author-link" title="查看作者主页">
+            <img class="article-author-avatar"
+                 src="${authorAvatar}"
+                 alt="${authorNickname}"
+                 onerror="this.src='${NanoBlog.apiBase}/static/images/avatar-default.png'">
+            <span class="article-author-name">${authorNickname}</span>
+        </a>
+        `);
         renderTags(tags);
         renderContent(mdContent, htmlContent);
         renderPrevNext();
@@ -171,7 +185,10 @@ layui.use(['layer', 'element'], function () {
     function renderTags(tags) {
         const $wrap = $('#tags');
         $wrap.empty();
-        if (!tags.length) { $wrap.hide(); return; }
+        if (!tags.length) {
+            $wrap.hide();
+            return;
+        }
         tags.forEach(tag => {
             const text = typeof tag === 'string' ? tag : (tag.tagName || tag.tag_name || tag.name || '');
             if (!text) return;
@@ -200,11 +217,12 @@ layui.use(['layer', 'element'], function () {
         fixAdmonitions($content);
         enhanceContent($content);
     }
+
     //修复<p>内的管道表格
     function fixInlineMarkdownTables($content) {
         $content.find('p').each(function () {
-            const $p    = $(this);
-            const raw   = $p.html() || '';
+            const $p = $(this);
+            const raw = $p.html() || '';
             if (!raw.includes('|') || !/\|[\s:]*-+[\s:]*\|/.test(raw)) return;
 
             const lines = raw.split(/\n/).map(l => l.trim()).filter(l => l.startsWith('|'));
@@ -217,15 +235,15 @@ layui.use(['layer', 'element'], function () {
 
     function pipeLinesToTable(lines) {
         const parseRow = (line) => line.split('|').slice(1, -1).map(c => c.trim());
-        const headers  = parseRow(lines[0]);
-        const seps     = parseRow(lines[1]);
+        const headers = parseRow(lines[0]);
+        const seps = parseRow(lines[1]);
 
         if (!seps.every(c => /^:?-+:?$/.test(c.trim()))) return null;
 
         const aligns = seps.map(c => {
             const t = c.trim();
             if (t.startsWith(':') && t.endsWith(':')) return 'center';
-            if (t.endsWith(':'))   return 'right';
+            if (t.endsWith(':')) return 'right';
             if (t.startsWith(':')) return 'left';
             return '';
         });
@@ -256,17 +274,18 @@ layui.use(['layer', 'element'], function () {
             }
         });
         $content.find('ul:has(li.todo-item)')
-            .css({ 'list-style': 'none', 'padding-left': '4px' });
+            .css({'list-style': 'none', 'padding-left': '4px'});
     }
+
     //支持GitHub提示块语法
     function fixAdmonitions($content) {
         //支持:> [!TIP] [!NOTE] [!WARNING] [!IMPORTANT] [!CAUTION]
         const typeMap = {
-            'TIP':       { label: '提示',  icon: '💡', color: '#1a7f37', bg: 'rgba(26,127,55,0.08)',  border: '#2da44e' },
-            'NOTE':      { label: '注意',  icon: 'ℹ️',  color: '#0969da', bg: 'rgba(9,105,218,0.08)',  border: '#54aeff' },
-            'WARNING':   { label: '警告',  icon: '⚠️', color: '#9a6700', bg: 'rgba(154,103,0,0.08)',  border: '#d4a72c' },
-            'IMPORTANT': { label: '重要',  icon: '❗', color: '#8250df', bg: 'rgba(130,80,223,0.08)', border: '#a371f7' },
-            'CAUTION':   { label: '危险',  icon: '🔥', color: '#cf222e', bg: 'rgba(207,34,46,0.08)',  border: '#ff8182' }
+            'TIP': {label: '提示', icon: '💡', color: '#1a7f37', bg: 'rgba(26,127,55,0.08)', border: '#2da44e'},
+            'NOTE': {label: '注意', icon: 'ℹ️', color: '#0969da', bg: 'rgba(9,105,218,0.08)', border: '#54aeff'},
+            'WARNING': {label: '警告', icon: '⚠️', color: '#9a6700', bg: 'rgba(154,103,0,0.08)', border: '#d4a72c'},
+            'IMPORTANT': {label: '重要', icon: '❗', color: '#8250df', bg: 'rgba(130,80,223,0.08)', border: '#a371f7'},
+            'CAUTION': {label: '危险', icon: '🔥', color: '#cf222e', bg: 'rgba(207,34,46,0.08)', border: '#ff8182'}
         };
 
         $content.find('blockquote').each(function () {
@@ -305,6 +324,7 @@ layui.use(['layer', 'element'], function () {
             });
         });
     }
+
     //修复代码块并执行hljs高亮
     function highlightCodeBlocks() {
         if (!window.hljs) return;
@@ -316,14 +336,17 @@ layui.use(['layer', 'element'], function () {
 
             try {
                 if (lang && hljs.getLanguage(lang)) {
-                    block.innerHTML = hljs.highlight(block.textContent, { language: lang }).value;
+                    block.innerHTML = hljs.highlight(block.textContent, {language: lang}).value;
                 } else {
                     block.innerHTML = hljs.highlightAuto(block.textContent).value;
                 }
                 block.classList.add('hljs');
             } catch (e) {
-                try { block.innerHTML = hljs.highlightAuto(block.textContent).value; }
-                catch (e2) { console.warn('hljs 高亮失败：', e2); }
+                try {
+                    block.innerHTML = hljs.highlightAuto(block.textContent).value;
+                } catch (e2) {
+                    console.warn('hljs 高亮失败：', e2);
+                }
             }
 
             //给pre添加语言标签和复制按钮
@@ -360,7 +383,9 @@ layui.use(['layer', 'element'], function () {
                         document.execCommand('copy');
                         document.body.removeChild(ta);
                         copyBtn.textContent = '已复制 ✓';
-                        setTimeout(() => { copyBtn.textContent = '复制'; }, 2000);
+                        setTimeout(() => {
+                            copyBtn.textContent = '复制';
+                        }, 2000);
                     });
                 });
                 pre.appendChild(copyBtn);
@@ -378,18 +403,22 @@ layui.use(['layer', 'element'], function () {
         if (!contentEl) return;
         const opts = {
             delimiters: [
-                { left: '$$',  right: '$$',  display: true  },
-                { left: '$',   right: '$',   display: false },
-                { left: '\\(', right: '\\)', display: false },
-                { left: '\\[', right: '\\]', display: true  }
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
             ],
             throwOnError: false
         };
-        if (window.renderMathInElement) { renderMathInElement(contentEl, opts); return; }
+        if (window.renderMathInElement) {
+            renderMathInElement(contentEl, opts);
+            return;
+        }
         if (!document.getElementById('katex-js')) {
             if (!document.getElementById('katex-css')) {
                 const link = document.createElement('link');
-                link.id = 'katex-css'; link.rel = 'stylesheet';
+                link.id = 'katex-css';
+                link.rel = 'stylesheet';
                 link.href = 'https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css';
                 document.head.appendChild(link);
             }
@@ -413,16 +442,23 @@ layui.use(['layer', 'element'], function () {
         if (!toc || !content || !tocContainer) return;
         toc.innerHTML = '';
         const headings = content.querySelectorAll('h1, h2, h3, h4');
-        if (!headings.length) { tocContainer.style.display = 'none'; return; }
+        if (!headings.length) {
+            tocContainer.style.display = 'none';
+            return;
+        }
         tocContainer.style.display = 'block';
         headings.forEach((heading, index) => {
             const id = `heading-${index}`;
             heading.id = id;
             const a = document.createElement('a');
-            a.href = `#${id}`; a.className = 'toc-link';
-            if (['h3','h4'].includes(heading.tagName.toLowerCase())) a.classList.add('level-h3');
+            a.href = `#${id}`;
+            a.className = 'toc-link';
+            if (['h3', 'h4'].includes(heading.tagName.toLowerCase())) a.classList.add('level-h3');
             a.textContent = heading.textContent;
-            a.onclick = e => { e.preventDefault(); document.getElementById(id).scrollIntoView({ behavior: 'smooth' }); };
+            a.onclick = e => {
+                e.preventDefault();
+                document.getElementById(id).scrollIntoView({behavior: 'smooth'});
+            };
             toc.appendChild(a);
         });
     }
@@ -450,7 +486,7 @@ layui.use(['layer', 'element'], function () {
         const btn = document.getElementById('back-to-top');
         if (!btn) return;
         window.addEventListener('scroll', () => btn.classList.toggle('show', window.scrollY > 300));
-        btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        btn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
     }
 
     function bindNavigation() {
@@ -466,10 +502,15 @@ layui.use(['layer', 'element'], function () {
     }
 
     function closeLoading() {
-        if (state.loadingIndex !== null) { layer.close(state.loadingIndex); state.loadingIndex = null; }
+        if (state.loadingIndex !== null) {
+            layer.close(state.loadingIndex);
+            state.loadingIndex = null;
+        }
     }
 
-    function getQueryParam(name) { return new URLSearchParams(window.location.search).get(name); }
+    function getQueryParam(name) {
+        return new URLSearchParams(window.location.search).get(name);
+    }
 
     function normalizeResponse(res) {
         if (!res) return null;
@@ -481,13 +522,15 @@ layui.use(['layer', 'element'], function () {
         return null;
     }
 
-    function getAjaxErrorMessage(xhr) { return xhr?.statusText || '请求失败'; }
+    function getAjaxErrorMessage(xhr) {
+        return xhr?.statusText || '请求失败';
+    }
 
     function formatTime(value) {
         if (!value) return '';
         const date = new Date(value);
         if (isNaN(date)) return value;
-        return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ` +
-            `${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ` +
+            `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     }
 });

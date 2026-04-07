@@ -1,9 +1,26 @@
 (function (window, document) {
     'use strict';
 
+    function detectApiBase() {
+        const fallback = '';
+        const script = document.currentScript
+            || Array.from(document.getElementsByTagName('script'))
+                .find(s => (s.src || '').includes('/static/js/common/common.js'));
+
+        if (!script || !script.src) return fallback;
+
+        try {
+            const pathname = new URL(script.src, window.location.origin).pathname;
+            const staticIndex = pathname.indexOf('/static/');
+            return staticIndex > 0 ? pathname.substring(0, staticIndex) : fallback;
+        } catch (e) {
+            return fallback;
+        }
+    }
+
     // 前端通用工具
     const NanoBlog = {
-        apiBase: ''
+        apiBase: detectApiBase()
     };
 
     // 统一请求封装
@@ -163,32 +180,33 @@
         const container = document.getElementById('navUserArea');
         if (!container) return;
 
-        fetch('/user/getProfile', { credentials: 'same-origin' })
+        fetch(NanoBlog.apiBase + '/user/getProfile', { credentials: 'same-origin' })
             .then(res => res.json())
             .then(result => {
                 if (result.code === 200 && result.data) {
                     const user = result.data.user;
-                    const avatar = user.avatarUrl || '/static/images/avatar-default.png';
+                    const defaultAvatar = NanoBlog.apiBase + '/static/images/avatar-default.png';
+                    const avatar = user.avatarUrl || defaultAvatar;
                     const nickname = user.nickname || user.username || '用户';
 
                     container.innerHTML = `
                     <div class="nav-user-dropdown">
                         <img class="nav-avatar" src="${avatar}" alt="${nickname}"
-                             onerror="this.src='/static/images/avatar-default.png'">
+                             onerror="this.src='${defaultAvatar}'">
                         <div class="nav-user-menu">
                             <div class="nav-user-info">
                                 <img src="${avatar}" alt="${nickname}"
-                                     onerror="this.src='/static/images/avatar-default.png'">
+                                     onerror="this.src='${defaultAvatar}'">
                                 <div>
                                     <div class="nav-user-name">${nickname}</div>
                                     <div class="nav-user-username">@${user.username}</div>
                                 </div>
                             </div>
                             <div class="nav-menu-divider"></div>
-                            <a class="nav-menu-item" href="/pages/front/profile.html">
+                            <a class="nav-menu-item" href="${NanoBlog.apiBase}/pages/front/profile.html">
                                 <i class="layui-icon layui-icon-username"></i> 个人资料
                             </a>
-                            <a class="nav-menu-item" href="/pages/front/editor.html">
+                            <a class="nav-menu-item" href="${NanoBlog.apiBase}/pages/front/editor.html">
                                 <i class="layui-icon layui-icon-edit"></i> 写文章
                             </a>
                             <div class="nav-menu-divider"></div>
@@ -201,27 +219,141 @@
 
                     // 退出登录
                     document.getElementById('navLogoutBtn').addEventListener('click', function () {
-                        fetch('/user/logout', { method: 'POST', credentials: 'same-origin' })
+                        fetch(NanoBlog.apiBase + '/user/logout', { method: 'POST', credentials: 'same-origin' })
                             .then(() => {
-                                window.location.href = '/pages/front/index.html';
+                                window.location.href = NanoBlog.apiBase + '/pages/front/index.html';
                             });
                     });
 
                 } else {
                     // 未登录时显示登录/注册入口
                     container.innerHTML = `
-                    <a href="/pages/front/login.html" class="nav-link">登录</a>
-                    <a href="/pages/front/register.html" class="nav-button">注册</a>
+                    <a href="${NanoBlog.apiBase}/pages/front/login.html" class="nav-link">登录</a>
+                    <a href="${NanoBlog.apiBase}/pages/front/register.html" class="nav-button">注册</a>
                 `;
                 }
             })
             .catch(() => {
                 // 获取用户信息失败时按未登录处理
                 container.innerHTML = `
-                <a href="/pages/front/login.html" class="nav-link">登录</a>
-                <a href="/pages/front/register.html" class="nav-button">注册</a>
+                <a href="${NanoBlog.apiBase}/pages/front/login.html" class="nav-link">登录</a>
+                <a href="${NanoBlog.apiBase}/pages/front/register.html" class="nav-button">注册</a>
             `;
             });
+    };
+    //初始化分类多级菜单
+    NanoBlog.initCategoryMenu = function () {
+        const dropdown = document.getElementById('categoryDropdown');
+        if (!dropdown) return;
+
+        fetch(NanoBlog.apiBase + '/category/tree')
+            .then(res => res.json())
+            .then(result => {
+                if (result.code !== 200 || !result.data) return;
+                const categories = result.data;
+
+                dropdown.innerHTML = categories.map(parent => {
+                    const hasChildren = parent.children && parent.children.length > 0;
+
+                    const subItems = hasChildren
+                        ? parent.children.map(child => `
+                        <li class="dropdown-subitem"
+                            data-category-id="${child.id}">
+                            ${child.categoryName}
+                        </li>`).join('')
+                        : '';
+
+                    const submenu = hasChildren
+                        ? `<ul class="dropdown-submenu">${subItems}</ul>`
+                        : '';
+
+                    const arrow = hasChildren ? `<span class="arrow">▶</span>` : '';
+
+                    return `
+                    <li class="dropdown-item" data-category-id="${parent.id}">
+                        ${parent.categoryName}
+                        ${arrow}
+                        ${submenu}
+                    </li>`;
+                }).join('');
+
+                // 统一用事件委托处理点击，点击时动态读取当前URL参数
+                dropdown.addEventListener('click', function (e) {
+                    const target = e.target.closest('[data-category-id]');
+                    if (!target) return;
+                    // 判断子父分类项
+                    const isSubItem = target.classList.contains('dropdown-subitem');
+                    const isParentItem = target.classList.contains('dropdown-item');
+
+                    if (!isSubItem && !isParentItem) return;
+
+                    //子分类直接用自身的categoryId跳转
+                    if (isSubItem) {
+                        const categoryId = target.dataset.categoryId;
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('categoryId', categoryId);
+                        location.href = NanoBlog.apiBase + '/pages/front/index.html?' + params.toString();
+                        return;
+                    }
+
+                    //父分类确保点击的不是箭头展开区域以外的子菜单触发
+                    // 点到.dropdown-item就跳转
+                    if (isParentItem && !e.target.closest('.dropdown-submenu')) {
+                        const categoryId = target.dataset.categoryId;
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('categoryId', categoryId);
+                        location.href = NanoBlog.apiBase + '/pages/front/index.html?' + params.toString();
+                    }
+                });
+            });
+    };
+    //初始化标签菜单
+    NanoBlog.initTagMenu = function () {
+        const container = document.getElementById('tagDropdown');
+        if (!container) return;
+
+        fetch(NanoBlog.apiBase + '/tag/list')
+            .then(res => res.json())
+            .then(result => {
+                if (result.code !== 200 || !result.data) return;
+                const tags = result.data.slice(0, 15);
+                container.innerHTML = tags.map(tag => `
+                <a class="tag-cloud-item"
+                   data-tag-id="${tag.id}"
+                   style="${tag.tagColor ? 'border-color:' + tag.tagColor : ''}">
+                    ${tag.tagName}
+                    <span class="tag-count">${tag.articleCount || 0}</span>
+                </a>
+            `).join('') + `
+                <a href="${NanoBlog.apiBase}/pages/front/tags.html"
+                    class="tag-cloud-item tag-cloud-all"
+                    style="border-style:dashed; opacity:0.75; width:100%; justify-content:center; margin-top:4px;">
+                    <i class="layui-icon layui-icon-more" style="font-size:0.8rem;"></i>
+                    查看全部标签
+                </a>`;
+
+                // 点击时动态读取当前URL参数
+                container.addEventListener('click', function (e) {
+                    const target = e.target.closest('[data-tag-id]');
+                    if (!target) return;
+                    const tagId = target.dataset.tagId;
+                    const params = new URLSearchParams(window.location.search);
+                    params.set('tagId', tagId);
+                    location.href = NanoBlog.apiBase + '/pages/front/index.html?' + params.toString();
+                });
+            });
+    };
+    // 工具函数构建筛选跳转URL，保留已有参数并合并新参数
+    NanoBlog.buildFilterUrl = function (newParams) {
+        const params = new URLSearchParams(window.location.search);
+        Object.entries(newParams).forEach(([key, value]) => {
+            if (value !== null && value !== undefined) {
+                params.set(key, value);
+            } else {
+                params.delete(key);
+            }
+        });
+        return NanoBlog.apiBase + '/pages/front/index.html?' + params.toString();
     };
 
     // 页面初始化入口
@@ -229,6 +361,8 @@
         NanoBlog.setActiveNav();
         NanoBlog.bindNavbarScrollEffect();
         NanoBlog.initNavUser();
+        NanoBlog.initCategoryMenu();
+        NanoBlog.initTagMenu();
     };
 
     window.NanoBlog = NanoBlog;

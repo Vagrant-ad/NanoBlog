@@ -3,7 +3,7 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
     const layer = layui.layer;
     const $ = layui.jquery;
     const upload = layui.upload;
-
+    const EDIT_ID = NanoBlog.getQueryParam('id'); //有文章id则是编辑模式，无则是新建
     let easyMDE = null;
     let articleTags = [];
 
@@ -20,7 +20,12 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
 
         //3.绑定交互
         bindSubmit();
-
+        if (EDIT_ID) {
+            // 编辑模式：加载原文章数据回填
+            loadArticleForEdit(EDIT_ID);
+            // 修改页面标题提示
+            document.title = '编辑文章 - NanoBlog';
+        }
         //4.高亮导航栏“写文章”
         $('.navbar-right a[href*="editor.html"]').addClass('active');
     }
@@ -46,6 +51,15 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
         });
     }
 
+
+    function renderTagsPublic() {
+        const $list = $('#tagList');
+        $list.empty();
+        articleTags.forEach(t => {
+            $list.append(`<div class="tag-item" data-tag="${t}">${t}<i class="layui-icon layui-icon-close del-tag"></i></div>`);
+        });
+    }
+
     function initTagSystem() {
         const $input = $('#tagInput');
         const $list = $('#tagList');
@@ -57,7 +71,7 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
                     if (articleTags.includes(val)) return layer.msg('标签已存在');
                     if (articleTags.length >= 5) return layer.msg('最多5个标签');
                     articleTags.push(val);
-                    renderTags();
+                    renderTagsPublic();
                     $(this).val('');
                 }
             }
@@ -65,20 +79,14 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
         $list.on('click', '.del-tag', function() {
             const tag = $(this).parent().data('tag');
             articleTags = articleTags.filter(t => t !== tag);
-            renderTags();
+            renderTagsPublic();
         });
-        function renderTags() {
-            $list.empty();
-            articleTags.forEach(t => {
-                $list.append(`<div class="tag-item" data-tag="${t}">${t}<i class="layui-icon layui-icon-close del-tag"></i></div>`);
-            });
-        }
     }
 
     function initCoverUpload() {
         upload.render({
             elem: '#coverUploadBtn',
-            url: '/attachment/upload/image',
+            url: NanoBlog.apiBase + '/attachment/upload/image',
             accept: 'images',
             done: function(res) {
                 if (res.code === 200 || res.code === 0) {
@@ -122,9 +130,12 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
         };
 
         const loadIdx = layer.load(2);
+        //根据是否有 EDIT_ID 决定走新建还是更新
+        const url    = EDIT_ID ? (NanoBlog.apiBase + '/article/' + EDIT_ID) : (NanoBlog.apiBase + '/article/publish');
+        const method = EDIT_ID ? 'PUT' : 'POST';
         $.ajax({
-            url: '/article/publish',
-            type: 'POST',
+            url: url,
+            type: method,
             contentType: 'application/json',
             data: JSON.stringify(submitData),
             success: function(res) {
@@ -132,7 +143,7 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
                 if (res.code === 200) {
                     easyMDE.clearAutosavedValue();
                     if (status === 1) {
-                        layer.msg('发布成功！', {icon: 1}, () => location.href = '/pages/front/index.html');
+                        layer.msg('发布成功！', {icon: 1}, () => location.href = NanoBlog.apiBase + '/pages/front/index.html');
                     } else {
                         layer.msg('草稿已保存', {icon: 1});
                     }
@@ -146,9 +157,71 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
             }
         });
     }
+    //回填
+    function loadArticleForEdit(id) {
+        const loadIdx = layer.load(2);
+        $.ajax({
+            url: NanoBlog.apiBase + '/article/' + id,
+            type: 'GET',
+            success: function(res) {
+                layer.close(loadIdx);
+                if (res.code !== 200 || !res.data) {
+                    layer.msg('文章加载失败');
+                    return;
+                }
+                const data = res.data;
+
+                // 回填标题
+                $('input[name="articleTitle"]').val(data.title || '');
+
+                // 回填摘要
+                $('textarea[name="articleSummary"]').val(data.articleSummary || '');
+
+                // 回填分类（等分类列表加载完再设置）
+                // loadCategories 是异步的，用一个回调或延迟处理
+                waitForCategories(function() {
+                    $('#categorySelect').val(data.categoryId || '');
+                    form.render('select');
+                });
+
+                // 回填标签
+                articleTags = data.tags || [];
+                renderTagsPublic(); // 见下方说明
+
+                // 回填封面图
+                if (data.coverImageUrl) {
+                    $('#coverPreview').attr('src', data.coverImageUrl).show();
+                    $('#uploaderContent').hide();
+                    $('#coverUrlInput').val(data.coverImageUrl);
+                }
+
+                // 回填 Markdown 正文
+                if (easyMDE && data.contentMd) {
+                    easyMDE.value(data.contentMd);
+                }
+            },
+            error: function() {
+                layer.close(loadIdx);
+                layer.msg('网络异常');
+            }
+        });
+    }
+
+    // 等分类下拉加载完成后执行回调
+    // 因为 loadCategories 是异步的，需要轮询或用一个标志位
+    let categoriesLoaded = false;
+    let pendingCategoryCallback = null;
+
+    function waitForCategories(cb) {
+        if (categoriesLoaded) {
+            cb();
+        } else {
+            pendingCategoryCallback = cb;
+        }
+    }
     function loadCategories() {
         $.ajax({
-            url: '/category/list',
+            url: NanoBlog.apiBase + '/category/list',
             type: 'GET',
             success: function(res) {
                 if (res.code === 200 && res.data) {
@@ -158,6 +231,11 @@ layui.use(['form', 'layer', 'jquery', 'upload'], function() {
                         );
                     });
                     form.render('select'); //通知layui重渲染下拉框
+                    categoriesLoaded = true;
+                    if (pendingCategoryCallback) {
+                        pendingCategoryCallback();
+                        pendingCategoryCallback = null;
+                    }
                 } else {
                     layer.msg('分类加载失败');
                 }

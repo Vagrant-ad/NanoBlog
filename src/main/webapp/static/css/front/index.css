@@ -1,4 +1,105 @@
 /* 首页布局 (Grid ) */
+
+/* ── Hero Section ── */
+.index-hero {
+    background: linear-gradient(135deg, #2d5f7c 0%, var(--brand-blue) 50%, #4a8ba8 100%);
+    padding: 56px 0 52px;
+    overflow: hidden;
+}
+
+.index-hero-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+/* ── 左侧文字 ── */
+.index-hero-text {
+    flex: 1;
+    max-width: 520px;
+}
+
+.index-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 14px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 18px;
+}
+
+.index-hero-badge i {
+    color: var(--brand-mint);
+    font-size: 0.78rem;
+}
+
+.index-hero-title {
+    font-size: 2.6rem;
+    font-weight: 850;
+    color: #fff;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    margin-bottom: 16px;
+}
+
+.index-hero-title span {
+    color: var(--brand-mint);
+}
+
+.index-hero-sub {
+    font-size: 0.97rem;
+    color: rgba(255, 255, 255, 0.72);
+    line-height: 1.8;
+}
+
+/* ── 右侧统计卡片 ── */
+.index-hero-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.hero-stat-card {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 18px;
+    padding: 20px 24px;
+    text-align: center;
+    min-width: 120px;
+}
+
+.hero-stat-icon {
+    font-size: 1.1rem;
+    color: var(--brand-mint);
+    margin-bottom: 8px;
+}
+
+.hero-stat-num {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+    letter-spacing: -0.5px;
+    margin-bottom: 5px;
+}
+
+.hero-stat-label {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.65);
+    font-weight: 500;
+}
+
 .page-main {
     padding-top: 40px;
 }
@@ -203,4 +304,41 @@
 .sort-btn:active:hover {
     background-color: #89e2c2 !important;
     box-shadow: 0 8px 20px rgba(167, 243, 208, 0.5);
+}
+
+/*当前筛选状态标签*/
+.filter-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--brand-mint-light);
+    border: 1px solid var(--brand-mint);
+    border-radius: var(--radius-pill);
+    margin-top: 12px;
+    font-size: 0.88rem;
+}
+
+.filter-badge-type {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.filter-badge-name {
+    color: var(--brand-blue);
+    font-weight: 600;
+}
+
+.filter-badge-clear {
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    text-decoration: none !important;
+    transition: color 0.2s;
+}
+
+.filter-badge-clear:hover {
+    color: #ef4444;
 }

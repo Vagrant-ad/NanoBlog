@@ -1,5 +1,6 @@
 package com.vagrant.nanoblog.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.vagrant.nanoblog.pojo.Article;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -19,11 +20,19 @@ import java.util.Map;
  * @since 2026-03-21
  */
 public interface ArticleMapper extends BaseMapper<Article> {
+
     ArticleDetailVO getArticleDetailById(Long id);
+
     void updateViewCount(Long id);
-    //首页文章分页
-    List<ArticleHomeVO> getHomeArticlePage(Page<ArticleHomeVO> page,@Param("keyword") String keyword,@Param("sortBy") String sortBy);
-    //批量查文章标签，返回 articleId+tagName
+
+    // 首页文章分页
+    List<ArticleHomeVO> getHomeArticlePage(Page<ArticleHomeVO> page,
+                                           @Param("keyword") String keyword,
+                                           @Param("sortBy") String sortBy,
+                                           @Param("categoryIds") List<Long> categoryIds,
+                                           @Param("tagId") Long tagId);
+
+    // 批量查文章标签，返回 articleId+tagName
     List<Map<String, Object>> getTagsByArticleIds(@Param("articleIds") List<Long> articleIds);
 
     // 统计用户所有文章的点赞总数

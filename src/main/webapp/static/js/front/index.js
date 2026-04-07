@@ -2,14 +2,17 @@
     'use strict';
 
     const PAGE_SIZE = 8;
-    const DEFAULT_COVER = '/static/images/demo-cover.jpg';
-    const DEFAULT_AVATAR = '/static/images/avatar-default.png';
+    const DEFAULT_COVER = NanoBlog.apiBase + '/static/images/demo-cover.jpg';
+    const DEFAULT_AVATAR = NanoBlog.apiBase + '/static/images/avatar-default.png';
 
     let currentPage = 1;
     //排序关键字
     let currentKeyword = '';
     //排序模式
     let currentSort = 'time';
+    //分类&标签id
+    let currentCategoryId = NanoBlog.getQueryParam('categoryId') || '';
+    let currentTagId = NanoBlog.getQueryParam('tagId') || '';
 
     const articleGrid = document.querySelector('.article-grid');
     const searchInput = document.getElementById('searchInput');
@@ -28,6 +31,10 @@
         if (sort) {
             params.set('sortBy', sort);
         }
+        if (currentCategoryId)
+            params.set('categoryId', currentCategoryId);
+        if (currentTagId)
+            params.set('tagId', currentTagId);
         return `/article/home?${params.toString()}`;
     }
     //渲染空状态
@@ -75,7 +82,7 @@
 
             return `
                 <article class="article-card">
-                    <a class="card-link" href="/pages/front/post.html?id=${id}">
+                    <a class="card-link" href="${NanoBlog.apiBase}/pages/front/post.html?id=${id}">
                         <div class="card-cover">
                             <img src="${coverUrl}" alt="${title} 封面" loading="lazy" onerror="this.src='${DEFAULT_COVER}'">
                             <div class="card-badges">
@@ -103,13 +110,13 @@
                                 </div>
 
                                 <div class="card-stats">
-                                    <span>${publishTime}</span>
+                                    <span><i class="fas fa-clock"></i> ${publishTime}</span>
                                     <span>·</span>
-                                    <span>${viewCount} 浏览</span>
+                                    <span><i class="fas fa-eye"></i> ${viewCount}</span>
                                     <span>·</span>
-                                    <span>${likeCount} 赞</span>
+                                    <span><i class="fas fa-thumbs-up"></i> ${likeCount}</span>
                                     <span>·</span>
-                                    <span>${commentCount} 评论</span>
+                                    <span><i class="fas fa-comment"></i> ${commentCount}</span>
                                 </div>
                             </div>
                         </div>
@@ -215,12 +222,90 @@
             searchInput.focus();
         });
     }
+    //筛选条件
+    function renderFilterBadge() {
+        const header = document.querySelector('.section-header');
+        if (!header) return;
+
+        if (currentCategoryId) {
+            // 查分类名称
+            fetch(NanoBlog.apiBase + '/category/list')
+                .then(res => res.json())
+                .then(result => {
+                    if (result.code !== 200) return;
+                    const cat = result.data.find(c => String(c.id) === currentCategoryId);
+                    if (cat) showFilterBadge('分类', cat.categoryName, header);
+                });
+        }
+        if (currentTagId) {
+            fetch(NanoBlog.apiBase + '/tag/list')
+                .then(res => res.json())
+                .then(result => {
+                    if (result.code !== 200) return;
+                    const tag = result.data.find(t => String(t.id) === currentTagId);
+                    if (tag) showFilterBadge('标签', tag.tagName, header);
+                });
+        }
+    }
+    //显示筛选条件
+    function showFilterBadge(type, name, header) {
+        //构建清除当前筛选条件后的URL
+        const params = new URLSearchParams(window.location.search);
+        const paramKey = type === '分类' ? 'categoryId' : 'tagId';
+        params.delete(paramKey);
+        const clearUrl = NanoBlog.apiBase + '/pages/front/index.html' + (params.toString() ? '?' + params.toString() : '');
+        //渲染
+        const badge = document.createElement('div');
+        badge.className = 'filter-badge';
+        badge.innerHTML = `
+        <span class="filter-badge-type">${type}</span>
+        <span class="filter-badge-name">${name}</span>
+        <a href="${clearUrl}" class="filter-badge-clear" title="清除筛选">×</a>
+    `;
+        header.appendChild(badge);
+    }
+
+    //hero section统计数据
+    function setStatNum(id, val) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var n = parseInt(val, 10) || 0;
+        el.textContent = n >= 1000 ? (n / 1000).toFixed(1) + 'k' : n;
+    }
+
+    function loadHeroStats() {
+        // heroArticleCount / heroUserCount / heroCommentCount 由 /article/stats 提供
+        // heroTagCount 由 /tag/list 提供
+        // 两个请求并行，各自静默失败不影响页面其余功能
+        fetch(NanoBlog.apiBase + '/article/stats', { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res.code === 200 && res.data) {
+                    setStatNum('heroArticleCount', res.data.articleCount);
+                    setStatNum('heroUserCount',    res.data.userCount);
+                    setStatNum('heroCommentCount', res.data.commentCount);
+                }
+            })
+            .catch(function () {});
+
+        fetch(NanoBlog.apiBase + '/tag/list', { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res.code === 200 && res.data) {
+                    setStatNum('heroTagCount', res.data.length);
+                }
+            })
+            .catch(function () {});
+    }
+
     //初始化
     function init() {
         bindSearch();
         bindSortTabs();
         bindSearchBoxFocus();
+        renderFilterBadge();
         loadArticles(1, '');
+        loadHeroStats();
     }
 
     document.addEventListener('DOMContentLoaded', function () {

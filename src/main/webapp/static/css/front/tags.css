@@ -1,0 +1,388 @@
+/*页面基础*/
+.tags-page {
+    min-height: 100vh;
+    background: var(--body-bg);
+}
+
+/*Hero区域*/
+.tags-hero {
+    background: linear-gradient(135deg, #2d5f7c 0%, var(--brand-blue) 50%, #4a8ba8 100%);
+    padding: 56px 0 48px;
+    position: relative;
+    overflow: hidden;
+}
+
+.tags-hero::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(163, 216, 224, 0.2) 0%, transparent 65%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.tags-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 10%;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, transparent 65%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.tags-hero-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    position: relative;
+    z-index: 1;
+}
+
+.tags-hero-title {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+}
+
+.tags-hero-title span {
+    color: var(--brand-mint);
+}
+
+.tags-hero-sub {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: 32px;
+}
+
+/*统计胶囊*/
+.tags-hero-stats {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50px;
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    backdrop-filter: blur(8px);
+}
+
+.stat-pill i {
+    font-size: 0.82rem;
+    color: var(--brand-mint);
+}
+
+/*搜索和排序工具栏*/
+.tags-toolbar {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 36px 32px 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.tags-search-wrap {
+    flex: 1;
+    min-width: 240px;
+    position: relative;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.tags-search-input {
+    flex: 1;
+    height: 46px;
+    padding: 0 16px 0 44px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--text-main);
+    background: #fff;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.tags-search-input:focus {
+    border-color: var(--brand-mint);
+    box-shadow: 0 0 0 4px rgba(163, 216, 224, 0.18), 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.tags-search-input::placeholder {
+    color: #b0bec5;
+}
+
+.tags-search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+/*搜索按钮*/
+.tags-search-btn {
+    height: 46px;
+    padding: 0 22px;
+    border-radius: 50px;
+    border: none;
+    background: var(--brand-blue);
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    transition: all 0.25s;
+    box-shadow: 0 4px 12px rgba(61, 115, 152, 0.25);
+}
+
+.tags-search-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(61, 115, 152, 0.32);
+}
+
+/*清除按钮(输入框右侧)*/
+.tags-search-clear {
+    position: absolute;
+    right: 120px; /*搜索按钮宽度+gap*/
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #64748b;
+    font-size: 0.72rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    z-index: 1;
+}
+
+.tags-search-clear:hover {
+    background: var(--brand-mint);
+    color: #fff;
+}
+
+.tags-search-clear.visible {
+    display: flex;
+}
+
+/*排序按钮组*/
+.sort-group {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.sort-tag-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 50px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.25s;
+    white-space: nowrap;
+}
+
+.sort-tag-btn:hover {
+    border-color: var(--brand-mint);
+    color: var(--brand-blue);
+}
+
+.sort-tag-btn.active {
+    background: var(--brand-blue);
+    border-color: var(--brand-blue);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(61, 115, 152, 0.25);
+}
+
+/*搜索结果提示*/
+.tags-result-info {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 32px 0;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    min-height: 28px;
+}
+
+.tags-result-info .highlight {
+    color: var(--brand-blue);
+    font-weight: 700;
+}
+
+/*标签云容器*/
+.tags-cloud-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 32px 80px;
+}
+
+.tags-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: flex-start;
+}
+
+/*标签胶囊*/
+.tag-pill {
+    --pill-font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 1.5px solid rgba(163, 216, 224, 0.5);
+    background: rgba(163, 216, 224, 0.08);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+
+
+.tag-pill .tag-name {
+    font-size: var(--pill-font-size, 0.9rem);
+    color: var(--brand-blue);
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+/*文章数badge*/
+.tag-pill .tag-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 11px;
+    background: var(--brand-mint-light);
+    color: var(--brand-blue);
+    font-size: 0.72rem;
+    font-weight: 700;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.tag-pill:hover {
+    border-color: var(--brand-blue);
+    background: var(--brand-blue);
+    transform: translateY(-3px) scale(1.04);
+    box-shadow: 0 8px 24px rgba(61, 115, 152, 0.22);
+}
+
+.tag-pill:hover .tag-name {
+    color: #fff;
+}
+
+.tag-pill:hover .tag-count-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+/*热门标签*/
+.tag-pill.is-hot {
+    border-color: rgba(255, 185, 0, 0.4);
+    background: rgba(255, 217, 61, 0.08);
+}
+
+.tag-pill.is-hot .tag-count-badge {
+    background: rgba(255, 185, 0, 0.2);
+    color: #9a6700;
+}
+
+.tag-pill.is-hot:hover {
+    border-color: #d4a72c;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 8px 24px rgba(213, 158, 38, 0.28);
+}
+
+/*无结果和空态*/
+.tags-empty {
+    width: 100%;
+    padding: 80px 0;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.tags-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.25;
+    color: var(--brand-blue);
+}
+
+.tags-empty-text {
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.tags-empty-sub {
+    font-size: 0.85rem;
+    color: #b0bec5;
+}
+
+/*骨架屏*/
+.tag-skeleton {
+    display: inline-flex;
+    height: 44px;
+    border-radius: 50px;
+    background: linear-gradient(90deg, #f0f4f8 25%, #e4ecf2 50%, #f0f4f8 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/*响应式*/
+@media (max-width: 768px) {
+    .tags-hero { padding: 40px 0 36px; }
+    .tags-hero-title { font-size: 1.8rem; }
+    .tags-toolbar { padding: 24px 20px 0; flex-direction: column; align-items: stretch; }
+    .sort-group { justify-content: flex-start; }
+    .tags-cloud-section { padding: 20px 20px 60px; }
+    .tags-hero-inner { padding: 0 20px; }
+    .tags-result-info { padding: 16px 20px 0; }
+    .tags-search-clear { right: 110px; }
+}
