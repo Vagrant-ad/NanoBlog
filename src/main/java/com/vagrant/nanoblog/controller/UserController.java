@@ -11,6 +11,8 @@ import com.vagrant.nanoblog.mapper.UserRoleMapper;
 import com.vagrant.nanoblog.pojo.User;
 import com.vagrant.nanoblog.pojo.UserFollow;
 import com.vagrant.nanoblog.pojo.UserRole;
+import com.vagrant.nanoblog.service.IArticleService;
+import com.vagrant.nanoblog.service.ICommentService;
 import com.vagrant.nanoblog.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
