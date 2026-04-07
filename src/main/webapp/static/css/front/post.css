@@ -494,3 +494,35 @@
     background: var(--brand-mint);
     transform: translateY(-3px);
 }
+
+/*作者信息*/
+.article-author {
+    display: flex;
+    justify-content: center;
+    margin: 12px 0 20px;
+}
+.article-author-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px;
+    border-radius: var(--radius-pill);
+    background: var(--brand-mint-light);
+    transition: var(--transition);
+}
+.article-author-link:hover {
+    background: var(--brand-mint);
+    transform: translateY(-1px);
+}
+.article-author-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+}
+.article-author-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--brand-blue);
+}

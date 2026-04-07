@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+
     <meta charset="UTF-8">
     <title>个人资料 - NanoBlog</title>
     <link rel="stylesheet" href="../../static/css/common/common.css">
@@ -10,9 +11,9 @@
 
 </head>
 <body>
+
 <header class="navbar">
     <div class="navbar-inner">
-        <!-- 左侧：Logo + 导航 -->
         <div class="navbar-left">
             <a class="logo-link" href="/pages/front/index.html">
                 <img src="/static/images/logo-horizontal.png" alt="NanoBlog Logo" class="logo-image">
@@ -20,31 +21,33 @@
             </a>
             <nav class="navbar-menu">
                 <a href="/pages/front/index.html">首页</a>
-                <a href="#">分类</a>
-                <a href="#">标签</a>
+                <div class="nav-dropdown" id="categoryMenu">
+                    <a href="#" class="nav-dropdown-trigger">
+                        分类
+                    </a>
+                    <ul class="dropdown-menu" id="categoryDropdown"></ul>
+                </div>
+                <div class="nav-dropdown" id="tagMenu">
+                    <a href="#" class="nav-dropdown-trigger">
+                        标签
+                    </a>
+                    <div class="dropdown-menu tag-cloud-menu" id="tagDropdown"></div>
+                </div>
             </nav>
         </div>
-
-        <!-- 中间：搜索框 -->
         <div class="navbar-center">
             <div class="search-box">
                 <i class="layui-icon layui-icon-search" id="searchBtn"></i>
                 <input type="text" placeholder="搜索文章标题、标签、作者" id="searchInput">
             </div>
         </div>
-
-
-        <!-- 右侧：用户操作区 -->
         <div class="navbar-right">
-            <!-- 在 editor.html 加上 active 类 -->
             <a href="/pages/front/editor.html" class="nav-button">写文章</a>
-            <!--<a href="/pages/front/login.html" class="nav-link">登录</a>
-            <a href="/pages/front/register.html" class="nav-button">注册</a>-->
-            <!--用户区域由js根据登录状态动态渲染-->
             <div id="navUserArea"></div>
         </div>
     </div>
 </header>
+
 
 <div class="profile-page">
 
@@ -54,7 +57,8 @@
         <div class="hero-body">
             <div class="avatar-wrapper">
                 <img id="avatarDisplay" src="../../static/images/avatar-default.png" alt="头像">
-                <label class="avatar-mask" for="avatarInput">
+                <!-- 上传头像遮罩：仅 owner 模式显示 -->
+                <label class="avatar-mask" for="avatarInput" id="avatarMaskLabel" style="display:none;">
                     <i class="fas fa-camera"></i>
                     <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(this)">
                 </label>
@@ -66,25 +70,42 @@
                     <span id="statusBadge" class="status-badge">---</span>
                 </div>
             </div>
+            <!-- 操作按钮区：owner/visitor 二选一显示 -->
             <div class="hero-actions">
-                <button id="editBtn" class="btn btn-ghost" onclick="enableEdit()">
-                    <i class="fas fa-pen"></i> 编辑资料
-                </button>
-                <button class="btn btn-ghost" onclick="openChangePassword()">
-                    <i class="fas fa-key"></i> 修改密码
-                </button>
+                <!-- owner：编辑资料 + 修改密码 -->
+                <div id="ownerActions" style="display:none; gap:10px; align-items:center;">
+                    <button id="editBtn" class="btn btn-ghost" onclick="enableEdit()">
+                        <i class="fas fa-pen"></i> 编辑资料
+                    </button>
+                    <button class="btn btn-ghost" onclick="openChangePassword()">
+                        <i class="fas fa-key"></i> 修改密码
+                    </button>
+                    <button class="btn btn-outline" id="adminDashboardBtn" style="display: none;" onclick="goToAdmin()">
+                        <i class="fas fa-tools"></i> 进入后台
+                    </button>
+                </div>
+                <!-- visitor：关注按钮 -->
+                <div id="visitorActions" style="display:none;">
+                    <button id="followBtn" class="btn btn-ghost" onclick="toggleFollow()">
+                        <i class="fas fa-user-plus"></i> 关注
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- ② 统计数据栏（接口预留） -->
-
+    <!--  统计数据栏 -->
     <div class="card">
         <div class="stats-row">
             <div class="stat-item">
                 <div class="stat-icon"><i class="fas fa-user-friends"></i></div>
                 <div class="stat-value" id="statFollow">--</div>
                 <div class="stat-label">我的关注</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon"><i class="fas fa-comment-dots"></i></div>
+                <div class="stat-value" id="statComment">--</div>
+                <div class="stat-label">我的评论</div>
             </div>
             <div class="stat-item">
                 <div class="stat-icon"><i class="fas fa-eye"></i></div>
@@ -99,8 +120,8 @@
         </div>
     </div>
 
-
-    <div class="card">
+    <!-- 账号详情卡片 -->
+    <div class="card" id="accountDetailCard">
         <div class="card-header">
             <i class="fas fa-id-card"></i>
             <h3>账号详情</h3>
@@ -140,7 +161,7 @@
             </div>
         </div>
 
-        <!-- 编辑面板 -->
+        <!-- 编辑面板：仅 owner 显示 -->
         <div id="editPanel" class="info-panel" style="display:none;">
             <div class="edit-form">
                 <div class="form-group">
@@ -165,37 +186,46 @@
         </div>
     </div>
 
-    <!-- ④ 我的文章（接口预留） -->
-
+    <!--  文章管理 -->
     <div class="card">
         <div class="card-header">
             <i class="fas fa-newspaper"></i>
-            <h3>我的文章</h3>
+            <h3 id="articleCardTitle">文章</h3>
         </div>
-        <div class="articles-body">
-            <div id="articleList" class="article-list">
-                <!-- 初始占位，由 loadMyArticles() 填充 -->
-                <div class="articles-empty">
-                    <i class="fas fa-file-alt"></i>
-                    <span>暂无文章，快去创作吧~</span>
-                </div>
-            </div>
-        </div>
-        <div class="articles-footer">
-            <button class="btn btn-ghost" onclick="goToMyArticles()">
-                <i class="fas fa-list"></i> 查看全部文章
+
+        <!-- Tab 切换 -->
+        <div class="article-tabs" id="articleTabsBar">
+            <button class="article-tab active" data-tab="published" onclick="switchTab('published')">
+                <i class="fas fa-check-circle"></i> 已发布
+                <span class="tab-count" id="publishedCount">0</span>
             </button>
+            <!-- 草稿 Tab 仅 owner 显示，由 JS 控制 -->
+            <button class="article-tab" data-tab="drafts" id="draftsTabBtn"
+                    onclick="switchTab('drafts')" style="display:none;">
+                <i class="fas fa-pencil-alt"></i> 草稿箱
+                <span class="tab-count" id="draftsCount">0</span>
+            </button>
+        </div>
+
+        <!-- 已发布文章列表 -->
+        <div class="articles-body" id="tabPublished">
+            <div id="publishedList" class="article-list">
+                <div class="articles-loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>
+            </div>
+            <div class="articles-pagination" id="publishedPagination"></div>
+        </div>
+
+        <!-- 草稿列表（仅 owner） -->
+        <div class="articles-body" id="tabDrafts" style="display:none;">
+            <div id="draftsList" class="article-list">
+                <div class="articles-loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>
+            </div>
+            <div class="articles-pagination" id="draftsPagination"></div>
         </div>
     </div>
 
-    <!-- ⑤ 危险区 / 注销账号（接口预留） -->
-    <!--
-        TODO（队友对接）：
-        POST /user/deleteAccount
-        Body: { password: "..." }
-        响应: { code: 200 } → 前端清 session，跳转登录页
-    -->
-    <div class="card">
+    <!-- 危险区域：仅 owner 显示 -->
+    <div class="card" id="dangerZoneCard" style="display:none;">
         <div class="card-header danger-header">
             <i class="fas fa-exclamation-triangle"></i>
             <h3>危险区域</h3>
@@ -211,10 +241,64 @@
         </div>
     </div>
 
+    <!-- 编辑文章 Modal（仅 owner 使用） -->
+    <div id="editArticleModal" class="modal-overlay" onclick="handleOverlayClick(event, 'editArticleModal')">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <i class="fas fa-edit"></i>
+                    <h3>编辑文章</h3>
+                </div>
+                <button class="modal-close" onclick="closeEditArticle()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="edit-article-form">
+                <div>
+                    <label>文章标题</label>
+                    <input type="text" id="editTitle" placeholder="请输入文章标题">
+                </div>
+                <div class="edit-form-row">
+                    <div>
+                        <label>文章分类</label>
+                        <select id="editCategory"></select>
+                    </div>
+                    <div>
+                        <label>状态</label>
+                        <select id="editStatus">
+                            <option value="1">已发布</option>
+                            <option value="0">草稿</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label>文章摘要</label>
+                    <textarea id="editSummary" rows="2" placeholder="简短描述文章内容..."></textarea>
+                </div>
+                <div>
+                    <label>封面图 URL</label>
+                    <input type="text" id="editCoverUrl" placeholder="封面图片地址（选填）">
+                </div>
+                <div>
+                    <label>标签（英文逗号分隔）</label>
+                    <input type="text" id="editTags" placeholder="例如：Java, Spring, MyBatis">
+                </div>
+                <div>
+                    <label>正文（Markdown）</label>
+                    <textarea id="editContentMd" rows="8" placeholder="请输入 Markdown 内容..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditArticle()">取消</button>
+                <button class="btn btn-primary" onclick="submitEditArticle()">
+                    <i class="fas fa-save"></i> 保存修改
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div><!-- /profile-page -->
 
 
-<!--  修改密码 Modal -->
+<!-- 修改密码 Modal（仅 owner 使用） -->
 <div id="pwdModal" class="modal-overlay" onclick="handleOverlayClick(event, 'pwdModal')">
     <div class="modal-box">
         <div class="modal-header">
@@ -237,7 +321,8 @@
             <div class="modal-field">
                 <label>新密码</label>
                 <div class="modal-field-wrap">
-                    <input type="password" id="newPassword" placeholder="至少 6 位，含字母和数字" oninput="checkPwdStrength(this.value)">
+                    <input type="password" id="newPassword" placeholder="至少 6 位，含字母和数字"
+                           oninput="checkPwdStrength(this.value)">
                     <button class="eye-btn" type="button" onclick="toggleEye('newPassword', this)">
                         <i class="fas fa-eye-slash"></i>
                     </button>
@@ -269,24 +354,55 @@
     </div>
 </div>
 
-<!---->
-<div id="deleteModal" class="modal-overlay confirm-modal" onclick="handleOverlayClick(event, 'deleteModal')">
+<!-- 草稿发布 Modal -->
+<div id="publishDraftModal" class="modal-overlay confirm-modal"
+     onclick="handleOverlayClick(event, 'publishDraftModal')">
     <div class="modal-box">
         <div class="confirm-body">
-            <div class="confirm-icon"><i class="fas fa-trash-alt"></i></div>
+            <div class="confirm-icon" style="background:#f0fdf4; color:#16a34a;">
+                <i class="fas fa-paper-plane"></i>
+            </div>
+            <h4>确认发布此草稿？</h4>
+            <p id="publishDraftDesc">发布后文章将对所有人可见，你仍可随时编辑修改。</p>
+        </div>
+        <div class="confirm-footer">
+            <button class="btn btn-secondary" onclick="closePublishDraftModal()">
+                <i class="fas fa-times"></i> 取消
+            </button>
+            <button class="btn" id="confirmPublishDraftBtn"
+                    style="background:linear-gradient(135deg,#34d399,#16a34a);color:#fff;border:none;
+                           box-shadow:0 4px 12px rgba(22,163,74,0.25);flex:1;justify-content:center;">
+                <i class="fas fa-paper-plane"></i> 确认发布
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 注销账号 / 删除文章 确认 Modal（共用） -->
+<div id="deleteModal" class="modal-overlay confirm-modal"
+     onclick="handleOverlayClick(event, 'deleteModal')">
+    <div class="modal-box">
+        <div class="confirm-body">
+            <div class="confirm-icon" style="background:#fef2f2;color:#dc2626;">
+                <i class="fas fa-user-times"></i>
+            </div>
             <h4>确认注销账号？</h4>
-            <p>你的所有文章、评论、关注数据将被<strong>永久删除</strong>，无法找回。请输入密码确认此操作。</p>
-            <div class="modal-field" style="margin-top:16px; text-align:left;">
-                <label style="font-size:0.72rem;font-weight:700;color:#dc2626;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:6px;">验证当前密码</label>
+            <p>此操作将<strong>永久删除</strong>你的账号及所有数据，无法恢复。请输入密码确认。</p>
+            <div class="modal-field" style="margin-top:16px;text-align:left;">
+                <label style="font-size:0.72rem;font-weight:700;color:#dc2626;
+                              letter-spacing:0.5px;text-transform:uppercase;
+                              display:block;margin-bottom:6px;">验证当前密码</label>
                 <div class="modal-field-wrap">
-                    <input type="password" id="deleteConfirmPassword" placeholder="输入密码以确认">
+                    <input type="password" id="deleteConfirmPassword" placeholder="输入密码以确认注销">
                 </div>
             </div>
         </div>
         <div class="confirm-footer">
-            <button class="btn btn-secondary" onclick="closeDeleteConfirm()">我再想想</button>
+            <button class="btn btn-secondary" onclick="closeDeleteConfirm()">
+                <i class="fas fa-arrow-left"></i> 我再想想
+            </button>
             <button class="btn btn-danger" onclick="submitDeleteAccount()">
-                <i class="fas fa-trash-alt"></i> 确认注销
+                <i class="fas fa-user-times"></i> 确认
             </button>
         </div>
     </div>
@@ -295,8 +411,26 @@
 <!-- Toast 提示 -->
 <div id="toast" class="toast"></div>
 
+<!-- 用户已注销提示弹窗 -->
+<div id="userDeletedModal" class="modal-overlay confirm-modal">
+    <div class="modal-box">
+        <div class="confirm-body">
+            <div class="confirm-icon" style="background:#f0f5f8; color:var(--brand-blue);">
+                <i class="fas fa-user-slash"></i>
+            </div>
+            <h4>该用户已注销</h4>
+        </div>
+        <div class="confirm-footer">
+            <a href="/pages/front/index.html" class="btn btn-secondary">
+                <i class="fas fa-home"></i> 返回首页
+            </a>
+        </div>
+    </div>
+</div>
 
-<script src="/static/js/front/profile.js"></script>
+<script src="/static/lib/layui/layui.js"></script>
 <script src="/static/js/common/common.js"></script>
+<script src="/static/js/front/profile.js"></script>
+
 </body>
 </html>

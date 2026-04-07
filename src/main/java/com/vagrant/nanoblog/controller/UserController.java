@@ -8,6 +8,7 @@ import com.vagrant.nanoblog.dto.UserUpdateDTO;
 import com.vagrant.nanoblog.mapper.ArticleMapper;
 import com.vagrant.nanoblog.mapper.UserFollowMapper;
 import com.vagrant.nanoblog.mapper.UserRoleMapper;
+import com.vagrant.nanoblog.pojo.Attachment;
 import com.vagrant.nanoblog.pojo.User;
 import com.vagrant.nanoblog.pojo.UserFollow;
 import com.vagrant.nanoblog.pojo.UserRole;
@@ -21,6 +22,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.File;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -174,60 +178,30 @@ public class UserController {
     }
 
 
-    /**
-     * 1. 更新/完善个人信息
-     */
+    // 更新/完善个人信息
     @PostMapping("/updateProfile")
     @ResponseBody
     public ResponseResult updateProfile(@RequestBody UserUpdateDTO updateDTO) {
         return userService.updateUserProfile(updateDTO);
     }
 
+
     /**
-     * 2.接收前端上传的头像图片，并返回图片访问URL
+     * 上传头像 (直接复用 AttachmentController 的逻辑)
      */
     @PostMapping("/uploadAvatar")
     @ResponseBody
-    public ResponseResult uploadAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
-        try {
-            String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String newFileName = UUID.randomUUID().toString() + extension;
-
-            // 使用电脑硬盘上的固定目录
-            String savePath = "D:/nanoblog_uploads/";
-            File dir = new File(savePath);
-            if (!dir.exists()) dir.mkdirs();
-
-            File serverFile = new File(dir, newFileName);
-            file.transferTo(serverFile);
+    public ResponseResult uploadAvatar(
+            @RequestParam("file") MultipartFile file,
+            HttpServletRequest request,
+            HttpSession session) {
 
 
-            String imageUrl = "/user/showAvatar?name=" + newFileName;
-            return ResponseResult.okResult(imageUrl);
-        } catch (Exception e) {
-            return ResponseResult.errorResult(500,"上传失败");
-        }
+        return attachmentController.uploadImage(file, request, session);
     }
 
-    /**
-     * 3. 新增：读取并展示头像的接口
-     * 浏览器访问这个接口，Java会去D盘读文件并返回给浏览器
-     */
-    @GetMapping("/showAvatar")
-    public void showAvatar(@RequestParam("name") String name, javax.servlet.http.HttpServletResponse response) {
-        try {
-            File file = new File("D:/nanoblog_uploads/" + name);
-            if (!file.exists()) return;
 
-
-            response.setContentType("image/jpeg");
-            java.nio.file.Files.copy(file.toPath(), response.getOutputStream());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
+    //修改密码
     @PostMapping("/updatePassword")
     @ResponseBody
     public ResponseResult updatePassword(@RequestBody Map<String, String> params, HttpSession session) {

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分类标签管理 - NanoBlog后台管理</title>
+    <link rel="stylesheet" href="/static/lib/layui/css/layui.css">
+    <style>
+        body { background-color: #f2f2f2; }
+        .layui-layout-admin .layui-body { padding: 20px; }
+        .tab-content { background: #fff; padding: 20px; border-radius: 4px; margin-top: 15px; }
+    </style>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <!-- 头部 -->
+    <div class="layui-header">
+        <div class="layui-logo">NanoBlog 后台管理</div>
+        <ul class="layui-nav layui-layout-right">
+            <li class="layui-nav-item"><a href="javascript:;" id="adminName">管理员</a></li>
+            <li class="layui-nav-item"><a href="javascript:;" id="logout">退出</a></li>
+        </ul>
+    </div>
+
+    <!-- 左侧导航 -->
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <ul class="layui-nav layui-nav-tree" lay-filter="test">
+                <li class="layui-nav-item"><a href="dashboard.html">仪表盘</a></li>
+                <li class="layui-nav-item"><a href="user.html">用户管理</a></li>
+                <li class="layui-nav-item"><a href="post.html">文章管理</a></li>
+                <li class="layui-nav-item"><a href="comment.html">评论管理</a></li>
+                <li class="layui-nav-item layui-this"><a href="category.html">分类标签管理</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 内容主体区域 -->
+    <div class="layui-body">
+        <div class="layui-tab layui-tab-brief" lay-filter="mainTab">
+            <ul class="layui-tab-title">
+                <li class="layui-this">分类管理</li>
+                <li>标签管理</li>
+            </ul>
+            <div class="layui-tab-content">
+                <!-- 分类管理 -->
+                <div class="layui-tab-item layui-show">
+                    <div class="tab-content">
+                        <button class="layui-btn" id="addCategoryBtn">新增分类</button>
+                        <table class="layui-hide" id="categoryTable" lay-filter="categoryTable"></table>
+                    </div>
+                </div>
+
+                <!-- 标签管理 -->
+                <div class="layui-tab-item">
+                    <div class="tab-content">
+                        <button class="layui-btn" id="addTagBtn">新增标签</button>
+                        <table class="layui-hide" id="tagTable" lay-filter="tagTable"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部 -->
+    <div class="layui-footer">© 2026 NanoBlog - 后台管理系统</div>
+</div>
+
+<!-- 操作列模板 -->
+<script type="text/html" id="categoryActionTpl">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</a>
+</script>
+
+<script type="text/html" id="tagActionTpl">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</a>
+</script>
+
+<script src="/static/lib/layui/layui.js"></script>
+<script>
+    layui.use(['element', 'table', 'layer', 'form'], function(){
+        var element = layui.element;
+        var table = layui.table;
+        var layer = layui.layer;
+        var form = layui.form;
+        var $ = layui.$;
+
+        // ===================== 分类管理 =====================
+        
+        // 渲染分类表格
+        var categoryTableIns = table.render({
+            elem: '#categoryTable',
+            url: '/category/list',
+            page: false,
+            cols: [[
+                {field: 'id', title: 'ID', width: 80},
+                {field: 'categoryName', title: '分类名称', width: 200},
+                {field: 'categorySlug', title: 'Slug', width: 200},
+                {field: 'sortOrder', title: '排序', width: 100},
+                {title: '操作', width: 150, toolbar: '#categoryActionTpl'}
+            ]],
+            response: {
+                statusCode: 200
+            },
+            parseData: function(res) {
+                return {
+                    "code": res.code,
+                    "msg": res.msg,
+                    "data": res.data
+                };
+            }
+        });
+
+        // 新增分类
+        $('#addCategoryBtn').click(function() {
+            layer.open({
+                type: 1,
+                title: '新增分类',
+                area: ['500px', '300px'],
+                content: '<div style="padding: 20px;">' +
+                    '<form class="layui-form" lay-filter="categoryForm">' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">分类名称</label>' +
+                    '<div class="layui-input-block">' +
+                    '<input type="text" name="categoryName" required lay-verify="required" placeholder="请输入分类名称" class="layui-input">' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">Slug</label>' +
+                    '<div class="layui-input-block">' +
+                    '<input type="text" name="categorySlug" placeholder="请输入slug（可选）" class="layui-input">' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">排序</label>' +
+                    '<div class="layui-input-block">' +
+                    '<input type="number" name="sortOrder" value="0" class="layui-input">' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<div class="layui-input-block">' +
+                    '<button class="layui-btn" lay-submit lay-filter="submitCategory">提交</button>' +
+                    '<button type="reset" class="layui-btn layui-btn-primary">重置</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</form>' +
+                    '</div>',
+                success: function(layero, index) {
+                    form.render();
+                    
+                    form.on('submit(submitCategory)', function(data) {
+                        $.ajax({
+                            url: '/admin/category/add',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(data.field),
+                            success: function(res) {
+                                if (res.code === 200) {
+                                    layer.msg('添加成功');
+                                    layer.close(index);
+                                    categoryTableIns.reload();
+                                } else {
+                                    layer.msg(res.msg || '添加失败');
+                                }
+                            },
+                            error: function() {
+                                layer.msg('网络错误');
+                            }
+                        });
+                        return false;
+                    });
+                }
+            });
+        });
+
+        // 监听分类工具条
+        table.on('tool(categoryTable)', function(obj){
+            var data = obj.data;
+            var layEvent = obj.event;
+
+            if(layEvent === 'edit'){
+                layer.open({
+                    type: 1,
+                    title: '编辑分类',
+                    area: ['500px', '300px'],
+                    content: '<div style="padding: 20px;">' +
+                        '<form class="layui-form" lay-filter="editCategoryForm">' +
+                        '<div class="layui-form-item">' +
+                        '<label class="layui-form-label">分类名称</label>' +
+                        '<div class="layui-input-block">' +
+                        '<input type="text" name="categoryName" value="' + data.categoryName + '" required lay-verify="required" class="layui-input">' +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="layui-form-item">' +
+                        '<label class="layui-form-label">排序</label>' +
+                        '<div class="layui-input-block">' +
+                        '<input type="number" name="sortOrder" value="' + data.sortOrder + '" class="layui-input">' +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="layui-form-item">' +
+                        '<div class="layui-input-block">' +
+                        '<button class="layui-btn" lay-submit lay-filter="submitEditCategory">提交</button>' +
+                        '</div>' +
+                        '</div>' +
+                        '</form>' +
+                        '</div>',
+                    success: function(layero, index) {
+                        form.render();
+                        
+                        form.on('submit(submitEditCategory)', function(formData) {
+                            $.ajax({
+                                url: '/admin/category/' + data.id,
+                                type: 'PUT',
+                                contentType: 'application/json',
+                                data: JSON.stringify(formData.field),
+                                success: function(res) {
+                                    if (res.code === 200) {
+                                        layer.msg('修改成功');
+                                        layer.close(index);
+                                        categoryTableIns.reload();
+                                    } else {
+                                        layer.msg(res.msg || '修改失败');
+                                    }
+                                },
+                                error: function() {
+                                    layer.msg('网络错误');
+                                }
+                            });
+                            return false;
+                        });
+                    }
+                });
+            } else if(layEvent === 'delete'){
+                layer.confirm('确定要删除该分类吗？如果该分类下还有文章将无法删除。', function(index){
+                    $.ajax({
+                        url: '/admin/category/' + data.id,
+                        type: 'DELETE',
+                        success: function(res) {
+                            if (res.code === 200) {
+                                layer.msg('删除成功');
+                                obj.del();
+                            } else {
+                                layer.msg(res.msg || '删除失败');
+                            }
+                        },
+                        error: function() {
+                            layer.msg('网络错误');
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+
+        // ===================== 标签管理 =====================
+        
+        // 渲染标签表格
+        var tagTableIns = table.render({
+            elem: '#tagTable',
+            url: '/tag/list',
+            page: false,
+            cols: [[
+                {field: 'id', title: 'ID', width: 80},
+                {field: 'tagName', title: '标签名称', width: 200},
+                {field: 'tagSlug', title: 'Slug', width: 200},
+                {title: '操作', width: 100, toolbar: '#tagActionTpl'}
+            ]],
+            response: {
+                statusCode: 200
+            },
+            parseData: function(res) {
+                return {
+                    "code": res.code,
+                    "msg": res.msg,
+                    "data": res.data
+                };
+            }
+        });
+
+        // 新增标签
+        $('#addTagBtn').click(function() {
+            layer.open({
+                type: 1,
+                title: '新增标签',
+                area: ['500px', '250px'],
+                content: '<div style="padding: 20px;">' +
+                    '<form class="layui-form" lay-filter="tagForm">' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">标签名称</label>' +
+                    '<div class="layui-input-block">' +
+                    '<input type="text" name="tagName" required lay-verify="required" placeholder="请输入标签名称" class="layui-input">' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">Slug</label>' +
+                    '<div class="layui-input-block">' +
+                    '<input type="text" name="tagSlug" placeholder="请输入slug（可选）" class="layui-input">' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<div class="layui-input-block">' +
+                    '<button class="layui-btn" lay-submit lay-filter="submitTag">提交</button>' +
+                    '<button type="reset" class="layui-btn layui-btn-primary">重置</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</form>' +
+                    '</div>',
+                success: function(layero, index) {
+                    form.render();
+                    
+                    form.on('submit(submitTag)', function(data) {
+                        $.ajax({
+                            url: '/admin/tag/add',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(data.field),
+                            success: function(res) {
+                                if (res.code === 200) {
+                                    layer.msg('添加成功');
+                                    layer.close(index);
+                                    tagTableIns.reload();
+                                } else {
+                                    layer.msg(res.msg || '添加失败');
+                                }
+                            },
+                            error: function() {
+                                layer.msg('网络错误');
+                            }
+                        });
+                        return false;
+                    });
+                }
+            });
+        });
+
+        // 监听标签工具条
+        table.on('tool(tagTable)', function(obj){
+            var data = obj.data;
+            var layEvent = obj.event;
+
+            if(layEvent === 'delete'){
+                layer.confirm('确定要删除该标签吗？', function(index){
+                    $.ajax({
+                        url: '/admin/tag/' + data.id,
+                        type: 'DELETE',
+                        success: function(res) {
+                            if (res.code === 200) {
+                                layer.msg('删除成功');
+                                obj.del();
+                            } else {
+                                layer.msg(res.msg || '删除失败');
+                            }
+                        },
+                        error: function() {
+                            layer.msg('网络错误');
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+
+        // 退出登录
+        $('#logout').click(function() {
+            layer.confirm('确定要退出吗？', function(index){
+                $.post('/user/logout', function(res) {
+                    if (res.code === 200) {
+                        window.location.href = '/pages/front/login.html';
+                    }
+                });
+                layer.close(index);
+            });
+        });
+    });
+</script>
+</body>
+</html>
