@@ -49,6 +49,12 @@ public class UserController {
     @Autowired
     private AttachmentController attachmentController; // 注入附件控制器
 
+    @Autowired
+    private com.vagrant.nanoblog.service.IArticleService articleService;
+
+    @Autowired
+    private com.vagrant.nanoblog.service.ICommentService commentService;
+
     // 跳转到注册页面
     @GetMapping("/register")
     public String toRegister() {
@@ -155,18 +161,13 @@ public class UserController {
             return ResponseResult.errorResult(401, "请先登录");
         }
 
-
-
         // 2. 查询完整的用户信息
         User user = userService.getById(sessionUser.getId());
-
 
         // 3. 使用 UserRoleMapper 查询该用户的角色记录
         UserRole userRole = userRoleMapper.selectOne(
                 new QueryWrapper<UserRole>().eq("user_id", user.getId())
         );
-
-
 
         // 4. 将数据封装进 Map
         Map<String, Object> result = new HashMap<>();
@@ -263,6 +264,46 @@ public class UserController {
         result.put("user", user);
         result.put("roleId", userRole != null ? userRole.getRoleId() : 1);
         return ResponseResult.okResult(result);
+    }
+
+    /**
+     * 获取用户统计信息（评论数、总浏览量）
+     * GET /user/getStats?userId=xxx
+     * userId 可选：不传则查当前登录用户，传则查目标用户（访客模式）
+     */
+    @GetMapping("/getStats")
+    @ResponseBody
+    public ResponseResult getStats(@RequestParam(required = false) Long userId, HttpSession session) {
+        Long targetId = userId;
+        if (targetId == null) {
+            User loginUser = (User) session.getAttribute("LOGIN_USER");
+            if (loginUser == null) return ResponseResult.errorResult(401, "请先登录");
+            targetId = loginUser.getId();
+        }
+
+        // 总浏览量：查该用户所有文章的 view_count 之和
+        Long totalView = articleService.lambdaQuery()
+                .eq(com.vagrant.nanoblog.pojo.Article::getAuthorId, targetId)
+                .eq(com.vagrant.nanoblog.pojo.Article::getIsDeleted, 0)
+                .list()
+                .stream()
+                .mapToLong(a -> a.getViewCount() == null ? 0L : a.getViewCount())
+                .sum();
+
+        // 评论数：查该用户发出的评论总数
+        long commentCount = commentService.lambdaQuery()
+                .eq(com.vagrant.nanoblog.pojo.Comment::getUserId, targetId)
+                .eq(com.vagrant.nanoblog.pojo.Comment::getIsDeleted, 0)
+                .count();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("viewCount", totalView);
+        stats.put("commentCount", commentCount);
+        // followCount 暂无关注表逻辑，返回 0 占位
+        stats.put("followCount", 0);
+        stats.put("likeCount", 0);
+
+        return ResponseResult.okResult(stats);
     }
 
 }

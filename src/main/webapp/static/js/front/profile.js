@@ -31,7 +31,6 @@ function handleOverlayClick(e, modalId) {
         if (modalId === 'deleteModal')       closeDeleteConfirm();
         if (modalId === 'editArticleModal')  closeEditArticle();
         if (modalId === 'publishDraftModal') closePublishDraftModal();
-        // userDeletedModal 点击遮罩不关闭，强制用户选择按钮
     }
 }
 
@@ -68,12 +67,9 @@ function resolveApiBase() {
 
 var API_BASE = resolveApiBase();
 
-
-
 function getQueryParam(name) {
     return new URLSearchParams(window.location.search).get(name);
 }
-
 
 /* 打开用户已注销弹窗 */
 function openUserDeletedModal() {
@@ -108,7 +104,6 @@ window.onload = function () {
                 }
             }
 
-            // 访问他人主页时，先校验该用户是否已注销
             if (!_isOwner && _profileUserId) {
                 checkUserDeletedThenInit(_profileUserId);
             } else {
@@ -117,20 +112,13 @@ window.onload = function () {
         });
 };
 
-/**
- * 访问他人主页时，先请求 publicProfile 判断是否已注销
- * 若已注销：渲染骨架页面后弹出提示弹窗
- * 若正常：直接进入 visitor 模式
- */
 function checkUserDeletedThenInit(userId) {
     fetch('/user/publicProfile?id=' + userId, { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.code === 200 && res.data) {
-                // 用户正常，走正常 visitor 流程
                 initPageByMode();
             } else {
-                // 用户已注销或不存在：渲染骨架，然后弹窗
                 initPageByModeDeleted();
             }
         })
@@ -139,9 +127,6 @@ function checkUserDeletedThenInit(userId) {
         });
 }
 
-/**
- * 已注销用户：渲染空壳骨架页面，然后弹出提示弹窗
- */
 function initPageByModeDeleted() {
     document.getElementById('ownerActions').style.display   = 'none';
     document.getElementById('visitorActions').style.display = 'none';
@@ -149,14 +134,10 @@ function initPageByModeDeleted() {
     document.getElementById('draftsTabBtn').style.display   = 'none';
     document.getElementById('dangerZoneCard').style.display = 'none';
     document.getElementById('articleCardTitle').innerText   = 'TA 的文章';
-
     renderDeletedUserSkeleton();
     openUserDeletedModal();
 }
 
-/**
- * 渲染已注销用户的骨架占位信息
- */
 function renderDeletedUserSkeleton() {
     var nicknameEl = document.getElementById('nicknameDisplay');
     var usernameEl = document.getElementById('usernameDisplay');
@@ -210,11 +191,11 @@ function initPageByMode() {
         document.getElementById('draftsTabBtn').style.display   = '';
         document.getElementById('dangerZoneCard').style.display = '';
         document.getElementById('articleCardTitle').innerText   = '文章管理';
-    fetchProfileOwner();
-    fetchStats();
-    loadPublishedArticles(1);
-    loadDraftArticles(1);
-} else {
+        fetchProfileOwner();
+        fetchStats(_profileUserId);
+        loadPublishedArticles(1);
+        loadDraftArticles(1);
+    } else {
         document.getElementById('ownerActions').style.display   = 'none';
         document.getElementById('visitorActions').style.display = 'flex';
         document.getElementById('avatarMaskLabel').style.display = 'none';
@@ -222,7 +203,8 @@ function initPageByMode() {
         document.getElementById('dangerZoneCard').style.display = 'none';
         document.getElementById('articleCardTitle').innerText   = 'TA 的文章';
         fetchProfileVisitor(_profileUserId);
-        fetchStats();
+        // 访客模式：查看目标用户的统计数据，传入目标用户ID
+        fetchStats(_profileUserId);
         loadPublishedArticles(1);
     }
 }
@@ -285,11 +267,31 @@ function fetchProfileOwner() {
                 var badge = document.getElementById('statusBadge');
                 badge.innerText = (u.status === 1) ? '正常' : '已封禁';
                 badge.className = (u.status === 1) ? 'status-badge status-ok' : 'status-badge status-error';
+
+                // 若是管理员，在 ownerActions 区域追加"进入后台"按钮
+                if (rId == 2) {
+                    injectAdminButton();
+                }
             } else {
                 window.location.href = 'login.html';
             }
         })
         .catch(function (err) { console.error('加载个人资料出错:', err); });
+}
+
+/**
+ * 向 ownerActions 区域注入"进入后台"按钮（仅管理员调用一次）
+ */
+function injectAdminButton() {
+    var ownerActions = document.getElementById('ownerActions');
+    if (!ownerActions || document.getElementById('adminEntryBtn')) return;
+    var btn = document.createElement('a');
+    btn.id        = 'adminEntryBtn';
+    btn.href      = API_BASE + '/pages/admin/dashboard.html';
+    btn.className = 'btn btn-primary';
+    btn.innerHTML = '<i class="fas fa-tools"></i> 进入后台';
+    btn.style.cssText = 'text-decoration:none;';
+    ownerActions.appendChild(btn);
 }
 
 /* 加载个人资料 —— visitor 模式 */
@@ -393,16 +395,24 @@ function uploadAvatar(input) {
         });
 }
 
-/* 统计数据 */
-function fetchStats() {
-    fetch(API_BASE +'/user/getStats', { credentials: 'same-origin' })
+/* 统计数据 —— 传入目标用户 ID，owner 和 visitor 均通过此函数加载 */
+function fetchStats(userId) {
+    var url = API_BASE + '/user/getStats';
+    if (userId) {
+        url += '?userId=' + userId;
+    }
+    fetch(url, { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
-            if (res.code === 200) {
-                document.getElementById('statFollow').innerText  = formatNumber(res.data.followCount);
-                document.getElementById('statView').innerText    = formatNumber(res.data.viewCount);
-                document.getElementById('statLike').innerText    = formatNumber(res.data.likeCount);
-                // statComment 待接口对接
+            if (res.code === 200 && res.data) {
+                var statFollow  = document.getElementById('statFollow');
+                var statView    = document.getElementById('statView');
+                var statLike    = document.getElementById('statLike');
+                var statComment = document.getElementById('statComment');
+                if (statFollow)  statFollow.innerText  = formatNumber(res.data.followCount);
+                if (statComment) statComment.innerText = formatNumber(res.data.commentCount);
+                if (statView)    statView.innerText    = formatNumber(res.data.viewCount);
+                if (statLike)    statLike.innerText    = formatNumber(res.data.likeCount);
             }
         })
         .catch(function () {});

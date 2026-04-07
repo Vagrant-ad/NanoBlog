@@ -7,6 +7,8 @@ import com.vagrant.nanoblog.dto.UserUpdateDTO;
 import com.vagrant.nanoblog.pojo.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.Map;
+
 /**
  * <p>
  * 用户表 服务类
