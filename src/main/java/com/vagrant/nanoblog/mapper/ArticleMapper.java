@@ -26,4 +26,7 @@ public interface ArticleMapper extends BaseMapper<Article> {
     //批量查文章标签，返回 articleId+tagName
     List<Map<String, Object>> getTagsByArticleIds(@Param("articleIds") List<Long> articleIds);
 
+    // 统计用户所有文章的点赞总数
+    Long sumLikeCountByAuthor(@Param("authorId") Long authorId);
+
 }

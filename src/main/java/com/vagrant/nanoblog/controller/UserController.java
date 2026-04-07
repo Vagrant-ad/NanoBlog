@@ -5,8 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.vagrant.nanoblog.common.ResponseResult;
 import com.vagrant.nanoblog.dto.UserRegisterDTO;
 import com.vagrant.nanoblog.dto.UserUpdateDTO;
+import com.vagrant.nanoblog.mapper.ArticleMapper;
+import com.vagrant.nanoblog.mapper.UserFollowMapper;
 import com.vagrant.nanoblog.mapper.UserRoleMapper;
 import com.vagrant.nanoblog.pojo.User;
+import com.vagrant.nanoblog.pojo.UserFollow;
 import com.vagrant.nanoblog.pojo.UserRole;
 import com.vagrant.nanoblog.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +44,12 @@ public class UserController {
 
     @Autowired
     private UserRoleMapper userRoleMapper;
+
+    @Autowired
+    private UserFollowMapper userFollowMapper;
+
+    @Autowired
+    private ArticleMapper articleMapper;
 
     // 跳转到注册页面
     @GetMapping("/register")
@@ -236,6 +245,39 @@ public class UserController {
 
         // 3. 调用 Service
         return userService.updatePassword(loginUser.getId(), oldPwd, newPwd);
+    }
+
+    /**
+     * 获取用户统计数据（关注数、粉丝数、总获赞、总浏览量）
+     */
+    @GetMapping("/getStats")
+    @ResponseBody
+    public ResponseResult getStats(HttpSession session) {
+        User loginUser = (User) session.getAttribute("LOGIN_USER");
+        if (loginUser == null) {
+            return ResponseResult.errorResult(401, "请先登录");
+        }
+        
+        Long userId = loginUser.getId();
+        
+        // 关注数：我关注了多少人
+        long followingCount = userFollowMapper.selectCount(
+            new QueryWrapper<UserFollow>().eq("follower_id", userId));
+        
+        // 粉丝数：多少人关注了我
+        long fansCount = userFollowMapper.selectCount(
+            new QueryWrapper<UserFollow>().eq("following_id", userId));
+        
+        // 总获赞：查该用户所有文章的 like_count 求和
+        Long totalLike = articleMapper.sumLikeCountByAuthor(userId);
+        
+        Map<String, Object> data = new HashMap<>();
+        data.put("followCount", followingCount);  // profile.js 用的是 followCount
+        data.put("fansCount", fansCount);
+        data.put("viewCount", 0);  // 暂时返回0，后续可扩展
+        data.put("likeCount", totalLike != null ? totalLike : 0);
+        
+        return ResponseResult.okResult(data);
     }
 
 }
