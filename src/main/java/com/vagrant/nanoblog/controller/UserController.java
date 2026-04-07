@@ -5,10 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.vagrant.nanoblog.common.ResponseResult;
 import com.vagrant.nanoblog.dto.UserRegisterDTO;
 import com.vagrant.nanoblog.dto.UserUpdateDTO;
+import com.vagrant.nanoblog.mapper.ArticleMapper;
+import com.vagrant.nanoblog.mapper.UserFollowMapper;
 import com.vagrant.nanoblog.mapper.UserRoleMapper;
-import com.vagrant.nanoblog.pojo.Attachment;
 import com.vagrant.nanoblog.pojo.User;
+import com.vagrant.nanoblog.pojo.UserFollow;
 import com.vagrant.nanoblog.pojo.UserRole;
+import com.vagrant.nanoblog.service.IArticleService;
+import com.vagrant.nanoblog.service.ICommentService;
 import com.vagrant.nanoblog.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -45,15 +49,20 @@ public class UserController {
 
     @Autowired
     private UserRoleMapper userRoleMapper;
-
     @Autowired
     private AttachmentController attachmentController; // 注入附件控制器
 
     @Autowired
-    private com.vagrant.nanoblog.service.IArticleService articleService;
+    private IArticleService articleService;
 
     @Autowired
-    private com.vagrant.nanoblog.service.ICommentService commentService;
+    private ICommentService commentService;
+
+    @Autowired
+    private UserFollowMapper userFollowMapper;
+
+    @Autowired
+    private ArticleMapper articleMapper;
 
     // 跳转到注册页面
     @GetMapping("/register")
