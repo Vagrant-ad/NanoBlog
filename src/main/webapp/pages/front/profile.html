@@ -14,7 +14,6 @@
 
 <header class="navbar">
     <div class="navbar-inner">
-        <!-- 左侧：Logo + 导航 -->
         <div class="navbar-left">
             <a class="logo-link" href="/pages/front/index.html">
                 <img src="/static/images/logo-horizontal.png" alt="NanoBlog Logo" class="logo-image">
@@ -22,16 +21,12 @@
             </a>
             <nav class="navbar-menu">
                 <a href="/pages/front/index.html">首页</a>
-                <!-- 分类多级下拉 -->
                 <div class="nav-dropdown" id="categoryMenu">
                     <a href="#" class="nav-dropdown-trigger">
                         分类
                     </a>
                     <ul class="dropdown-menu" id="categoryDropdown"></ul>
                 </div>
-
-
-                <!-- 标签云下拉 -->
                 <div class="nav-dropdown" id="tagMenu">
                     <a href="#" class="nav-dropdown-trigger">
                         标签
@@ -40,23 +35,14 @@
                 </div>
             </nav>
         </div>
-
-        <!-- 中间：搜索框 -->
         <div class="navbar-center">
             <div class="search-box">
                 <i class="layui-icon layui-icon-search" id="searchBtn"></i>
                 <input type="text" placeholder="搜索文章标题、标签、作者" id="searchInput">
             </div>
         </div>
-
-
-        <!-- 右侧：用户操作区 -->
         <div class="navbar-right">
-            <!-- 在 editor.html 加上 active 类 -->
             <a href="/pages/front/editor.html" class="nav-button">写文章</a>
-            <!--<a href="/pages/front/login.html" class="nav-link">登录</a>
-            <a href="/pages/front/register.html" class="nav-button">注册</a>-->
-            <!--用户区域由js根据登录状态动态渲染-->
             <div id="navUserArea"></div>
         </div>
     </div>
@@ -71,7 +57,8 @@
         <div class="hero-body">
             <div class="avatar-wrapper">
                 <img id="avatarDisplay" src="../../static/images/avatar-default.png" alt="头像">
-                <label class="avatar-mask" for="avatarInput">
+                <!-- 上传头像遮罩：仅 owner 模式显示 -->
+                <label class="avatar-mask" for="avatarInput" id="avatarMaskLabel" style="display:none;">
                     <i class="fas fa-camera"></i>
                     <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(this)">
                 </label>
@@ -83,25 +70,42 @@
                     <span id="statusBadge" class="status-badge">---</span>
                 </div>
             </div>
+            <!-- 操作按钮区：owner/visitor 二选一显示 -->
             <div class="hero-actions">
-                <button id="editBtn" class="btn btn-ghost" onclick="enableEdit()">
-                    <i class="fas fa-pen"></i> 编辑资料
-                </button>
-                <button class="btn btn-ghost" onclick="openChangePassword()">
-                    <i class="fas fa-key"></i> 修改密码
-                </button>
+                <!-- owner：编辑资料 + 修改密码 -->
+                <div id="ownerActions" style="display:none; gap:10px; align-items:center;">
+                    <button id="editBtn" class="btn btn-ghost" onclick="enableEdit()">
+                        <i class="fas fa-pen"></i> 编辑资料
+                    </button>
+                    <button class="btn btn-ghost" onclick="openChangePassword()">
+                        <i class="fas fa-key"></i> 修改密码
+                    </button>
+                    <button class="btn btn-outline" id="adminDashboardBtn" style="display: none;" onclick="goToAdmin()">
+                        <i class="fas fa-tools"></i> 进入后台
+                    </button>
+                </div>
+                <!-- visitor：关注按钮 -->
+                <div id="visitorActions" style="display:none;">
+                    <button id="followBtn" class="btn btn-ghost" onclick="toggleFollow()">
+                        <i class="fas fa-user-plus"></i> 关注
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!--  统计数据栏（接口预留） -->
-
+    <!--  统计数据栏 -->
     <div class="card">
         <div class="stats-row">
             <div class="stat-item">
                 <div class="stat-icon"><i class="fas fa-user-friends"></i></div>
                 <div class="stat-value" id="statFollow">--</div>
                 <div class="stat-label">我的关注</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon"><i class="fas fa-comment-dots"></i></div>
+                <div class="stat-value" id="statComment">--</div>
+                <div class="stat-label">我的评论</div>
             </div>
             <div class="stat-item">
                 <div class="stat-icon"><i class="fas fa-eye"></i></div>
@@ -116,8 +120,8 @@
         </div>
     </div>
 
-
-    <div class="card">
+    <!-- 账号详情卡片 -->
+    <div class="card" id="accountDetailCard">
         <div class="card-header">
             <i class="fas fa-id-card"></i>
             <h3>账号详情</h3>
@@ -157,7 +161,7 @@
             </div>
         </div>
 
-        <!-- 编辑面板 -->
+        <!-- 编辑面板：仅 owner 显示 -->
         <div id="editPanel" class="info-panel" style="display:none;">
             <div class="edit-form">
                 <div class="form-group">
@@ -182,22 +186,22 @@
         </div>
     </div>
 
-
-
-    <!--  我的文章 + 草稿箱 -->
+    <!--  文章管理 -->
     <div class="card">
         <div class="card-header">
             <i class="fas fa-newspaper"></i>
-            <h3>文章管理</h3>
+            <h3 id="articleCardTitle">文章</h3>
         </div>
 
         <!-- Tab 切换 -->
-        <div class="article-tabs">
+        <div class="article-tabs" id="articleTabsBar">
             <button class="article-tab active" data-tab="published" onclick="switchTab('published')">
                 <i class="fas fa-check-circle"></i> 已发布
                 <span class="tab-count" id="publishedCount">0</span>
             </button>
-            <button class="article-tab" data-tab="drafts" onclick="switchTab('drafts')">
+            <!-- 草稿 Tab 仅 owner 显示，由 JS 控制 -->
+            <button class="article-tab" data-tab="drafts" id="draftsTabBtn"
+                    onclick="switchTab('drafts')" style="display:none;">
                 <i class="fas fa-pencil-alt"></i> 草稿箱
                 <span class="tab-count" id="draftsCount">0</span>
             </button>
@@ -211,7 +215,7 @@
             <div class="articles-pagination" id="publishedPagination"></div>
         </div>
 
-        <!-- 草稿列表 -->
+        <!-- 草稿列表（仅 owner） -->
         <div class="articles-body" id="tabDrafts" style="display:none;">
             <div id="draftsList" class="article-list">
                 <div class="articles-loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>
@@ -220,8 +224,8 @@
         </div>
     </div>
 
-
-    <div class="card">
+    <!-- 危险区域：仅 owner 显示 -->
+    <div class="card" id="dangerZoneCard" style="display:none;">
         <div class="card-header danger-header">
             <i class="fas fa-exclamation-triangle"></i>
             <h3>危险区域</h3>
@@ -237,7 +241,7 @@
         </div>
     </div>
 
-    <!-- 编辑文章 Modal -->
+    <!-- 编辑文章 Modal（仅 owner 使用） -->
     <div id="editArticleModal" class="modal-overlay" onclick="handleOverlayClick(event, 'editArticleModal')">
         <div class="modal-box">
             <div class="modal-header">
@@ -294,7 +298,7 @@
 </div><!-- /profile-page -->
 
 
-<!--  修改密码 Modal -->
+<!-- 修改密码 Modal（仅 owner 使用） -->
 <div id="pwdModal" class="modal-overlay" onclick="handleOverlayClick(event, 'pwdModal')">
     <div class="modal-box">
         <div class="modal-header">
@@ -317,7 +321,8 @@
             <div class="modal-field">
                 <label>新密码</label>
                 <div class="modal-field-wrap">
-                    <input type="password" id="newPassword" placeholder="至少 6 位，含字母和数字" oninput="checkPwdStrength(this.value)">
+                    <input type="password" id="newPassword" placeholder="至少 6 位，含字母和数字"
+                           oninput="checkPwdStrength(this.value)">
                     <button class="eye-btn" type="button" onclick="toggleEye('newPassword', this)">
                         <i class="fas fa-eye-slash"></i>
                     </button>
@@ -349,8 +354,9 @@
     </div>
 </div>
 
-<!--草稿发布-->
-<div id="publishDraftModal" class="modal-overlay confirm-modal" onclick="handleOverlayClick(event, 'publishDraftModal')">
+<!-- 草稿发布 Modal -->
+<div id="publishDraftModal" class="modal-overlay confirm-modal"
+     onclick="handleOverlayClick(event, 'publishDraftModal')">
     <div class="modal-box">
         <div class="confirm-body">
             <div class="confirm-icon" style="background:#f0fdf4; color:#16a34a;">
@@ -372,10 +378,9 @@
     </div>
 </div>
 
-
-<!---->
-<!-- 注销账号确认 Modal -->
-<div id="deleteModal" class="modal-overlay confirm-modal" onclick="handleOverlayClick(event, 'deleteModal')">
+<!-- 注销账号 / 删除文章 确认 Modal（共用） -->
+<div id="deleteModal" class="modal-overlay confirm-modal"
+     onclick="handleOverlayClick(event, 'deleteModal')">
     <div class="modal-box">
         <div class="confirm-body">
             <div class="confirm-icon" style="background:#fef2f2;color:#dc2626;">
@@ -406,7 +411,25 @@
 <!-- Toast 提示 -->
 <div id="toast" class="toast"></div>
 
+<!-- 用户已注销提示弹窗 -->
+<div id="userDeletedModal" class="modal-overlay confirm-modal">
+    <div class="modal-box">
+        <div class="confirm-body">
+            <div class="confirm-icon" style="background:#f0f5f8; color:var(--brand-blue);">
+                <i class="fas fa-user-slash"></i>
+            </div>
+            <h4>该用户已注销</h4>
+        </div>
+        <div class="confirm-footer">
+            <a href="/pages/front/index.html" class="btn btn-secondary">
+                <i class="fas fa-home"></i> 返回首页
+            </a>
+        </div>
+    </div>
+</div>
 
+<script src="/static/lib/layui/layui.js"></script>
+<script src="/static/js/common/common.js"></script>
 <script src="/static/js/front/profile.js"></script>
 
 </body>

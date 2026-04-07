@@ -1,3 +1,8 @@
+/* 全局状态*/
+var _profileUserId  = null;
+var _currentLoginId = null;
+var _isOwner        = false;
+
 /* 工具函数 */
 function showToast(msg, type) {
     type = type || 'info';
@@ -22,10 +27,10 @@ function toggleEye(inputId, btn) {
 
 function handleOverlayClick(e, modalId) {
     if (e.target.id === modalId) {
-        if (modalId === 'pwdModal')            closeChangePassword();
-        if (modalId === 'deleteModal')         closeDeleteConfirm();
-        if (modalId === 'editArticleModal')    closeEditArticle();
-        if (modalId === 'publishDraftModal')   closePublishDraftModal();
+        if (modalId === 'pwdModal')          closeChangePassword();
+        if (modalId === 'deleteModal')       closeDeleteConfirm();
+        if (modalId === 'editArticleModal')  closeEditArticle();
+        if (modalId === 'publishDraftModal') closePublishDraftModal();
     }
 }
 
@@ -62,21 +67,172 @@ function resolveApiBase() {
 
 var API_BASE = resolveApiBase();
 
-/* ================================================================
-   页面初始化
-================================================================ */
+function getQueryParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+}
+
+/* 打开用户已注销弹窗 */
+function openUserDeletedModal() {
+    var modal = document.getElementById('userDeletedModal');
+    if (modal) modal.classList.add('active');
+}
+
+/* 页面初始化 */
 window.onload = function () {
-    fetchProfile();
-    fetchStats();
-    loadPublishedArticles(1);
-    loadDraftArticles(1);
+    var urlId = getQueryParam('id');
+
+    fetch('/user/getProfile', { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.code === 200 && res.data) {
+                _currentLoginId = String(res.data.user.id);
+            }
+        })
+        .catch(function () {})
+        .finally(function () {
+            if (urlId) {
+                _profileUserId = urlId;
+                _isOwner = (_currentLoginId !== null && _currentLoginId === String(urlId));
+            } else {
+                if (_currentLoginId) {
+                    _profileUserId = _currentLoginId;
+                    _isOwner = true;
+                    history.replaceState(null, '', '/pages/front/profile.html?id=' + _currentLoginId);
+                } else {
+                    window.location.href = '/pages/front/login.html';
+                    return;
+                }
+            }
+
+            if (!_isOwner && _profileUserId) {
+                checkUserDeletedThenInit(_profileUserId);
+            } else {
+                initPageByMode();
+            }
+        });
 };
 
-/* ================================================================
-   个人资料
-================================================================ */
-function fetchProfile() {
-    fetch(API_BASE + '/user/getProfile')
+function checkUserDeletedThenInit(userId) {
+    fetch('/user/publicProfile?id=' + userId, { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.code === 200 && res.data) {
+                initPageByMode();
+            } else {
+                initPageByModeDeleted();
+            }
+        })
+        .catch(function () {
+            initPageByModeDeleted();
+        });
+}
+
+function initPageByModeDeleted() {
+    document.getElementById('ownerActions').style.display   = 'none';
+    document.getElementById('visitorActions').style.display = 'none';
+    document.getElementById('avatarMaskLabel').style.display = 'none';
+    document.getElementById('draftsTabBtn').style.display   = 'none';
+    document.getElementById('dangerZoneCard').style.display = 'none';
+    document.getElementById('articleCardTitle').innerText   = 'TA 的文章';
+    renderDeletedUserSkeleton();
+    openUserDeletedModal();
+}
+
+function renderDeletedUserSkeleton() {
+    var nicknameEl = document.getElementById('nicknameDisplay');
+    var usernameEl = document.getElementById('usernameDisplay');
+    var statusEl   = document.getElementById('statusBadge');
+    var bioEl      = document.getElementById('bioDisplay');
+    var emailEl    = document.getElementById('emailDisplay');
+    var roleEl     = document.getElementById('roleDisplay');
+    var createEl   = document.getElementById('createTimeDisplay');
+    var loginEl    = document.getElementById('lastLoginDisplay');
+    var updateEl   = document.getElementById('updateTimeDisplay');
+    var userIdEl   = document.getElementById('userId');
+
+    if (nicknameEl) nicknameEl.innerText = '已注销用户';
+    if (usernameEl) usernameEl.innerText = '@unknown';
+    if (statusEl) {
+        statusEl.innerText = '已注销';
+        statusEl.className = 'status-badge status-error';
+    }
+    if (bioEl)    bioEl.innerText    = '该账号已注销。';
+    if (emailEl)  emailEl.innerText  = '---';
+    if (roleEl)   roleEl.innerText   = '---';
+    if (createEl) createEl.innerText = '---';
+    if (loginEl)  loginEl.innerText  = '---';
+    if (updateEl) updateEl.innerText = '---';
+    if (userIdEl) userIdEl.value     = _profileUserId || '';
+
+    var statFollow  = document.getElementById('statFollow');
+    var statView    = document.getElementById('statView');
+    var statLike    = document.getElementById('statLike');
+    var statComment = document.getElementById('statComment');
+    if (statFollow)  statFollow.innerText  = '--';
+    if (statView)    statView.innerText    = '--';
+    if (statLike)    statLike.innerText    = '--';
+    if (statComment) statComment.innerText = '--';
+
+    var publishedList = document.getElementById('publishedList');
+    if (publishedList) {
+        publishedList.innerHTML =
+            '<div class="articles-empty"><i class="fas fa-file-alt"></i><span>暂无内容</span></div>';
+    }
+    var publishedCount = document.getElementById('publishedCount');
+    if (publishedCount) publishedCount.innerText = 0;
+}
+
+/* 根据 owner/visitor 模式初始化页面 */
+function initPageByMode() {
+    if (_isOwner) {
+        document.getElementById('ownerActions').style.display   = 'flex';
+        document.getElementById('visitorActions').style.display = 'none';
+        document.getElementById('avatarMaskLabel').style.display = '';
+        document.getElementById('draftsTabBtn').style.display   = '';
+        document.getElementById('dangerZoneCard').style.display = '';
+        document.getElementById('articleCardTitle').innerText   = '文章管理';
+        fetchProfileOwner();
+        fetchStats(_profileUserId);
+        loadPublishedArticles(1);
+        loadDraftArticles(1);
+    } else {
+        document.getElementById('ownerActions').style.display   = 'none';
+        document.getElementById('visitorActions').style.display = 'flex';
+        document.getElementById('avatarMaskLabel').style.display = 'none';
+        document.getElementById('draftsTabBtn').style.display   = 'none';
+        document.getElementById('dangerZoneCard').style.display = 'none';
+        document.getElementById('articleCardTitle').innerText   = 'TA 的文章';
+        fetchProfileVisitor(_profileUserId);
+        // 访客模式：查看目标用户的统计数据，传入目标用户ID
+        fetchStats(_profileUserId);
+        loadPublishedArticles(1);
+    }
+}
+
+/* 关注按钮 */
+var _isFollowing = false;
+
+function toggleFollow() {
+    if (!_currentLoginId) {
+        window.location.href = '/pages/front/login.html';
+        return;
+    }
+    _isFollowing = !_isFollowing;
+    var btn = document.getElementById('followBtn');
+    if (_isFollowing) {
+        btn.innerHTML = '<i class="fas fa-user-check"></i> 已关注';
+        btn.classList.add('btn-primary');
+        btn.classList.remove('btn-ghost');
+    } else {
+        btn.innerHTML = '<i class="fas fa-user-plus"></i> 关注';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-ghost');
+    }
+}
+
+/* 加载个人资料 —— owner 模式 */
+function fetchProfileOwner() {
+    fetch(API_BASE + '/user/getProfile', { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.code === 200) {
@@ -108,9 +264,14 @@ function fetchProfile() {
 
                 if (u.avatarUrl) document.getElementById('avatarDisplay').src = u.avatarUrl;
 
-                var badge     = document.getElementById('statusBadge');
+                var badge = document.getElementById('statusBadge');
                 badge.innerText = (u.status === 1) ? '正常' : '已封禁';
                 badge.className = (u.status === 1) ? 'status-badge status-ok' : 'status-badge status-error';
+
+                // 若是管理员，在 ownerActions 区域追加"进入后台"按钮
+                if (rId == 2) {
+                    injectAdminButton();
+                }
             } else {
                 window.location.href = 'login.html';
             }
@@ -118,6 +279,69 @@ function fetchProfile() {
         .catch(function (err) { console.error('加载个人资料出错:', err); });
 }
 
+/**
+ * 向 ownerActions 区域注入"进入后台"按钮（仅管理员调用一次）
+ */
+function injectAdminButton() {
+    var ownerActions = document.getElementById('ownerActions');
+    if (!ownerActions || document.getElementById('adminEntryBtn')) return;
+    var btn = document.createElement('a');
+    btn.id        = 'adminEntryBtn';
+    btn.href      = API_BASE + '/pages/admin/dashboard.html';
+    btn.className = 'btn btn-primary';
+    btn.innerHTML = '<i class="fas fa-tools"></i> 进入后台';
+    btn.style.cssText = 'text-decoration:none;';
+    ownerActions.appendChild(btn);
+}
+
+/* 加载个人资料 —— visitor 模式 */
+function fetchProfileVisitor(userId) {
+    fetch('/user/publicProfile?id=' + userId, { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.code === 200 && res.data) {
+                renderVisitorProfile(res.data);
+            } else {
+                showToast('用户不存在或已注销', 'error');
+            }
+        })
+        .catch(function () {
+            showToast('加载用户信息失败', 'error');
+        });
+}
+
+function renderVisitorProfile(data) {
+    var u   = data.user || data;
+    var rId = data.roleId || 1;
+
+    document.getElementById('userId').value              = u.id || _profileUserId;
+    document.getElementById('nicknameDisplay').innerText = u.nickname || ('用户 ' + _profileUserId);
+    document.getElementById('usernameDisplay').innerText = '@' + (u.username || 'user');
+    document.getElementById('emailDisplay').innerText    = u.email || '---';
+    document.getElementById('bioDisplay').innerText      = u.bio   || '这个人很懒，暂时没有简介。';
+
+    var roleEl = document.getElementById('roleDisplay');
+    if (rId == 2) {
+        roleEl.innerText   = '管理员';
+        roleEl.style.color = '#e53e3e';
+    } else {
+        roleEl.innerText   = '普通用户';
+        roleEl.style.color = '#4a5568';
+    }
+
+    var fmt = function (t) { return t ? String(t).replace('T', ' ').split('.')[0] : '---'; };
+    document.getElementById('createTimeDisplay').innerText  = fmt(u.createTime);
+    document.getElementById('lastLoginDisplay').innerText   = fmt(u.lastLoginTime);
+    document.getElementById('updateTimeDisplay').innerText  = fmt(u.updateTime);
+
+    if (u.avatarUrl) document.getElementById('avatarDisplay').src = u.avatarUrl;
+
+    var badge = document.getElementById('statusBadge');
+    badge.innerText = (u.status === 1) ? '正常' : '已封禁';
+    badge.className = (u.status === 1) ? 'status-badge status-ok' : 'status-badge status-error';
+}
+
+/* 编辑资料（仅 owner） */
 function enableEdit() {
     document.getElementById('viewPanel').style.display = 'none';
     document.getElementById('editPanel').style.display = 'block';
@@ -140,6 +364,7 @@ function submitUpdate() {
     };
     fetch(API_BASE + '/user/updateProfile', {
         method:  'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(updateData)
     })
@@ -158,7 +383,7 @@ function uploadAvatar(input) {
     if (!input.files || !input.files[0]) return;
     var fd = new FormData();
     fd.append('file', input.files[0]);
-    fetch(API_BASE + '/user/uploadAvatar', { method: 'POST', body: fd })
+    fetch(API_BASE + '/user/uploadAvatar', { method: 'POST', credentials: 'same-origin', body: fd })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.code === 200) {
@@ -170,25 +395,30 @@ function uploadAvatar(input) {
         });
 }
 
-/* ================================================================
-   统计数据
-================================================================ */
-function fetchStats() {
-    fetch(API_BASE + '/user/getStats')
+/* 统计数据 —— 传入目标用户 ID，owner 和 visitor 均通过此函数加载 */
+function fetchStats(userId) {
+    var url = API_BASE + '/user/getStats';
+    if (userId) {
+        url += '?userId=' + userId;
+    }
+    fetch(url, { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
-            if (res.code === 200) {
-                document.getElementById('statFollow').innerText = formatNumber(res.data.followCount);
-                document.getElementById('statView').innerText   = formatNumber(res.data.viewCount);
-                document.getElementById('statLike').innerText   = formatNumber(res.data.likeCount);
+            if (res.code === 200 && res.data) {
+                var statFollow  = document.getElementById('statFollow');
+                var statView    = document.getElementById('statView');
+                var statLike    = document.getElementById('statLike');
+                var statComment = document.getElementById('statComment');
+                if (statFollow)  statFollow.innerText  = formatNumber(res.data.followCount);
+                if (statComment) statComment.innerText = formatNumber(res.data.commentCount);
+                if (statView)    statView.innerText    = formatNumber(res.data.viewCount);
+                if (statLike)    statLike.innerText    = formatNumber(res.data.likeCount);
             }
         })
         .catch(function () {});
 }
 
-/* ================================================================
-   文章管理 Tab 切换
-================================================================ */
+/* 文章 Tab 切换 */
 function switchTab(tab) {
     document.querySelectorAll('.article-tab').forEach(function (b) { b.classList.remove('active'); });
     document.querySelector('.article-tab[data-tab="' + tab + '"]').classList.add('active');
@@ -196,9 +426,7 @@ function switchTab(tab) {
     document.getElementById('tabDrafts').style.display    = (tab === 'drafts')    ? 'block' : 'none';
 }
 
-/* ================================================================
-   已发布文章
-================================================================ */
+/* 已发布文章列表 */
 var publishedPage     = 1;
 var publishedPageSize = 5;
 
@@ -207,14 +435,18 @@ function loadPublishedArticles(page) {
     var container = document.getElementById('publishedList');
     container.innerHTML = '<div class="articles-loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>';
 
-    fetch(API_BASE + '/article/my/published?page=' + page + '&size=' + publishedPageSize)
+    var url = _isOwner
+        ? ('/article/my/published?page=' + page + '&size=' + publishedPageSize)
+        : ('/article/my/published?page=' + page + '&size=' + publishedPageSize + '&userId=' + _profileUserId);
+
+    fetch(API_BASE + url, { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.code === 200 && res.data) {
                 var records = res.data.records || [];
                 var total   = res.data.total   || 0;
                 document.getElementById('publishedCount').innerText = total;
-                renderArticleItems(container, records, false);
+                renderArticleItems(container, records, false, _isOwner);
                 renderPagination('publishedPagination', total, page, publishedPageSize, 'loadPublishedArticles');
             } else {
                 renderEmpty(container, '暂无已发布文章');
@@ -224,25 +456,24 @@ function loadPublishedArticles(page) {
         .catch(function () { renderEmpty(container, '加载失败，请刷新重试'); });
 }
 
-/* ================================================================
-   草稿列表
-================================================================ */
+/* 草稿列表（仅 owner） */
 var draftsPage     = 1;
 var draftsPageSize = 5;
 
 function loadDraftArticles(page) {
+    if (!_isOwner) return;
     draftsPage = page;
     var container = document.getElementById('draftsList');
     container.innerHTML = '<div class="articles-loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>';
 
-    fetch(API_BASE + '/article/my/drafts?page=' + page + '&size=' + draftsPageSize)
+    fetch(API_BASE +'/article/my/drafts?page=' + page + '&size=' + draftsPageSize, { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.code === 200 && res.data) {
                 var records = res.data.records || [];
                 var total   = res.data.total   || 0;
                 document.getElementById('draftsCount').innerText = total;
-                renderArticleItems(container, records, true);
+                renderArticleItems(container, records, true, true);
                 renderPagination('draftsPagination', total, page, draftsPageSize, 'loadDraftArticles');
             } else {
                 renderEmpty(container, '草稿箱是空的');
@@ -252,10 +483,8 @@ function loadDraftArticles(page) {
         .catch(function () { renderEmpty(container, '加载失败，请刷新重试'); });
 }
 
-/* ================================================================
-   渲染文章列表
-================================================================ */
-function renderArticleItems(container, records, isDraft) {
+/* 渲染文章列表 */
+function renderArticleItems(container, records, isDraft, isOwnerView) {
     if (!records || records.length === 0) {
         renderEmpty(container, isDraft ? '草稿箱是空的' : '暂无已发布文章');
         return;
@@ -275,18 +504,28 @@ function renderArticleItems(container, records, isDraft) {
 
         var thumbInner = a.coverImageUrl
             ? '<img src="' + a.coverImageUrl + '" alt="' + title + '" '
-            + 'onerror="this.parentElement.innerHTML=\'<i class=\"fas fa-file-alt\\\"></i>'
+            + 'onerror="this.parentElement.innerHTML=\'<i class=&quot;fas fa-file-alt&quot;></i>\'">'
             : '<i class="fas fa-file-alt"></i>';
 
         var timeLabel = isDraft ? '创建' : '发布';
         var timeVal   = isDraft ? formatArticleTime(a.createTime) : formatArticleTime(a.publishTime);
 
-        /* 草稿专属：发布按钮 —— 点击打开美化弹窗，不再用 confirm() */
-        var publishBtnHtml = isDraft
-            ? '<button class="article-action-btn btn-publish-draft" '
-            + 'onclick="openPublishDraftModal(' + a.id + ', \'' + title.replace(/'/g, '\\\'') + '\')">'
-            + '<i class="fas fa-paper-plane"></i> 发布</button>'
-            : '';
+        var actionHtml = '';
+        if (isOwnerView) {
+            if (isDraft) {
+                actionHtml +=
+                    '<button class="article-action-btn btn-publish-draft" '
+                    + 'onclick="openPublishDraftModal(' + a.id + ', \'' + title.replace(/'/g, '\\\'') + '\')">'
+                    + '<i class="fas fa-paper-plane"></i> 发布</button>';
+            }
+            actionHtml +=
+                '<button class="article-action-btn btn-edit" onclick="openEditArticle(' + a.id + ')">'
+                + '<i class="fas fa-edit"></i> 编辑</button>';
+            actionHtml +=
+                '<button class="article-action-btn btn-delete" '
+                + 'onclick="confirmDeleteArticle(' + a.id + ', \'' + title.replace(/'/g, '\\\'') + '\')">'
+                + '<i class="fas fa-trash-alt"></i> 删除</button>';
+        }
 
         html += '<div class="article-manage-item">';
         html +=   '<div class="article-manage-thumb">' + thumbInner + '</div>';
@@ -305,14 +544,9 @@ function renderArticleItems(container, records, isDraft) {
         html +=       '<span><i class="fas fa-comment"></i>&nbsp;' + formatNumber(a.commentCount) + '</span>';
         html +=     '</div>';
         html +=   '</div>';
-        html +=   '<div class="article-manage-actions">';
-        html +=     publishBtnHtml;
-        html +=     '<button class="article-action-btn btn-edit" onclick="openEditArticle(' + a.id + ')">'
-            + '<i class="fas fa-edit"></i> 编辑</button>';
-        html +=     '<button class="article-action-btn btn-delete" '
-            + 'onclick="confirmDeleteArticle(' + a.id + ', \'' + title.replace(/'/g, '\\\'') + '\')">'
-            + '<i class="fas fa-trash-alt"></i> 删除</button>';
-        html +=   '</div>';
+        if (actionHtml) {
+            html += '<div class="article-manage-actions">' + actionHtml + '</div>';
+        }
         html += '</div>';
     }
 
@@ -320,7 +554,8 @@ function renderArticleItems(container, records, isDraft) {
 }
 
 function renderEmpty(container, msg) {
-    container.innerHTML = '<div class="articles-empty"><i class="fas fa-file-alt"></i><span>' + msg + '</span></div>';
+    container.innerHTML =
+        '<div class="articles-empty"><i class="fas fa-file-alt"></i><span>' + msg + '</span></div>';
 }
 
 function renderPagination(elId, total, currentPage, pageSize, callbackName) {
@@ -346,16 +581,11 @@ function renderPagination(elId, total, currentPage, pageSize, callbackName) {
     el.innerHTML = html;
 }
 
-/* ================================================================
-   文章操作
-================================================================ */
-
-/* 查看详情 */
+/* 文章操作 */
 function goToArticleDetail(id) {
     window.open(API_BASE + '/pages/front/post.html?id=' + id, '_blank');
 }
 
-/* 编辑：跳转到写文章页面，editor.js 通过 ?id= 参数回填数据 */
 function openEditArticle(id) {
     window.location.href = API_BASE + '/pages/front/editor.html?id=' + id;
 }
@@ -365,20 +595,18 @@ function closeEditArticle() {
     if (modal) modal.classList.remove('active');
 }
 
-/* ── 发布草稿弹窗（美化版） ── */
+/* 发布草稿弹窗 */
 var _pendingPublishId = null;
 
 function openPublishDraftModal(id, title) {
     _pendingPublishId = id;
     var desc = document.getElementById('publishDraftDesc');
     if (desc) {
-        desc.innerHTML = '「' + escapeHtml(title) + '」发布后将对<strong>所有人可见</strong>，你仍可随时编辑修改。';
+        desc.innerHTML =
+            '「' + escapeHtml(title) + '」发布后将对<strong>所有人可见</strong>，你仍可随时编辑修改。';
     }
-    /* 绑定确认按钮点击事件 */
     var confirmBtn = document.getElementById('confirmPublishDraftBtn');
-    if (confirmBtn) {
-        confirmBtn.onclick = doPublishDraft;
-    }
+    if (confirmBtn) confirmBtn.onclick = doPublishDraft;
     document.getElementById('publishDraftModal').classList.add('active');
 }
 
@@ -391,14 +619,13 @@ function doPublishDraft() {
     if (!_pendingPublishId) return;
     var id = _pendingPublishId;
 
-    /* 禁用按钮，防止重复点击 */
     var confirmBtn = document.getElementById('confirmPublishDraftBtn');
     if (confirmBtn) {
         confirmBtn.disabled = true;
         confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 发布中...';
     }
 
-    fetch(API_BASE + '/article/' + id + '/publish', { method: 'POST' })
+    fetch(API_BASE +'/article/' + id + '/publish', { method: 'POST', credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             closePublishDraftModal();
@@ -415,7 +642,6 @@ function doPublishDraft() {
             showToast('网络异常，请稍后再试', 'error');
         })
         .finally(function () {
-            /* 恢复按钮状态 */
             if (confirmBtn) {
                 confirmBtn.disabled = false;
                 confirmBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 确认发布';
@@ -423,9 +649,9 @@ function doPublishDraft() {
         });
 }
 
-/* ── 删除文章弹窗（复用 deleteModal） ── */
-var _pendingDeleteId   = null;
-var _deleteMode        = 'article'; /* 'article' | 'logout' */
+/* 删除文章弹窗 */
+var _pendingDeleteId = null;
+var _deleteMode      = 'article';
 
 function confirmDeleteArticle(id, title) {
     _pendingDeleteId = id;
@@ -440,7 +666,6 @@ function confirmDeleteArticle(id, title) {
             + '<p>「' + escapeHtml(title) + '」将被<strong>永久删除</strong>，无法找回。</p>';
     }
 
-    /* 绑定确认按钮 */
     var confirmBtn = document.querySelector('#deleteModal .btn-danger');
     if (confirmBtn) {
         confirmBtn.innerHTML = '<i class="fas fa-trash-alt"></i> 确认删除';
@@ -460,7 +685,7 @@ function doDeleteArticle() {
         confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 删除中...';
     }
 
-    fetch(API_BASE + '/article/' + id, { method: 'DELETE' })
+    fetch(API_BASE + '/article/' + id, { method: 'DELETE', credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             closeDeleteConfirm();
@@ -484,9 +709,7 @@ function doDeleteArticle() {
         });
 }
 
-/* ================================================================
-   修改密码 Modal
-================================================================ */
+/* 修改密码 Modal */
 function openChangePassword() {
     document.getElementById('oldPassword').value     = '';
     document.getElementById('newPassword').value     = '';
@@ -506,10 +729,11 @@ function submitChangePassword() {
 
     if (!oldPwd || !newPwd || !confPwd) { showToast('请填写所有密码字段', 'error'); return; }
     if (newPwd !== confPwd)             { showToast('两次输入的新密码不一致', 'error'); return; }
-    if (newPwd.length < 6)              { showToast('新密码长度不能少于 6 位', 'error'); return; }
+    if (newPwd.length < 6)             { showToast('新密码长度不能少于 6 位', 'error'); return; }
 
     fetch(API_BASE + '/user/updatePassword', {
         method:  'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd })
     })
@@ -546,19 +770,16 @@ function checkPwdStrength(val) {
 }
 
 function resetPwdStrength() {
-    ['pBar1','pBar2','pBar3','pBar4'].forEach(function (id) {
+    ['pBar1', 'pBar2', 'pBar3', 'pBar4'].forEach(function (id) {
         document.getElementById(id).className = 'pwd-bar';
     });
     document.getElementById('pLabel').innerText = '';
 }
 
-/* 注销账号 Modal*/
+/* 注销账号 Modal */
 function openDeleteConfirm() {
-    // 每次打开时清空密码输入框
-    var inp = document.getElementById('deleteConfirmPassword');
-    if (inp) inp.value = '';
+    _deleteMode = 'logout';
 
-    // 恢复弹窗内容为注销账号样式（防止被删文章弹窗逻辑覆盖）
     var body = document.querySelector('#deleteModal .confirm-body');
     if (body) {
         body.innerHTML =
@@ -575,7 +796,6 @@ function openDeleteConfirm() {
             + '</div></div>';
     }
 
-    // 绑定确认按钮为注销逻辑
     var confirmBtn = document.querySelector('#deleteModal .btn-danger');
     if (confirmBtn) {
         confirmBtn.innerHTML = '<i class="fas fa-user-times"></i> 确认注销';
@@ -590,15 +810,11 @@ function closeDeleteConfirm() {
     _pendingDeleteId = null;
 }
 
-/* 调用 POST /user/deleteAccount，软删除用户（is_deleted=1），成功后跳登录页 */
 function submitDeleteAccount() {
     var inp = document.getElementById('deleteConfirmPassword');
     var pwd = inp ? inp.value.trim() : '';
 
-    if (!pwd) {
-        showToast('请输入密码以确认注销', 'error');
-        return;
-    }
+    if (!pwd) { showToast('请输入密码以确认注销', 'error'); return; }
 
     var confirmBtn = document.querySelector('#deleteModal .btn-danger');
     if (confirmBtn) {
@@ -622,7 +838,6 @@ function submitDeleteAccount() {
                 }, 1500);
             } else {
                 showToast(res.msg || '注销失败，请检查密码', 'error');
-                // 恢复按钮
                 if (confirmBtn) {
                     confirmBtn.disabled = false;
                     confirmBtn.innerHTML = '<i class="fas fa-user-times"></i> 确认注销';
@@ -638,7 +853,4 @@ function submitDeleteAccount() {
         });
 }
 
-/* submitLogout 保留空实现，防止旧代码引用报错 */
-function submitLogout() {
-    openDeleteConfirm();
-}
+function submitLogout() { openDeleteConfirm(); }

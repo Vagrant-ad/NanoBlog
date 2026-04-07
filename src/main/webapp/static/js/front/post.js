@@ -166,7 +166,7 @@ layui.use(['layer', 'element'], function () {
         $('#category').text(category);
         $('#viewCount').text(viewCount);
         $('#article-author').html(`
-        <a href="${NanoBlog.apiBase}/pages/front/profile.html" class="article-author-link" title="查看作者主页">
+        <a href="${NanoBlog.apiBase}/pages/front/profile.html?id=${authorId}" class="article-author-link" title="查看作者主页">
             <img class="article-author-avatar"
                  src="${authorAvatar}"
                  alt="${authorNickname}"

@@ -75,38 +75,13 @@ document.getElementById("loginBtn").onclick = function() {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState === 4 && xhr.status === 200) {
-            var layer = window.layer;
             var res = JSON.parse(xhr.responseText);
             if (res.code === 200) {
-                // 登录成功，记录用户名
                 sessionStorage.setItem("loginUsername", username);
-
-                // 登录成功后请求 /user/getProfile 获取 roleId，再决定跳转目标
-                var profileXhr = new XMLHttpRequest();
-                profileXhr.onreadystatechange = function() {
-                    if (profileXhr.readyState === 4 && profileXhr.status === 200) {
-                        var profileRes = JSON.parse(profileXhr.responseText);
-
-                        var redirectUrl = apiBase + '/pages/front/index.html';
-
-                        if (profileRes.code === 200 && profileRes.data) {
-
-                            var roleId = profileRes.data.roleId;
-
-                            if (Number(roleId) === 2) {
-                                redirectUrl = apiBase + '/pages/admin/dashboard.html';
-                            }
-                        }
-
-
-                        layer.msg("登录成功！", {icon: 1, time: 1000}, function() {
-                            window.location.href = redirectUrl;
-                        });
-                    }
-                };
-                profileXhr.open("GET", apiBase + "/user/getProfile", true);
-                profileXhr.send();
-
+                // 所有用户统一跳转首页
+                layer.msg("登录成功！", {icon: 1, time: 1000}, function() {
+                    window.location.href = apiBase + '/pages/front/index.html';
+                });
             } else {
                 layer.msg(res.msg, {icon: 2});
             }

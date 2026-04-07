@@ -5,7 +5,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.vagrant.nanoblog.common.ResponseResult;
 import com.vagrant.nanoblog.dto.UserUpdateDTO;
+import com.vagrant.nanoblog.mapper.ArticleMapper;
+import com.vagrant.nanoblog.mapper.CommentMapper;
 import com.vagrant.nanoblog.mapper.UserRoleMapper;
+import com.vagrant.nanoblog.pojo.Article;
+import com.vagrant.nanoblog.pojo.Comment;
 import com.vagrant.nanoblog.pojo.User;
 import com.vagrant.nanoblog.mapper.UserMapper;
 import com.vagrant.nanoblog.pojo.UserRole;
@@ -19,6 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -34,6 +41,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Autowired
     private UserRoleMapper userRoleMapper;
+
+    @Autowired
+    private ArticleMapper articleMapper;
+
+    @Autowired
+    private CommentMapper commentMapper;
 
     // key: 用户名, value: 失败次数
     private static final java.util.Map<String, Integer> failCountMap = new java.util.concurrent.ConcurrentHashMap<>();
