@@ -1,16 +1,24 @@
 package com.vagrant.nanoblog.service;
 
-import com.vagrant.nanoblog.pojo.Tag;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.vagrant.nanoblog.pojo.Tag;
+import com.vagrant.nanoblog.vo.TagVO;
+import java.util.List;
 
 /**
- * <p>
- * 标签表 服务类
- * </p>
- *
- * @author vagrant
- * @since 2026-03-21
+ * 标签服务接口
  */
 public interface ITagService extends IService<Tag> {
 
+    /**
+     * 查询所有标签（含文章数，热门排序）
+     */
+    List<TagVO> getTagsWithCount();
+    
+    // ===================== 【后台管理相关方法】 =====================
+    /** 管理员新增标签 */
+    void addTag(Tag tag);
+    
+    /** 管理员软删除标签 */
+    void deleteTagByAdmin(Long tagId);
 }

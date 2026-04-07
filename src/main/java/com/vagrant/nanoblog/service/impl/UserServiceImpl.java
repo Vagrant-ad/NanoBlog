@@ -1,9 +1,15 @@
 package com.vagrant.nanoblog.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.vagrant.nanoblog.common.ResponseResult;
 import com.vagrant.nanoblog.dto.UserUpdateDTO;
+import com.vagrant.nanoblog.mapper.ArticleMapper;
+import com.vagrant.nanoblog.mapper.CommentMapper;
 import com.vagrant.nanoblog.mapper.UserRoleMapper;
+import com.vagrant.nanoblog.pojo.Article;
+import com.vagrant.nanoblog.pojo.Comment;
 import com.vagrant.nanoblog.pojo.User;
 import com.vagrant.nanoblog.mapper.UserMapper;
 import com.vagrant.nanoblog.pojo.UserRole;
@@ -14,8 +20,12 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -31,6 +41,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Autowired
     private UserRoleMapper userRoleMapper;
+
+    @Autowired
+    private ArticleMapper articleMapper;
+
+    @Autowired
+    private CommentMapper commentMapper;
 
     // key: 用户名, value: 失败次数
     private static final java.util.Map<String, Integer> failCountMap = new java.util.concurrent.ConcurrentHashMap<>();
@@ -102,11 +118,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             return ResponseResult.errorResult(404,"用户不存在");
         }
 
-        //判断账户是否被封禁
+        //3.判断账号是否被注销
+        if (user.getIsDeleted() != null && user.getIsDeleted() == 1) {
+            return ResponseResult.errorResult(403,"该账号已被注销！");
+        }
+
+        //4.判断账户是否被封禁
         if (user.getStatus() != null && user.getStatus() == 0) {
             return ResponseResult.errorResult(403,"您的账号已被管理员封禁！");
         }
-        // 3. 校验密码
+
+        // 5. 校验密码
         if (BCrypt.checkpw(password, user.getPasswordHash())) {
             // 登录成功，清除该用户的失败记录
             failCountMap.remove(username);
@@ -166,5 +188,70 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         return ResponseResult.errorResult(500, "服务器异常，修改失败");
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseResult deleteAccount(Long userId, String password) {
+        // 1. 查询用户
+        User user = this.getById(userId);
+        if (user == null || user.getIsDeleted() == 1) {
+            return ResponseResult.errorResult(404, "用户不存在");
+        }
+
+        // 2. 校验密码
+        if (!BCrypt.checkpw(password, user.getPasswordHash())) {
+            return ResponseResult.errorResult(400, "密码错误，注销失败");
+        }
+
+        // 3. 软删除：将 is_deleted 设为 1
+        user.setIsDeleted(1);
+        user.setUpdateTime(LocalDateTime.now());
+
+        boolean success = this.updateById(user);
+        if (success) {
+            return ResponseResult.okResult();
+        }
+        return ResponseResult.errorResult(500, "注销失败，请稍后再试");
+    }
+
+    // ===================== 【后台管理相关方法实现】 =====================
+    
+    @Override
+    public IPage<User> getUserList(Integer page, Integer size, String username) {
+        Page<User> userPage = new Page<>(page, size);
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("is_deleted", 0); // 只查未删除的用户
+        
+        // 支持按用户名搜索
+        if (StringUtils.hasText(username)) {
+            wrapper.like("username", username);
+        }
+        
+        wrapper.orderByDesc("create_time");
+        return this.page(userPage, wrapper);
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void toggleUserStatus(Long userId, Integer status) {
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        user.setStatus(status);
+        user.setUpdateTime(LocalDateTime.now());
+        this.updateById(user);
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteUserByAdmin(Long userId) {
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        user.setIsDeleted(1);
+        user.setUpdateTime(LocalDateTime.now());
+        this.updateById(user);
+    }
 
 }

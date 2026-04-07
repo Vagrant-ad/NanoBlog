@@ -7,8 +7,10 @@
                            http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
                            http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
-    <!-- 1. SpringMVC扫描控制器 -->
+    <!-- 1. SpringMVC扫描Web层组件（Controller + MVC配置 + 拦截器） -->
     <context:component-scan base-package="com.vagrant.nanoblog.controller"/>
+    <context:component-scan base-package="com.vagrant.nanoblog.config"/>
+    <context:component-scan base-package="com.vagrant.nanoblog.interceptor"/>
 
     <!-- 2. Thymeleaf模板引擎配置（保留页面渲染功能） -->
     <bean id="templateResolver"
@@ -32,6 +34,15 @@
 
     <!-- 3. 静态资源放行 -->
     <mvc:default-servlet-handler />
+
+    <!-- 显式注册拦截器，避免仅依赖WebMvcConfigurer在XML模式下不生效 -->
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/pages/admin/**"/>
+            <mvc:mapping path="/admin/**"/>
+            <ref bean="adminInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
 
     <context:property-placeholder location="classpath:jdbc.properties" ignore-unresolvable="true"/>
     <!-- 上传图片的虚拟路径映射到磁盘固定目录 -->

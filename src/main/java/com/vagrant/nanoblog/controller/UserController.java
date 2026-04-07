@@ -21,6 +21,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.File;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -44,6 +47,14 @@ public class UserController {
 
     @Autowired
     private UserRoleMapper userRoleMapper;
+    @Autowired
+    private AttachmentController attachmentController; // 注入附件控制器
+
+    @Autowired
+    private IArticleService articleService;
+
+    @Autowired
+    private ICommentService commentService;
 
     @Autowired
     private UserFollowMapper userFollowMapper;
@@ -174,60 +185,30 @@ public class UserController {
     }
 
 
-    /**
-     * 1. 更新/完善个人信息
-     */
+    // 更新/完善个人信息
     @PostMapping("/updateProfile")
     @ResponseBody
     public ResponseResult updateProfile(@RequestBody UserUpdateDTO updateDTO) {
         return userService.updateUserProfile(updateDTO);
     }
 
+
     /**
-     * 2.接收前端上传的头像图片，并返回图片访问URL
+     * 上传头像 (直接复用 AttachmentController 的逻辑)
      */
     @PostMapping("/uploadAvatar")
     @ResponseBody
-    public ResponseResult uploadAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
-        try {
-            String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String newFileName = UUID.randomUUID().toString() + extension;
-
-            // 使用电脑硬盘上的固定目录
-            String savePath = "D:/nanoblog_uploads/";
-            File dir = new File(savePath);
-            if (!dir.exists()) dir.mkdirs();
-
-            File serverFile = new File(dir, newFileName);
-            file.transferTo(serverFile);
+    public ResponseResult uploadAvatar(
+            @RequestParam("file") MultipartFile file,
+            HttpServletRequest request,
+            HttpSession session) {
 
 
-            String imageUrl = "/user/showAvatar?name=" + newFileName;
-            return ResponseResult.okResult(imageUrl);
-        } catch (Exception e) {
-            return ResponseResult.errorResult(500,"上传失败");
-        }
+        return attachmentController.uploadImage(file, request, session);
     }
 
-    /**
-     * 3. 新增：读取并展示头像的接口
-     * 浏览器访问这个接口，Java会去D盘读文件并返回给浏览器
-     */
-    @GetMapping("/showAvatar")
-    public void showAvatar(@RequestParam("name") String name, javax.servlet.http.HttpServletResponse response) {
-        try {
-            File file = new File("D:/nanoblog_uploads/" + name);
-            if (!file.exists()) return;
 
-
-            response.setContentType("image/jpeg");
-            java.nio.file.Files.copy(file.toPath(), response.getOutputStream());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
+    //修改密码
     @PostMapping("/updatePassword")
     @ResponseBody
     public ResponseResult updatePassword(@RequestBody Map<String, String> params, HttpSession session) {
@@ -247,6 +228,89 @@ public class UserController {
         return userService.updatePassword(loginUser.getId(), oldPwd, newPwd);
     }
 
+    //删除账号
+    @PostMapping("/deleteAccount")
+    @ResponseBody
+    public ResponseResult deleteAccount(@RequestBody Map<String, String> params, HttpSession session) {
+        User loginUser = (User) session.getAttribute("LOGIN_USER");
+        if (loginUser == null) return ResponseResult.errorResult(401, "请先登录");
 
+        String password = params.get("password");
+        if (password == null || password.trim().isEmpty()) {
+            return ResponseResult.errorResult(400, "请输入密码");
+        }
+
+        ResponseResult result = userService.deleteAccount(loginUser.getId(), password);
+        if (result.getCode() == 200) {
+            // 注销成功后清除 Session
+            session.removeAttribute("LOGIN_USER");
+            session.invalidate();
+        }
+        return result;
+    }
+
+    /**
+     * 获取用户公开资料（访客可访问，不返回敏感字段）
+     * GET /user/publicProfile?id=xxx
+     */
+    @GetMapping("/publicProfile")
+    @ResponseBody
+    public ResponseResult getPublicProfile(@RequestParam Long id) {
+        User user = userService.getById(id);
+        if (user == null || user.getIsDeleted() == 1) {
+            return ResponseResult.errorResult(404, "用户不存在");
+        }
+        // 脱敏：清除密码哈希
+        user.setPasswordHash(null);
+
+        UserRole userRole = userRoleMapper.selectOne(
+                new QueryWrapper<UserRole>().eq("user_id", id)
+        );
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("user", user);
+        result.put("roleId", userRole != null ? userRole.getRoleId() : 1);
+        return ResponseResult.okResult(result);
+    }
+
+    /**
+     * 获取用户统计信息（评论数、总浏览量）
+     * GET /user/getStats?userId=xxx
+     * userId 可选：不传则查当前登录用户，传则查目标用户（访客模式）
+     */
+    @GetMapping("/getStats")
+    @ResponseBody
+    public ResponseResult getStats(@RequestParam(required = false) Long userId, HttpSession session) {
+        Long targetId = userId;
+        if (targetId == null) {
+            User loginUser = (User) session.getAttribute("LOGIN_USER");
+            if (loginUser == null) return ResponseResult.errorResult(401, "请先登录");
+            targetId = loginUser.getId();
+        }
+
+        // 总浏览量：查该用户所有文章的 view_count 之和
+        Long totalView = articleService.lambdaQuery()
+                .eq(com.vagrant.nanoblog.pojo.Article::getAuthorId, targetId)
+                .eq(com.vagrant.nanoblog.pojo.Article::getIsDeleted, 0)
+                .list()
+                .stream()
+                .mapToLong(a -> a.getViewCount() == null ? 0L : a.getViewCount())
+                .sum();
+
+        // 评论数：查该用户发出的评论总数
+        long commentCount = commentService.lambdaQuery()
+                .eq(com.vagrant.nanoblog.pojo.Comment::getUserId, targetId)
+                .eq(com.vagrant.nanoblog.pojo.Comment::getIsDeleted, 0)
+                .count();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("viewCount", totalView);
+        stats.put("commentCount", commentCount);
+        // followCount 暂无关注表逻辑，返回 0 占位
+        stats.put("followCount", 0);
+        stats.put("likeCount", 0);
+
+        return ResponseResult.okResult(stats);
+    }
 
 }
