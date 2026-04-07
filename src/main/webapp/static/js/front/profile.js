@@ -202,6 +202,14 @@ function initPageByMode() {
         document.getElementById('draftsTabBtn').style.display   = 'none';
         document.getElementById('dangerZoneCard').style.display = 'none';
         document.getElementById('articleCardTitle').innerText   = 'TA 的文章';
+
+        //  visitor 模式：隐藏整个 Tab 栏
+        var tabsBar = document.getElementById('articleTabsBar');
+        if (tabsBar) tabsBar.style.display = 'none';
+        // 直接显示已发布文章区域
+        var tabPublished = document.getElementById('tabPublished');
+        if (tabPublished) tabPublished.style.display = 'block';
+
         fetchProfileVisitor(_profileUserId);
         // 访客模式：查看目标用户的统计数据，传入目标用户ID
         fetchStats(_profileUserId);

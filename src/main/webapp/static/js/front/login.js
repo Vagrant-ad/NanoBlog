@@ -50,7 +50,6 @@ document.querySelectorAll('.field-input').forEach(input => {
     });
 });
 
-
 document.getElementById("loginBtn").onclick = function() {
 
     var apiBase = (window.NanoBlog && typeof window.NanoBlog.apiBase === 'string')
@@ -71,7 +70,6 @@ document.getElementById("loginBtn").onclick = function() {
         layer.msg("请输入验证码！", {icon: 5, shift: 6});
         return;
     }
-
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState === 4 && xhr.status === 200) {
