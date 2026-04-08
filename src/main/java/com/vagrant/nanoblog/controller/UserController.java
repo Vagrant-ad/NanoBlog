@@ -25,6 +25,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import com.vagrant.nanoblog.service.IArticleService;
+import com.vagrant.nanoblog.service.ICommentService;
 
 
 /**
@@ -50,10 +52,10 @@ public class UserController {
     private AttachmentController attachmentController; // 注入附件控制器
 
     @Autowired
-    private com.vagrant.nanoblog.service.IArticleService articleService;
+    private IArticleService articleService;
 
     @Autowired
-    private com.vagrant.nanoblog.service.ICommentService commentService;
+    private ICommentService commentService;
 
     // 跳转到注册页面
     @GetMapping("/register")
