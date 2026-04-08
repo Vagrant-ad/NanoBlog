@@ -10,10 +10,10 @@
         .layui-layout-admin .layui-body { padding: 20px; }
         .tab-content { background: #fff; padding: 20px; border-radius: 4px; margin-top: 15px; }
         .tree-indent { display: inline-block; width: 20px; }
-        .tree-icon { cursor: pointer; margin-right: 5px; user-select: none; }
+        .tree-icon { cursor: pointer; margin-right: 5px; user-select: none; font-size: 16px; }
         .tree-icon:hover { color: #1E9FFF; }
-        .child-row { display: none; }
-        .child-row.show { display: table-row; }
+        .parent-row { background-color: #f8f8f8; font-weight: bold; }
+        .child-row { background-color: #ffffff; }
     </style>
 </head>
 <body class="layui-layout-body">
@@ -57,10 +57,10 @@
                         <table class="layui-table" id="categoryTable" lay-size="sm">
                             <thead>
                                 <tr>
+                                    <th width="100">排序</th>
                                     <th width="80">ID</th>
                                     <th>分类名称</th>
                                     <th width="200">Slug</th>
-                                    <th width="100">排序</th>
                                     <th width="100">状态</th>
                                     <th width="150">操作</th>
                                 </tr>
@@ -104,6 +104,7 @@
             $.get('/category/list', function(res) {
                 if (res.code === 200) {
                     allCategories = res.data;
+                    console.log('加载的分类数据:', allCategories);
                     renderCategoryTree();
                 } else {
                     layer.msg('加载分类失败');
@@ -118,6 +119,7 @@
             var tbody = $('#categoryTableBody');
             tbody.empty();
 
+            // 构建父子关系映射
             var parentMap = {};
             allCategories.forEach(function(cat) {
                 var pid = cat.parentId || 0;
@@ -127,9 +129,15 @@
                 parentMap[pid].push(cat);
             });
 
+            console.log('父子关系映射:', parentMap);
+
+            // 获取顶级分类（parentId为0或null）
             var parents = parentMap[0] || [];
             parents.sort(function(a, b) { return a.sortOrder - b.sortOrder; });
 
+            console.log('顶级分类:', parents);
+
+            // 渲染每个父分类及其子分类
             parents.forEach(function(parent) {
                 renderCategoryRow(tbody, parent, parentMap, 0);
             });
@@ -140,38 +148,47 @@
             var children = parentMap[category.id] || [];
             var hasChildren = children.length > 0;
             var isExpanded = expandedNodes.has(category.id);
+
+            // 构建缩进
             var indent = '';
             for (var i = 0; i < level; i++) {
                 indent += '<span class="tree-indent"></span>';
             }
 
+            // 构建图标
             var icon = '';
             if (hasChildren) {
-                icon = isExpanded ?
-                    '<i class="layui-icon layui-icon-down tree-icon" data-id="' + category.id + '"></i>' :
-                    '<i class="layui-icon layui-icon-right tree-icon" data-id="' + category.id + '"></i>';
+                if (isExpanded) {
+                    icon = '<i class="layui-icon layui-icon-down tree-icon" data-id="' + category.id + '" style="color: #1E9FFF;"></i>';
+                } else {
+                    icon = '<i class="layui-icon layui-icon-right tree-icon" data-id="' + category.id + '" style="color: #FFB800;"></i>';
+                }
             } else {
                 icon = '<i class="layui-icon layui-icon-file" style="margin-right: 5px; color: #ccc;"></i>';
             }
 
+            // 状态显示
             var statusHtml = category.status === 1 ?
-                '<span style="color: #5FB878;">启用</span>' :
-                '<span style="color: #FF5722;">禁用</span>';
+                '<span style="color: #5FB878;">● 启用</span>' :
+                '<span style="color: #FF5722;">● 禁用</span>';
 
-            var row = '<tr data-id="' + category.id + '" data-level="' + level + '">';
-            row += '<td>' + category.id + '</td>';
-            row += '<td>' + indent + icon + category.categoryName + '</td>';
-            row += '<td>' + category.categorySlug + '</td>';
+            // 构建行
+            var rowClass = level === 0 ? 'parent-row' : 'child-row';
+            var row = '<tr class="' + rowClass + '" data-id="' + category.id + '" data-level="' + level + '">';
             row += '<td>' + category.sortOrder + '</td>';
+            row += '<td>' + category.id + '</td>';
+            row += '<td>' + indent + icon + ' <span>' + category.categoryName + '</span></td>';
+            row += '<td>' + (category.categorySlug || '-') + '</td>';
             row += '<td>' + statusHtml + '</td>';
             row += '<td>';
-            row += '<button class="layui-btn layui-btn-xs edit-category" data-id="' + category.id + '">编辑</button>';
+            row += '<button class="layui-btn layui-btn-xs edit-category" data-id="' + category.id + '">编辑</button> ';
             row += '<button class="layui-btn layui-btn-danger layui-btn-xs delete-category" data-id="' + category.id + '">删除</button>';
             row += '</td>';
             row += '</tr>';
 
             tbody.append(row);
 
+            // 如果有子分类且已展开，递归渲染子分类
             if (hasChildren && isExpanded) {
                 children.sort(function(a, b) { return a.sortOrder - b.sortOrder; });
                 children.forEach(function(child) {
@@ -185,10 +202,14 @@
             e.stopPropagation();
             var id = parseInt($(this).data('id'));
 
+            console.log('点击分类ID:', id, '当前展开状态:', expandedNodes.has(id));
+
             if (expandedNodes.has(id)) {
                 expandedNodes.delete(id);
+                console.log('折叠分类:', id);
             } else {
                 expandedNodes.add(id);
+                console.log('展开分类:', id);
             }
 
             renderCategoryTree();
@@ -197,15 +218,20 @@
         // 展开全部
         $('#expandAllBtn').click(function() {
             allCategories.forEach(function(cat) {
-                expandedNodes.add(cat.id);
+                var children = allCategories.filter(function(c) { return c.parentId === cat.id; });
+                if (children.length > 0) {
+                    expandedNodes.add(cat.id);
+                }
             });
             renderCategoryTree();
+            layer.msg('已展开所有分类');
         });
 
         // 折叠全部
         $('#collapseAllBtn').click(function() {
             expandedNodes.clear();
             renderCategoryTree();
+            layer.msg('已折叠所有分类');
         });
 
         // 获取分类列表用于父分类选择
@@ -310,13 +336,18 @@
         $(document).on('click', '.edit-category', function() {
             var id = parseInt($(this).data('id'));
             var category = allCategories.find(function(c) { return c.id === id; });
-            if (!category) return;
+            if (!category) {
+                layer.msg('找不到分类信息');
+                return;
+            }
+
+            console.log('编辑分类:', category);
 
             getCategoryList(function(categoryList) {
                 var parentOptions = '<option value="0">无（作为顶级分类）</option>';
                 categoryList.forEach(function(cat) {
                     if (cat.id !== category.id) {
-                        var selected = category.parentId && cat.id == category.parentId ? 'selected' : '';
+                        var selected = (category.parentId && cat.id == category.parentId) ? 'selected' : '';
                         parentOptions += '<option value="' + cat.id + '" ' + selected + '>' + cat.categoryName + '</option>';
                     }
                 });
@@ -540,3 +571,4 @@
 </script>
 </body>
 </html>
+
