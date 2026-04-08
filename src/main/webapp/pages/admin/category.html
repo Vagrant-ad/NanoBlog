@@ -9,6 +9,7 @@
         body { background-color: #f2f2f2; }
         .layui-layout-admin .layui-body { padding: 20px; }
         .tab-content { background: #fff; padding: 20px; border-radius: 4px; margin-top: 15px; }
+        .layui-table-tree-nodeIcon > i { font-size: 16px; }
     </style>
 </head>
 <body class="layui-layout-body">
@@ -47,6 +48,8 @@
                 <div class="layui-tab-item layui-show">
                     <div class="tab-content">
                         <button class="layui-btn" id="addCategoryBtn">新增分类</button>
+                        <button class="layui-btn layui-btn-normal" id="expandAllBtn">展开全部</button>
+                        <button class="layui-btn layui-btn-warm" id="collapseAllBtn">折叠全部</button>
                         <table class="layui-hide" id="categoryTable" lay-filter="categoryTable"></table>
                     </div>
                 </div>
@@ -92,19 +95,24 @@
             elem: '#categoryTable',
             url: '/category/list',
             page: false,
-            defaultExpandState: true,
+            height: 'full-200',
             tree: {
                 idName: 'id',
                 pidName: 'parentId',
-                childName: 'children',
-                iconIndex: 1
+                childName: 'children'
             },
             cols: [[
-                {field: 'id', title: 'ID', width: 80},
-                {field: 'categoryName', title: '分类名称', minWidth: 200},
+                {field: 'id', title: 'ID', width: 80, sort: true},
+                {field: 'categoryName', title: '分类名称', minWidth: 200, templet: function(d) {
+                        var icon = d.children && d.children.length > 0 ? '&#xe625;' : '&#xe626;';
+                        return '<i class="layui-icon" style="margin-right: 5px;">' + icon + '</i>' + d.categoryName;
+                    }},
                 {field: 'categorySlug', title: 'Slug', width: 200},
-                {field: 'sortOrder', title: '排序', width: 100},
-                {title: '操作', width: 150, toolbar: '#categoryActionTpl'}
+                {field: 'sortOrder', title: '排序', width: 100, sort: true},
+                {field: 'status', title: '状态', width: 100, templet: function(d) {
+                        return d.status === 1 ? '<span style="color: #5FB878;">启用</span>' : '<span style="color: #FF5722;">禁用</span>';
+                    }},
+                {title: '操作', width: 150, toolbar: '#categoryActionTpl', fixed: 'right'}
             ]],
             response: {
                 statusCode: 200
@@ -115,7 +123,28 @@
                     "msg": res.msg,
                     "data": res.data
                 };
+            },
+            done: function(res, curr, count) {
+                console.log('树形表格加载完成', count);
             }
+        });
+
+        // 展开全部
+        $('#expandAllBtn').click(function() {
+            $('.layui-table-tree-flexIcon').each(function() {
+                if ($(this).hasClass('layui-table-tree-expand')) {
+                    $(this).trigger('click');
+                }
+            });
+        });
+
+        // 折叠全部
+        $('#collapseAllBtn').click(function() {
+            $('.layui-table-tree-flexIcon').each(function() {
+                if ($(this).hasClass('layui-table-tree-pack')) {
+                    $(this).trigger('click');
+                }
+            });
         });
 
         // 获取分类列表用于父分类选择
@@ -123,7 +152,11 @@
             $.get('/category/list', function(res) {
                 if (res.code === 200) {
                     callback(res.data);
+                } else {
+                    layer.msg('获取分类列表失败');
                 }
+            }).fail(function() {
+                layer.msg('网络错误');
             });
         }
 
@@ -138,7 +171,7 @@
                 layer.open({
                     type: 1,
                     title: '新增分类',
-                    area: ['500px', '350px'],
+                    area: ['500px', '380px'],
                     content: '<div style="padding: 20px;">' +
                         '<form class="layui-form" lay-filter="categoryForm">' +
                         '<div class="layui-form-item">' +
@@ -166,6 +199,13 @@
                         '</div>' +
                         '</div>' +
                         '<div class="layui-form-item">' +
+                        '<label class="layui-form-label">状态</label>' +
+                        '<div class="layui-input-block">' +
+                        '<input type="radio" name="status" value="1" title="启用" checked>' +
+                        '<input type="radio" name="status" value="0" title="禁用">' +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="layui-form-item">' +
                         '<div class="layui-input-block">' +
                         '<button class="layui-btn" lay-submit lay-filter="submitCategory">提交</button>' +
                         '<button type="reset" class="layui-btn layui-btn-primary">重置</button>' +
@@ -178,6 +218,8 @@
 
                         form.on('submit(submitCategory)', function(data) {
                             data.field.parentId = parseInt(data.field.parentId) || 0;
+                            data.field.sortOrder = parseInt(data.field.sortOrder) || 0;
+                            data.field.status = parseInt(data.field.status);
                             $.ajax({
                                 url: '/admin/category/add',
                                 type: 'POST',
@@ -213,7 +255,10 @@
                     var parentOptions = '<option value="0">无（作为顶级分类）</option>';
                     categoryList.forEach(function(cat) {
                         if (cat.id !== data.id) {
-                            var selected = cat.id === data.parentId ? 'selected' : '';
+                            var selected = cat.parentId === data.parentId && cat.id === data.parentId ? 'selected' : '';
+                            if (data.parentId && cat.id == data.parentId) {
+                                selected = 'selected';
+                            }
                             parentOptions += '<option value="' + cat.id + '" ' + selected + '>' + cat.categoryName + '</option>';
                         }
                     });
@@ -221,7 +266,7 @@
                     layer.open({
                         type: 1,
                         title: '编辑分类',
-                        area: ['500px', '350px'],
+                        area: ['500px', '380px'],
                         content: '<div style="padding: 20px;">' +
                             '<form class="layui-form" lay-filter="editCategoryForm">' +
                             '<div class="layui-form-item">' +
@@ -243,6 +288,13 @@
                             '</div>' +
                             '</div>' +
                             '<div class="layui-form-item">' +
+                            '<label class="layui-form-label">状态</label>' +
+                            '<div class="layui-input-block">' +
+                            '<input type="radio" name="status" value="1" title="启用"' + (data.status === 1 ? ' checked' : '') + '>' +
+                            '<input type="radio" name="status" value="0" title="禁用"' + (data.status === 0 ? ' checked' : '') + '>' +
+                            '</div>' +
+                            '</div>' +
+                            '<div class="layui-form-item">' +
                             '<div class="layui-input-block">' +
                             '<button class="layui-btn" lay-submit lay-filter="submitEditCategory">提交</button>' +
                             '</div>' +
@@ -254,6 +306,8 @@
 
                             form.on('submit(submitEditCategory)', function(formData) {
                                 formData.field.parentId = parseInt(formData.field.parentId) || 0;
+                                formData.field.sortOrder = parseInt(formData.field.sortOrder) || 0;
+                                formData.field.status = parseInt(formData.field.status);
                                 $.ajax({
                                     url: '/admin/category/' + data.id,
                                     type: 'PUT',
@@ -285,7 +339,7 @@
                         success: function(res) {
                             if (res.code === 200) {
                                 layer.msg('删除成功');
-                                obj.del();
+                                categoryTableIns.reload();
                             } else {
                                 layer.msg(res.msg || '删除失败');
                             }

@@ -60,16 +60,24 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     // ===================== 【后台管理相关方法实现】 =====================
     
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addCategory(Category category) {
-        category.setStatus(1);
+        if (category.getParentId() == null) {
+            category.setParentId(0L);
+        }
+        if (category.getSortOrder() == null) {
+            category.setSortOrder(0);
+        }
+        if (category.getStatus() == null) {
+            category.setStatus(1);
+        }
         category.setIsDeleted(0);
         category.setCreateTime(LocalDateTime.now());
         this.save(category);
     }
-
-    // ... existing code ...
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -91,7 +99,10 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
         existing.setParentId(category.getParentId() != null ? category.getParentId() : 0);
         existing.setCategoryName(category.getCategoryName());
-        existing.setSortOrder(category.getSortOrder());
+        existing.setSortOrder(category.getSortOrder() != null ? category.getSortOrder() : existing.getSortOrder());
+        if (category.getStatus() != null) {
+            existing.setStatus(category.getStatus());
+        }
         existing.setUpdateTime(LocalDateTime.now());
         this.updateById(existing);
     }
@@ -106,8 +117,6 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         }
         return isDescendant(parentId, child.getParentId());
     }
-
-// ... existing code ...
 
 
     @Override
