@@ -23,6 +23,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     private final ArticleMapper articleMapper;
 
+
     @Override
     public List<CategoryTreeVO> getCategoryTree() {
         QueryWrapper<Category> wrapper = new QueryWrapper<>();
@@ -49,14 +50,20 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         return parentList;
     }
 
+// ... existing code ...
+
     private CategoryTreeVO convert(Category category) {
         CategoryTreeVO vo = new CategoryTreeVO();
         vo.setId(category.getId());
+        vo.setParentId(category.getParentId());
         vo.setCategoryName(category.getCategoryName());
         vo.setCategorySlug(category.getCategorySlug());
         vo.setSortOrder(category.getSortOrder());
+        vo.setStatus(category.getStatus());
         return vo;
     }
+
+// ... existing code ...
 
     // ===================== 【后台管理相关方法实现】 =====================
     
