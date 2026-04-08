@@ -68,7 +68,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         category.setCreateTime(LocalDateTime.now());
         this.save(category);
     }
-    
+
+    // ... existing code ...
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateCategory(Category category) {
@@ -76,12 +78,38 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         if (existing == null) {
             throw new RuntimeException("分类不存在");
         }
+
+        if (category.getParentId() != null && !category.getParentId().equals(existing.getParentId())) {
+            if (category.getParentId().equals(category.getId())) {
+                throw new RuntimeException("不能将分类设置为自己的子分类");
+            }
+
+            if (isDescendant(category.getId(), category.getParentId())) {
+                throw new RuntimeException("不能将父分类设置为自己的子分类");
+            }
+        }
+
+        existing.setParentId(category.getParentId() != null ? category.getParentId() : 0);
         existing.setCategoryName(category.getCategoryName());
         existing.setSortOrder(category.getSortOrder());
         existing.setUpdateTime(LocalDateTime.now());
         this.updateById(existing);
     }
-    
+
+    private boolean isDescendant(Long parentId, Long childId) {
+        Category child = this.getById(childId);
+        if (child == null || child.getParentId() == null || child.getParentId() == 0) {
+            return false;
+        }
+        if (child.getParentId().equals(parentId)) {
+            return true;
+        }
+        return isDescendant(parentId, child.getParentId());
+    }
+
+// ... existing code ...
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteCategoryByAdmin(Long categoryId) {

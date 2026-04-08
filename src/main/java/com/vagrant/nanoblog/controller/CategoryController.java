@@ -23,7 +23,6 @@ public class CategoryController {
     public ResponseResult<List<Category>> list() {
         List<Category> list = categoryService.list(
                 new QueryWrapper<Category>()
-                        .eq("status", 1)
                         .eq("is_deleted", 0)
                         .orderByAsc("sort_order")
         );
