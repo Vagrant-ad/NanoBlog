@@ -4,8 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.vagrant.nanoblog.dto.ArticlePublishDTO;
-import com.vagrant.nanoblog.mapper.*;
-import com.vagrant.nanoblog.pojo.*;
+import com.vagrant.nanoblog.mapper.ArticleContentMapper;
+import com.vagrant.nanoblog.mapper.ArticleTagMapper;
+import com.vagrant.nanoblog.mapper.TagMapper;
+import com.vagrant.nanoblog.pojo.Article;
+import com.vagrant.nanoblog.mapper.ArticleMapper;
+import com.vagrant.nanoblog.pojo.ArticleContent;
+import com.vagrant.nanoblog.pojo.ArticleTag;
+import com.vagrant.nanoblog.pojo.Tag;
 import com.vagrant.nanoblog.service.IArticleService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.vagrant.nanoblog.vo.ArticleDetailVO;
@@ -26,7 +32,10 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -46,10 +55,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private final TagMapper tagMapper;
     @Getter
     private final ArticleTagMapper articleTagMapper;
-    @Getter
-    private final CategoryMapper categoryMapper;
-    @Getter
-    private final UserMapper userMapper;
 
     private static final Parser MD_PARSER = Parser.builder()
             .extensions(Arrays.asList(
@@ -231,29 +236,18 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             vo.setContent(content.getContentHtml());
             vo.setContentMd(content.getContentMd());
         }
-
-        User author = userMapper.selectById(article.getAuthorId());
-        if (author != null) {
-            vo.setAuthorId(author.getId());
-            vo.setAuthorNickname(author.getNickname());
-            vo.setAuthorAvatar(author.getAvatarUrl());
-        }
         return vo;
     }
 
     @Override
-    public IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size,String keyword,String sortBy,Long categoryId,Long tagId) {
+    public IPage<ArticleHomeVO> getHomeArticleList(Integer page, Integer size,String keyword,String sortBy) {
         if (page == null || page < 1) page = 1;
         if (size == null || size < 1 || size > 100) size = 8;
 
         Page<ArticleHomeVO> pageInfo = new Page<>(page, size);
-        //包含自身及其子分类的列表
-        List<Long> categoryIds = null;
-        if (categoryId != null) {
-            categoryIds = buildCategoryIdList(categoryId);
-        }
+
         // 1. 查首页文章基础数据
-        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo,keyword, sortBy,categoryIds,tagId);
+        List<ArticleHomeVO> records = articleMapper.getHomeArticlePage(pageInfo,keyword, sortBy);
 
         if (records == null || records.isEmpty()) {
             pageInfo.setRecords(records);
@@ -402,67 +396,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         this.updateById(article);
     }
 
-    @Override
-    public IPage<ArticleListVO> listByCategory(Long categoryId, Integer pageNum, Integer pageSize) {
-        Page<Article> page = new Page<>(pageNum, pageSize);
-
-        // 查询该分类下的所有子分类ID
-        List<Long> categoryIds = buildCategoryIdList(categoryId);
-
-        QueryWrapper<Article> wrapper = new QueryWrapper<Article>()
-                .eq("status", 1)
-                .eq("is_deleted", 0)
-                .in("category_id", categoryIds) //IN查询
-                .orderByDesc("publish_time");
-
-        IPage<Article> articlePage = this.page(page, wrapper);
-
-        List<ArticleListVO> voList = articlePage.getRecords().stream().map(article -> {
-            ArticleListVO vo = new ArticleListVO();
-            vo.setId(article.getId());
-            vo.setArticleTitle(article.getArticleTitle());
-            vo.setArticleSummary(article.getArticleSummary());
-            vo.setCategoryId(article.getCategoryId());
-            vo.setViewCount(article.getViewCount());
-            vo.setLikeCount(article.getLikeCount());
-            vo.setCommentCount(article.getCommentCount());
-            vo.setPublishTime(article.getPublishTime());
-            return vo;
-        }).collect(Collectors.toList());
-
-        Page<ArticleListVO> resultPage = new Page<>();
-        resultPage.setRecords(voList);
-        resultPage.setTotal(articlePage.getTotal());
-        resultPage.setSize(articlePage.getSize());
-        resultPage.setCurrent(articlePage.getCurrent());
-
-        return resultPage;
-    }
-
-    //构建分类ID列表：包含自身及所有子分类ID
-    private List<Long> buildCategoryIdList(Long categoryId) {
-        List<Long> ids = new ArrayList<>();
-        ids.add(categoryId);
-
-        // 查子分类（category表中 parent_id = categoryId 且未删除的）
-        List<Category> children = categoryMapper.selectList(
-                new QueryWrapper<Category>()
-                        .eq("parent_id", categoryId)
-                        .eq("is_deleted", 0)
-                        .eq("status", 1)
-        );
-
-        children.forEach(c -> ids.add(c.getId()));
-        return ids;
-    }
-
-    @Override
-    public IPage<ArticleHomeVO> listByTag(Long tagId, Integer pageNum, Integer pageSize) {
-        Page<ArticleHomeVO> page = new Page<>(pageNum, pageSize);
-        articleMapper.getArticlePageByTagId(page, tagId);
-        return page;
-    }
-
     /**
      * Article 分页结果 → ArticleManageVO 分页结果（公共转换，含标签批量查询）
      */
@@ -505,100 +438,5 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         result.setRecords(voList);
         return result;
-    }
-
-    // ===================== 【后台管理相关方法实现】 =====================
-    
-    @Override
-    public IPage<ArticleManageVO> getAdminArticleList(Integer page, Integer size, Integer status, String title) {
-        if (page == null || page < 1) page = 1;
-        if (size == null || size < 1 || size > 100) size = 10;
-        
-        Page<Article> articlePage = new Page<>(page, size);
-        QueryWrapper<Article> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("is_deleted", 0); // 只查未删除的
-        
-        // 按状态筛选
-        if (status != null) {
-            queryWrapper.eq("status", status);
-        }
-        
-        // 按标题搜索
-        if (StringUtils.hasText(title)) {
-            queryWrapper.like("article_title", title);
-        }
-        
-        queryWrapper.orderByDesc("create_time");
-        IPage<Article> articlePageResult = this.page(articlePage, queryWrapper);
-        
-        // 转换为 VO
-        Page<ArticleManageVO> result = new Page<>();
-        result.setTotal(articlePageResult.getTotal());
-        result.setCurrent(articlePageResult.getCurrent());
-        result.setSize(articlePageResult.getSize());
-        
-        if (articlePageResult.getRecords().isEmpty()) {
-            result.setRecords(Collections.emptyList());
-            return result;
-        }
-        
-        // 批量查标签
-        List<Long> ids = articlePageResult.getRecords().stream()
-                .map(Article::getId).collect(Collectors.toList());
-        List<Map<String, Object>> tagRows = articleMapper.getTagsByArticleIds(ids);
-        Map<Long, List<String>> tagMap = tagRows.stream().collect(Collectors.groupingBy(
-                row -> ((Number) row.get("articleId")).longValue(),
-                Collectors.mapping(row -> (String) row.get("tagName"), Collectors.toList())
-        ));
-        
-        List<ArticleManageVO> voList = articlePageResult.getRecords().stream().map(a -> {
-            ArticleManageVO vo = new ArticleManageVO();
-            vo.setId(a.getId());
-            vo.setArticleTitle(a.getArticleTitle());
-            vo.setArticleSummary(a.getArticleSummary());
-            vo.setCoverImageUrl(a.getCoverImageUrl());
-            vo.setStatus(a.getStatus());
-            vo.setCategoryId(a.getCategoryId());
-            vo.setViewCount(a.getViewCount());
-            vo.setLikeCount(a.getLikeCount());
-            vo.setCommentCount(a.getCommentCount());
-            vo.setCreateTime(a.getCreateTime());
-            vo.setPublishTime(a.getPublishTime());
-            vo.setTags(tagMap.getOrDefault(a.getId(), Collections.emptyList()));
-            return vo;
-        }).collect(Collectors.toList());
-        
-        result.setRecords(voList);
-        return result;
-    }
-    
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void updateArticleStatusByAdmin(Long articleId, Integer status) {
-        Article article = this.getById(articleId);
-        if (article == null) {
-            throw new RuntimeException("文章不存在");
-        }
-        article.setStatus(status);
-        article.setUpdateTime(LocalDateTime.now());
-        
-        // 如果发布，设置发布时间
-        if (status == 1 && article.getPublishTime() == null) {
-            article.setPublishTime(LocalDateTime.now());
-        }
-        
-        this.updateById(article);
-    }
-    
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void deleteArticleByAdmin(Long articleId) {
-        Article article = this.getById(articleId);
-        if (article == null) {
-            throw new RuntimeException("文章不存在");
-        }
-        article.setIsDeleted(1);
-        article.setUpdateTime(LocalDateTime.now());
-        this.updateById(article);
     }
 }
