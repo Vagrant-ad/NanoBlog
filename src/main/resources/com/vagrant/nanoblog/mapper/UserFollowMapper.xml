@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.vagrant.nanoblog.mapper.UserFollowMapper">
+    
+    <!-- 查询粉丝列表（关注我的人） -->
+    <select id="getFansList" resultType="com.vagrant.nanoblog.vo.UserFollowVO">
+        SELECT
+            u.id AS userId,
+            u.nickname,
+            u.avatar_url AS avatarUrl,
+            u.bio
+        FROM user_follow uf
+        LEFT JOIN user u ON uf.follower_id = u.id
+        WHERE uf.following_id = #{userId}
+    </select>
+
+    <!-- 查询关注列表（我关注的人） -->
+    <select id="getFollowingList" resultType="com.vagrant.nanoblog.vo.UserFollowVO">
+        SELECT
+            u.id AS userId,
+            u.nickname,
+            u.avatar_url AS avatarUrl,
+            u.bio
+        FROM user_follow uf
+        LEFT JOIN user u ON uf.following_id = u.id
+        WHERE uf.follower_id = #{userId}
+    </select>
+
+</mapper>
