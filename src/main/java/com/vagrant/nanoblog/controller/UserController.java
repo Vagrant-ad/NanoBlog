@@ -276,7 +276,7 @@ public class UserController {
     }
 
     /**
-     * 获取用户统计信息（评论数、总浏览量）
+     * 获取用户统计信息（评论数、总浏览量、关注数、粉丝数、获赞数）
      * GET /user/getStats?userId=xxx
      * userId 可选：不传则查当前登录用户，传则查目标用户（访客模式）
      */
@@ -305,12 +305,25 @@ public class UserController {
                 .eq(com.vagrant.nanoblog.pojo.Comment::getIsDeleted, 0)
                 .count();
 
+        // 关注数：我关注了多少人
+        long followingCount = userFollowMapper.selectCount(
+            new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<UserFollow>()
+                .eq("follower_id", targetId));
+
+        // 粉丝数：多少人关注了我
+        long fansCount = userFollowMapper.selectCount(
+            new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<UserFollow>()
+                .eq("following_id", targetId));
+
+        // 总获赞：查该用户所有文章的 like_count 求和
+        Long totalLike = articleMapper.sumLikeCountByAuthor(targetId);
+
         Map<String, Object> stats = new HashMap<>();
         stats.put("viewCount", totalView);
         stats.put("commentCount", commentCount);
-        // followCount 暂无关注表逻辑，返回 0 占位
-        stats.put("followCount", 0);
-        stats.put("likeCount", 0);
+        stats.put("followCount", followingCount);
+        stats.put("fansCount", fansCount);
+        stats.put("likeCount", totalLike != null ? totalLike : 0);
 
         return ResponseResult.okResult(stats);
     }
