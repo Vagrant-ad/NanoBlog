@@ -1,51 +1,69 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
 <mapper namespace="com.vagrant.nanoblog.mapper.ArticleMapper">
-    <!--查询文章细节-->
-    <select id="getArticleDetailById"
-            resultType="com.vagrant.nanoblog.vo.ArticleDetailVO">
-        SELECT
-            a.id,
-            a.article_title AS title,
-            a.category_id AS categoryId,
-            c.category_name AS categoryName,
-            a.publish_time AS publishTime,
-            a.view_count AS viewCount,
-            a.like_count AS likeCount
+
+    <select id="getArticleDetailById" resultType="com.vagrant.nanoblog.vo.ArticleDetailVO">
+        SELECT a.id,
+               a.article_title AS title,
+               a.category_id   AS categoryId,
+               c.category_name AS categoryName,
+               a.publish_time  AS publishTime,
+               a.view_count    AS viewCount,
+               a.like_count    AS likeCount
         FROM article a
                  LEFT JOIN category c ON a.category_id = c.id
         WHERE a.id = #{id}
           AND a.status = 1
     </select>
-    <!--查询首页文章卡片信息-->
+
     <select id="getHomeArticlePage" resultType="com.vagrant.nanoblog.vo.ArticleHomeVO">
         SELECT
-            a.id,
-            a.article_slug AS articleSlug,
-            a.article_title AS title,
-            a.article_summary AS summary,
-            a.cover_image_url AS coverUrl,
-            a.author_id AS authorId,
-            u.nickname AS authorName,
-            u.avatar_url AS authorAvatar,
-            a.category_id AS categoryId,
-            c.category_name AS categoryName,
-            a.is_top AS isTop,
-            a.is_featured AS isFeatured,
-            a.view_count AS viewCount,
-            a.like_count AS likeCount,
-            a.comment_count AS commentCount,
-            a.publish_time AS publishTime
+        a.id,
+        a.article_slug AS articleSlug,
+        a.article_title AS title,
+        a.article_summary AS summary,
+        a.cover_image_url AS coverUrl,
+        a.author_id AS authorId,
+        u.nickname AS authorName,
+        u.avatar_url AS authorAvatar,
+        a.category_id AS categoryId,
+        c.category_name AS categoryName,
+        a.is_top AS isTop,
+        a.is_featured AS isFeatured,
+        a.view_count AS viewCount,
+        a.like_count AS likeCount,
+        a.comment_count AS commentCount,
+        a.publish_time AS publishTime
         FROM article a
-                 LEFT JOIN user u ON a.author_id = u.id
-                 LEFT JOIN category c ON a.category_id = c.id
-        WHERE a.status = 1
-          AND a.is_deleted = 0
+        LEFT JOIN user u ON a.author_id = u.id
+        LEFT JOIN category c ON a.category_id = c.id
+        WHERE a.status = 1 AND a.is_deleted = 0
         <if test="keyword != null and keyword != ''">
-            AND (a.article_title LIKE CONCAT('%', #{keyword}, '%'))
+            AND (
+            a.article_title LIKE CONCAT('%', #{keyword}, '%')
+            OR u.nickname LIKE CONCAT('%', #{keyword}, '%')
+            OR c.category_name LIKE CONCAT('%', #{keyword}, '%')
+            OR EXISTS (
+            SELECT 1 FROM article_tag at
+            LEFT JOIN tag t ON at.tag_id = t.id
+            WHERE at.article_id = a.id
+            AND t.tag_name LIKE CONCAT('%', #{keyword}, '%')
+            )
+            )
+        </if>
+        /*使用IN，包含子分类id*/
+        <if test="categoryIds != null and categoryIds.size() > 0">
+            AND a.category_id IN
+            <foreach collection="categoryIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="tagId != null">
+            AND EXISTS (
+            SELECT 1 FROM article_tag at
+            WHERE at.article_id = a.id AND at.tag_id = #{tagId}
+            )
         </if>
         ORDER BY a.is_top DESC,
         <choose>
@@ -54,7 +72,29 @@
             <otherwise>a.publish_time DESC</otherwise>
         </choose>
     </select>
-    <!--查询文章标签-->
+
+    <!--按标签ID查询文章-->
+    <select id="getArticlePageByTagId" resultType="com.vagrant.nanoblog.vo.ArticleHomeVO">
+        SELECT a.id,
+               a.article_title   AS title,
+               a.article_summary AS summary,
+               a.cover_image_url AS coverUrl,
+               a.publish_time    AS publishTime,
+               a.view_count      AS viewCount,
+               u.nickname        AS authorName,
+               c.category_name   AS categoryName
+        FROM article a
+                 INNER JOIN article_tag at
+        ON a.id = at.article_id
+            LEFT JOIN user u ON a.author_id = u.id
+            LEFT JOIN category c ON a.category_id = c.id
+        WHERE
+            at.tag_id = #{tagId}
+          AND a.status = 1
+          AND a.is_deleted = 0
+        ORDER BY a.publish_time DESC
+    </select>
+
     <select id="getTagsByArticleIds" resultType="map">
         SELECT
         at.article_id AS articleId,
@@ -66,7 +106,7 @@
             #{id}
         </foreach>
     </select>
-    <!--更新浏览量-->
+
     <update id="updateViewCount">
         UPDATE article
         SET view_count = view_count + 1
