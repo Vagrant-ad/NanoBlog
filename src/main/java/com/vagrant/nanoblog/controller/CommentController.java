@@ -61,8 +61,11 @@ public class CommentController {
         String content = (String) params.get("commentContent");
         Long parentId = params.get("parentId") != null ? 
                          Long.valueOf(params.get("parentId").toString()) : 0;
+        Long replyToUserId = params.get("replyToUserId") != null
+                ? Long.valueOf(params.get("replyToUserId").toString())
+                : null;
 
-        commentService.addComment(articleId, userId, content, parentId,null);
+        commentService.addComment(articleId, userId, content, parentId, replyToUserId);
         return ResponseResult.okResult();
     }
 
