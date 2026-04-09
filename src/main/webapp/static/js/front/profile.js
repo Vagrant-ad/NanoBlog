@@ -2,11 +2,13 @@
 var _profileUserId  = null;
 var _currentLoginId = null;
 var _isOwner        = false;
+var _isFollowing    = false; // 提取为全局变量，专门管理关注状态
 
 /* 工具函数 */
 function showToast(msg, type) {
     type = type || 'info';
     var t = document.getElementById('toast');
+    if (!t) return;
     var icons = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' };
     t.innerHTML = '<i class="fas ' + icons[type] + '"></i> ' + msg;
     t.className = 'toast ' + type + ' show';
@@ -81,15 +83,17 @@ function openUserDeletedModal() {
 window.onload = function () {
     var urlId = getQueryParam('id');
 
-    fetch('/user/getProfile', { credentials: 'same-origin' })
+    // 1. 获取当前登录用户
+    fetch(API_BASE + '/user/getProfile', { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
-            if (res.code === 200 && res.data) {
+            if (res.code === 200 && res.data && res.data.user) {
                 _currentLoginId = String(res.data.user.id);
             }
         })
-        .catch(function () {})
+        .catch(function (err) { console.warn("未登录或获取状态失败", err); })
         .finally(function () {
+            // 2. 确认被访问的主页属于谁
             if (urlId) {
                 _profileUserId = urlId;
                 _isOwner = (_currentLoginId !== null && _currentLoginId === String(urlId));
@@ -97,13 +101,14 @@ window.onload = function () {
                 if (_currentLoginId) {
                     _profileUserId = _currentLoginId;
                     _isOwner = true;
-                    history.replaceState(null, '', '/pages/front/profile.html?id=' + _currentLoginId);
+                    history.replaceState(null, '', window.location.pathname + '?id=' + _currentLoginId);
                 } else {
-                    window.location.href = '/pages/front/login.html';
+                    window.location.href = API_BASE + '/pages/front/login.html';
                     return;
                 }
             }
 
+            // 3. 根据是否是访客进行页面渲染
             if (!_isOwner && _profileUserId) {
                 checkUserDeletedThenInit(_profileUserId);
             } else {
@@ -113,7 +118,7 @@ window.onload = function () {
 };
 
 function checkUserDeletedThenInit(userId) {
-    fetch('/user/publicProfile?id=' + userId, { credentials: 'same-origin' })
+    fetch(API_BASE + '/user/publicProfile?id=' + userId, { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.code === 200 && res.data) {
@@ -165,10 +170,12 @@ function renderDeletedUserSkeleton() {
     if (userIdEl) userIdEl.value     = _profileUserId || '';
 
     var statFollow  = document.getElementById('statFollow');
+    var statFans    = document.getElementById('statFans');
     var statView    = document.getElementById('statView');
     var statLike    = document.getElementById('statLike');
     var statComment = document.getElementById('statComment');
     if (statFollow)  statFollow.innerText  = '--';
+    if (statFans)    statFans.innerText    = '--';
     if (statView)    statView.innerText    = '--';
     if (statLike)    statLike.innerText    = '--';
     if (statComment) statComment.innerText = '--';
@@ -211,32 +218,123 @@ function initPageByMode() {
         if (tabPublished) tabPublished.style.display = 'block';
 
         fetchProfileVisitor(_profileUserId);
-        // 访客模式：查看目标用户的统计数据，传入目标用户ID
+
+        // 访客模式下同步检查关注状态
+        checkFollowingStatus(_profileUserId);
+
+        // 访客模式：查看目标用户的统计数据
         fetchStats(_profileUserId);
         loadPublishedArticles(1);
     }
 }
 
-/* 关注按钮 */
-var _isFollowing = false;
+/* ================= 核心：关注与统计模块 ================= */
 
-function toggleFollow() {
-    if (!_currentLoginId) {
-        window.location.href = '/pages/front/login.html';
-        return;
-    }
-    _isFollowing = !_isFollowing;
+// 1. 独立抽离更新关注按钮UI的逻辑
+function updateFollowButtonUI() {
     var btn = document.getElementById('followBtn');
+    if (!btn) return;
+
     if (_isFollowing) {
         btn.innerHTML = '<i class="fas fa-user-check"></i> 已关注';
-        btn.classList.add('btn-primary');
-        btn.classList.remove('btn-ghost');
+        btn.className = 'btn btn-primary'; // 确保加上实心样式
     } else {
         btn.innerHTML = '<i class="fas fa-user-plus"></i> 关注';
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-ghost');
+        btn.className = 'btn btn-ghost'; // 确保加上空心样式
     }
 }
+
+// 2. 检查初始关注状态
+function checkFollowingStatus(userId) {
+    if (!_currentLoginId) return; // 未登录无需校验
+
+    fetch(API_BASE + '/follow/check/' + userId, { credentials: 'same-origin' })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.code === 200) {
+                _isFollowing = res.data;
+                updateFollowButtonUI();
+            }
+        })
+        .catch(function(err) { console.error('获取关注状态失败:', err); });
+}
+
+// 3. 点击触发关注/取消关注
+function toggleFollow() {
+    // 拦截 1：未登录
+    if (!_currentLoginId) {
+        showToast('请先登录', 'error');
+        setTimeout(function() {
+            window.location.href = API_BASE + '/pages/front/login.html';
+        }, 1000);
+        return;
+    }
+
+    // 拦截 2：不能自己关注自己
+    if (String(_currentLoginId) === String(_profileUserId)) {
+        showToast('无法关注自己', 'error');
+        return;
+    }
+
+    var btn = document.getElementById('followBtn');
+    if(btn) btn.disabled = true;
+
+    var method = _isFollowing ? 'DELETE' : 'POST';
+
+    fetch(API_BASE + '/follow/' + _profileUserId, {
+        method: method,
+        credentials: 'same-origin'
+    })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.code === 200) {
+                _isFollowing = !_isFollowing; // 翻转状态
+                updateFollowButtonUI();       // 刷新按钮
+                showToast(_isFollowing ? '关注成功' : '已取消关注', 'success');
+
+                // 重新拉取统计数据，刷新关注数
+                fetchStats(_profileUserId);
+            } else {
+                showToast(res.msg || '操作失败', 'error');
+            }
+        })
+        .catch(function() {
+            showToast('网络异常，请稍后再试', 'error');
+        })
+        .finally(function() {
+            if(btn) btn.disabled = false; // 恢复按钮点击
+        });
+}
+
+// 4. 获取用户统计信息
+function fetchStats(userId) {
+    var url = API_BASE + '/user/getStats';
+    if (userId) {
+        url += '?userId=' + userId;
+    }
+    fetch(url, { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res.code === 200 && res.data) {
+                var statFollow  = document.getElementById('statFollow');
+                var statFans    = document.getElementById('statFans');
+                var statView    = document.getElementById('statView');
+                var statLike    = document.getElementById('statLike');
+                var statComment = document.getElementById('statComment');
+
+                // followCount ：该用户的关注数，likeCount 包含文章+评论获赞
+                if (statFollow)  statFollow.innerText  = formatNumber(res.data.followCount);
+                if (statFans)    statFans.innerText    = formatNumber(res.data.fansCount);
+                if (statComment) statComment.innerText = formatNumber(res.data.commentCount);
+                if (statView)    statView.innerText    = formatNumber(res.data.viewCount);
+                if (statLike)    statLike.innerText    = formatNumber(res.data.likeCount);
+
+            }
+        })
+        .catch(function () {});
+}
+
+
 
 /* 加载个人资料 —— owner 模式 */
 function fetchProfileOwner() {
@@ -281,15 +379,12 @@ function fetchProfileOwner() {
                     injectAdminButton();
                 }
             } else {
-                window.location.href = 'login.html';
+                window.location.href = API_BASE + '/pages/front/login.html';
             }
         })
         .catch(function (err) { console.error('加载个人资料出错:', err); });
 }
 
-/**
- * 向 ownerActions 区域注入"进入后台"按钮（仅管理员调用一次）
- */
 function injectAdminButton() {
     var ownerActions = document.getElementById('ownerActions');
     if (!ownerActions || document.getElementById('adminEntryBtn')) return;
@@ -304,7 +399,7 @@ function injectAdminButton() {
 
 /* 加载个人资料 —— visitor 模式 */
 function fetchProfileVisitor(userId) {
-    fetch('/user/publicProfile?id=' + userId, { credentials: 'same-origin' })
+    fetch(API_BASE + '/user/publicProfile?id=' + userId, { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
             if (res.code === 200 && res.data) {
@@ -401,29 +496,6 @@ function uploadAvatar(input) {
                 showToast('上传失败：' + res.msg, 'error');
             }
         });
-}
-
-/* 统计数据 —— 传入目标用户 ID，owner 和 visitor 均通过此函数加载 */
-function fetchStats(userId) {
-    var url = API_BASE + '/user/getStats';
-    if (userId) {
-        url += '?userId=' + userId;
-    }
-    fetch(url, { credentials: 'same-origin' })
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-            if (res.code === 200 && res.data) {
-                var statFollow  = document.getElementById('statFollow');
-                var statView    = document.getElementById('statView');
-                var statLike    = document.getElementById('statLike');
-                var statComment = document.getElementById('statComment');
-                if (statFollow)  statFollow.innerText  = formatNumber(res.data.followCount);
-                if (statComment) statComment.innerText = formatNumber(res.data.commentCount);
-                if (statView)    statView.innerText    = formatNumber(res.data.viewCount);
-                if (statLike)    statLike.innerText    = formatNumber(res.data.likeCount);
-            }
-        })
-        .catch(function () {});
 }
 
 /* 文章 Tab 切换 */
@@ -750,7 +822,7 @@ function submitChangePassword() {
             if (res.code === 200) {
                 showToast('密码修改成功，请重新登录', 'success');
                 closeChangePassword();
-                setTimeout(function () { window.location.href = 'login.html'; }, 1500);
+                setTimeout(function () { window.location.href = API_BASE + '/pages/front/login.html'; }, 1500);
             } else {
                 showToast(res.msg || '修改失败', 'error');
             }
