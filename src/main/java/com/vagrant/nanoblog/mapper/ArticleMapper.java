@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.vagrant.nanoblog.vo.ArticleDetailVO;
 import com.vagrant.nanoblog.vo.ArticleHomeVO;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 import java.util.Map;
@@ -41,5 +42,6 @@ public interface ArticleMapper extends BaseMapper<Article> {
     /**
      * 统计指定作者所有文章的点赞数总和
      */
+    @Select("SELECT SUM(like_count) FROM article WHERE author_id = #{authorId} AND is_deleted = 0")
     Long sumLikeCountByAuthor(@Param("authorId") Long authorId);
 }
