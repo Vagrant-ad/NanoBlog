@@ -8,6 +8,7 @@ import com.vagrant.nanoblog.dto.UserUpdateDTO;
 import com.vagrant.nanoblog.mapper.ArticleMapper;
 import com.vagrant.nanoblog.mapper.UserFollowMapper;
 import com.vagrant.nanoblog.mapper.UserRoleMapper;
+import com.vagrant.nanoblog.pojo.Attachment;
 import com.vagrant.nanoblog.pojo.User;
 import com.vagrant.nanoblog.pojo.UserFollow;
 import com.vagrant.nanoblog.pojo.UserRole;
@@ -29,6 +30,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import com.vagrant.nanoblog.service.IArticleService;
+import com.vagrant.nanoblog.service.ICommentService;
 
 
 /**
@@ -307,23 +310,35 @@ public class UserController {
 
         // 关注数：我关注了多少人
         long followingCount = userFollowMapper.selectCount(
-            new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<UserFollow>()
-                .eq("follower_id", targetId));
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<UserFollow>()
+                        .eq("follower_id", targetId));
 
         // 粉丝数：多少人关注了我
         long fansCount = userFollowMapper.selectCount(
-            new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<UserFollow>()
-                .eq("following_id", targetId));
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<UserFollow>()
+                        .eq("following_id", targetId));
 
-        // 总获赞：查该用户所有文章的 like_count 求和
-        Long totalLike = articleMapper.sumLikeCountByAuthor(targetId);
+        // 文章获赞：该用户所有文章的 like_count 求和
+        Long articleLike = articleMapper.sumLikeCountByAuthor(targetId);
+        long totalArticleLike = articleLike != null ? articleLike : 0L;
+
+        // 评论获赞：查该用户所有发出的评论被点赞的数量总和
+        long totalCommentLike = commentService.lambdaQuery()
+                .eq(com.vagrant.nanoblog.pojo.Comment::getUserId, targetId)
+                .eq(com.vagrant.nanoblog.pojo.Comment::getIsDeleted, 0)
+                .list()
+                .stream()
+                .mapToLong(c -> c.getLikeCount() == null ? 0L : c.getLikeCount())
+                .sum();
+        // 最终总获赞数
+        long totalLike = totalArticleLike + totalCommentLike;
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("viewCount", totalView);
         stats.put("commentCount", commentCount);
         stats.put("followCount", followingCount);
         stats.put("fansCount", fansCount);
-        stats.put("likeCount", totalLike != null ? totalLike : 0);
+        stats.put("likeCount", totalLike);
 
         return ResponseResult.okResult(stats);
     }
