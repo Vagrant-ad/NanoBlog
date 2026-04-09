@@ -25,7 +25,7 @@ layui.use(['layer', 'element'], function () {
             renderEmptyPage('未找到文章');
             return;
         }
-
+        initArticleLike(state.articleId);
         //并行加载分类和文章
         $.when(loadCategoryList(), loadArticleData(state.articleId))
             .done(function (categoryRes, articleRes) {
@@ -180,6 +180,10 @@ layui.use(['layer', 'element'], function () {
         renderToc();
         bindTocHighlight();
         element.render();
+        //初始化点赞数
+        var likeCountEl = document.getElementById('articleLikeCount');
+        if (likeCountEl) likeCountEl.textContent = data.likeCount || 0;
+        initArticleLike(state.articleId);
     }
 
     function renderTags(tags) {
@@ -532,5 +536,76 @@ layui.use(['layer', 'element'], function () {
         if (isNaN(date)) return value;
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ` +
             `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    }
+
+    /*文章点赞*/
+    var _articleLiked = false;
+
+    function initArticleLike(articleId) {
+        if (!articleId) return;
+        //查询初始点赞状态
+        $.ajax({
+            url: NanoBlog.apiBase + '/like/article/' + articleId,
+            method: 'GET',
+            success: function(res) {
+                if (res.code === 200) {
+                    _articleLiked = !!res.data;
+                    updateArticleLikeBtn(_articleLiked);
+                }
+            }
+        });
+    }
+
+    function updateArticleLikeBtn(liked) {
+        var btn = document.getElementById('articleLikeBtn');
+        if (!btn) return;
+        if (liked) {
+            btn.classList.add('liked');
+        } else {
+            btn.classList.remove('liked');
+        }
+    }
+
+    window.toggleArticleLike = function() {
+        var articleId = state.articleId;
+        if (!articleId) return;
+        // 未登录提示
+        fetch(NanoBlog.apiBase + '/user/getProfile', { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.code !== 200 || !res.data) {
+                    layer.msg('请先登录后再点赞', { icon: 5 });
+                    return;
+                }
+                doToggleArticleLike(articleId);
+            });
+    };
+
+    function doToggleArticleLike(articleId) {
+        var method = _articleLiked ? 'DELETE' : 'POST';
+        $.ajax({
+            url: NanoBlog.apiBase + '/like/article/' + articleId,
+            method: method,
+            success: function(res) {
+                if (res.code === 200) {
+                    _articleLiked = !_articleLiked;
+                    updateArticleLikeBtn(_articleLiked);
+                    // 更新点赞数显示
+                    var countEl = document.getElementById('articleLikeCount');
+                    if (countEl) {
+                        var current = parseInt(countEl.textContent) || 0;
+                        countEl.textContent = _articleLiked
+                            ? current + 1
+                            : Math.max(0, current - 1);
+                    }
+                    layer.msg(_articleLiked ? '点赞成功 👍' : '已取消点赞', { icon: 1, time: 1200 });
+                } else {
+                    layer.msg(res.msg || '操作失败', { icon: 2 });
+                }
+            },
+            error: function() {
+                layer.msg('网络异常，请稍后重试', { icon: 2 });
+            }
+        });
     }
 });
