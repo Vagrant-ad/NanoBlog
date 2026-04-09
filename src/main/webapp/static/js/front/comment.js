@@ -181,6 +181,12 @@
                         <div class="comment-time">${formatTime(comment.createTime)}</div>
                     </div>
                     <div class="comment-actions">
+                        <button class="btn-comment-action btn-like-comment"
+                            id="likeBtn-${comment.id}"
+                            onclick="CommentModule.toggleCommentLike(${comment.id}, this)">
+                            <i class="fas fa-heart"></i>
+                            <span>${comment.likeCount || 0}</span>
+                        </button>
                         ${state.currentUserId ? `
                         <button class="btn-comment-action btn-reply"
                                 id="replyBtn-${comment.id}"
@@ -237,6 +243,12 @@
                     <div class="reply-time">${formatTime(reply.createTime)}</div>
                 </div>
                 <div class="comment-actions">
+                    <button class="btn-comment-action btn-like-comment"
+                        id="likeBtn-${reply.id}"
+                        onclick="CommentModule.toggleCommentLike(${reply.id}, this)">
+                        <i class="fas fa-heart"></i>
+                        <span>${reply.likeCount || 0}</span>
+                    </button>
                     ${state.currentUserId ? `
                     <button class="btn-comment-action btn-reply"
                             data-parent-id="${reply.parentId}"
@@ -285,6 +297,9 @@
             .then(res => {
                 if (res.code === 200) {
                     renderCommentList(res.data || []);
+                    if (state.currentUserId && res.data && res.data.length > 0) {
+                        initAllCommentLikeStatus(res.data);
+                    }
                 } else {
                     toast('评论加载失败：' + (res.msg || ''));
                     renderEmpty();
@@ -500,6 +515,64 @@
         const replyUserId = btn.dataset.replyUserId;
         CommentModule.toggleSubReply(parentId, replyId, replyNickname, replyUserId);
     };
+
+    //批量初始化所有评论（含回复）的点赞状态
+    function initAllCommentLikeStatus(comments) {
+        comments.forEach(function(comment) {
+            initCommentLikeStatus(comment.id);
+            if (comment.replies && comment.replies.length > 0) {
+                comment.replies.forEach(function(reply) {
+                    initCommentLikeStatus(reply.id);
+                });
+            }
+        });
+    }
+
+    function initCommentLikeStatus(commentId) {
+        fetch(API_BASE.replace('/article', '') + '/comment/like/' + commentId, {
+            credentials: 'same-origin'
+        })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.code === 200 && res.data === true) {
+                    var btn = document.getElementById('likeBtn-' + commentId);
+                    if (btn) btn.classList.add('liked');
+                }
+            })
+            .catch(function() {});
+    }
+
+    CommentModule.toggleCommentLike = function(commentId, btn) {
+        if (!state.currentUserId) {
+            toast('请先登录后再点赞');
+            return;
+        }
+        var isLiked = btn.classList.contains('liked');
+        var method  = isLiked ? 'DELETE' : 'POST';
+
+        fetch(API_BASE.replace('/article', '') + '/comment/like/' + commentId, {
+            method: method,
+            credentials: 'same-origin'
+        })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.code === 200) {
+                    var countSpan = btn.querySelector('span');
+                    var current   = parseInt(countSpan ? countSpan.textContent : 0) || 0;
+                    if (isLiked) {
+                        btn.classList.remove('liked');
+                        if (countSpan) countSpan.textContent = Math.max(0, current - 1);
+                    } else {
+                        btn.classList.add('liked');
+                        if (countSpan) countSpan.textContent = current + 1;
+                    }
+                } else {
+                    toast(res.msg || '操作失败');
+                }
+            })
+            .catch(function() { toast('网络异常'); });
+    };
+
     // 入口: 在 post.js 初始化后调用
     CommentModule.init = function (articleId) {
         state.articleId = articleId;
