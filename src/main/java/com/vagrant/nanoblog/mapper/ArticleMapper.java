@@ -37,4 +37,9 @@ public interface ArticleMapper extends BaseMapper<Article> {
 
     // ===================== 【新增：按标签查询文章】 =====================
     IPage<ArticleHomeVO> getArticlePageByTagId(IPage<ArticleHomeVO> page, @Param("tagId") Long tagId);
+
+    /**
+     * 统计指定作者所有文章的点赞数总和
+     */
+    Long sumLikeCountByAuthor(@Param("authorId") Long authorId);
 }

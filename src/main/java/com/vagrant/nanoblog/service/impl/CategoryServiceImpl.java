@@ -23,6 +23,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     private final ArticleMapper articleMapper;
 
+
     @Override
     public List<CategoryTreeVO> getCategoryTree() {
         QueryWrapper<Category> wrapper = new QueryWrapper<>();
@@ -49,26 +50,42 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         return parentList;
     }
 
+// ... existing code ...
+
     private CategoryTreeVO convert(Category category) {
         CategoryTreeVO vo = new CategoryTreeVO();
         vo.setId(category.getId());
+        vo.setParentId(category.getParentId());
         vo.setCategoryName(category.getCategoryName());
         vo.setCategorySlug(category.getCategorySlug());
         vo.setSortOrder(category.getSortOrder());
+        vo.setStatus(category.getStatus());
         return vo;
     }
 
+// ... existing code ...
+
     // ===================== 【后台管理相关方法实现】 =====================
     
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addCategory(Category category) {
-        category.setStatus(1);
+        if (category.getParentId() == null) {
+            category.setParentId(0L);
+        }
+        if (category.getSortOrder() == null) {
+            category.setSortOrder(0);
+        }
+        if (category.getStatus() == null) {
+            category.setStatus(1);
+        }
         category.setIsDeleted(0);
         category.setCreateTime(LocalDateTime.now());
         this.save(category);
     }
-    
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateCategory(Category category) {
@@ -76,12 +93,39 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         if (existing == null) {
             throw new RuntimeException("分类不存在");
         }
+
+        if (category.getParentId() != null && !category.getParentId().equals(existing.getParentId())) {
+            if (category.getParentId().equals(category.getId())) {
+                throw new RuntimeException("不能将分类设置为自己的子分类");
+            }
+
+            if (isDescendant(category.getId(), category.getParentId())) {
+                throw new RuntimeException("不能将父分类设置为自己的子分类");
+            }
+        }
+
+        existing.setParentId(category.getParentId() != null ? category.getParentId() : 0);
         existing.setCategoryName(category.getCategoryName());
-        existing.setSortOrder(category.getSortOrder());
+        existing.setSortOrder(category.getSortOrder() != null ? category.getSortOrder() : existing.getSortOrder());
+        if (category.getStatus() != null) {
+            existing.setStatus(category.getStatus());
+        }
         existing.setUpdateTime(LocalDateTime.now());
         this.updateById(existing);
     }
-    
+
+    private boolean isDescendant(Long parentId, Long childId) {
+        Category child = this.getById(childId);
+        if (child == null || child.getParentId() == null || child.getParentId() == 0) {
+            return false;
+        }
+        if (child.getParentId().equals(parentId)) {
+            return true;
+        }
+        return isDescendant(parentId, child.getParentId());
+    }
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteCategoryByAdmin(Long categoryId) {
