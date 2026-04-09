@@ -89,8 +89,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
 
         // 状态：前端传0(草稿) 1(发布)
-        // 兜底默认发布
-        int status = (dto.getStatus() != null) ? dto.getStatus() : 1;
+        // 兜底默认草稿
+        int status = (dto.getStatus() != null) ? dto.getStatus() : 0;
         article.setStatus(status);
 
         // 只有发布状态才设置发布时间

@@ -105,7 +105,7 @@ public class ArticleController {
     public ResponseResult<IPage<ArticleManageVO>> myPublished(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) Long userId,   // 新增：访客查看他人时传入
+            @RequestParam(required = false) Long userId,
             HttpSession session) {
         Long targetUserId = userId;
         if (targetUserId == null) {
