@@ -482,8 +482,22 @@ layui.use(['layer', 'element'], function () {
     }
 
     function renderPrevNext() {
-        $('#prev-post').addClass('disabled').text('← 没有上一篇');
-        $('#next-post').addClass('disabled').text('没有下一篇 →');
+        var currentId = parseInt(state.articleId);
+        if (!currentId) return;
+
+        var prevId = currentId - 1;
+        var nextId = currentId + 1;
+        var base = NanoBlog.apiBase + '/pages/front/post.html?id=';
+
+        $('#prev-post')
+            .removeClass('disabled')
+            .attr('href', base + prevId)
+            .text('← 上一篇');
+
+        $('#next-post')
+            .removeClass('disabled')
+            .attr('href', base + nextId)
+            .text('下一篇 →');
     }
 
     function bindBackToTop() {

@@ -558,16 +558,17 @@
     box-shadow: 0 8px 24px rgba(61, 115, 152, 0.15);
 }
 
+/* 红色高亮 */
 .btn-article-like.liked {
-    background: var(--brand-blue);
-    border-color: var(--brand-blue);
-    color: #fff;
-    box-shadow: 0 6px 20px rgba(61, 115, 152, 0.3);
+    background: #fff5f5;
+    border-color: #fca5a5;
+    color: #e53e3e;
+    box-shadow: 0 6px 20px rgba(229, 83, 83, 0.2);
 }
 
 .btn-article-like.liked:hover {
-    background: #2d5f7c;
-    border-color: #2d5f7c;
+    background: #fee2e2;
+    border-color: #f87171;
 }
 
 .btn-article-like i {

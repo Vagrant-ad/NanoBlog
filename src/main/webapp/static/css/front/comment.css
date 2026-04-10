@@ -286,6 +286,30 @@
     border-color: #fca5a5;
 }
 
+/* ── 评论点赞按钮 ── */
+.btn-like-comment {
+    border-color: #e2eaf0;
+    min-width: 52px;
+    color: var(--text-muted);
+}
+
+.btn-like-comment:hover {
+    background: #fff5f5;
+    color: #e53e3e;
+    border-color: #fca5a5;
+}
+
+.btn-like-comment.liked {
+    background: #fff5f5;
+    color: #e53e3e;
+    border-color: #fca5a5;
+    font-weight: 700;
+}
+
+.btn-like-comment.liked i {
+    transform: scale(1.15);
+    color: #e53e3e;
+}
 /* ── 评论正文 ── */
 .comment-body {
     font-size: 0.95rem;
