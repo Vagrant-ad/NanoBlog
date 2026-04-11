@@ -51,13 +51,13 @@
 
 <div class="profile-page">
 
-    <!--  头像 基本信息卡片 -->
+    <!--头像和基本信息卡片-->
     <div class="card profile-hero">
         <div class="hero-bg"></div>
         <div class="hero-body">
             <div class="avatar-wrapper">
                 <img id="avatarDisplay" src="../../static/images/avatar-default.png" alt="头像">
-                <!-- 上传头像遮罩：仅 owner 模式显示 -->
+                <!--上传头像遮罩:仅owner模式显示-->
                 <label class="avatar-mask" for="avatarInput" id="avatarMaskLabel" style="display:none;">
                     <i class="fas fa-camera"></i>
                     <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(this)">
@@ -70,9 +70,9 @@
                     <span id="statusBadge" class="status-badge">---</span>
                 </div>
             </div>
-            <!-- 操作按钮区：owner/visitor 二选一显示 -->
+            <!--操作按钮区:owner/visitor二选一显示-->
             <div class="hero-actions">
-                <!-- owner：编辑资料 + 修改密码 -->
+                <!--owner:编辑资料+修改密码-->
                 <div id="ownerActions" style="display:none; gap:10px; align-items:center;">
                     <button id="editBtn" class="btn btn-ghost" onclick="enableEdit()">
                         <i class="fas fa-pen"></i> 编辑资料
@@ -84,7 +84,7 @@
                         <i class="fas fa-tools"></i> 进入后台
                     </button>
                 </div>
-                <!-- visitor：关注按钮 -->
+                <!--visitor:关注按钮-->
                 <div id="visitorActions" style="display:none;">
                     <button id="followBtn" class="btn btn-ghost" onclick="toggleFollow()">
                         <i class="fas fa-user-plus"></i> 关注
@@ -94,7 +94,7 @@
         </div>
     </div>
 
-    <!--  统计数据栏 -->
+    <!--统计数据栏-->
     <div class="card">
         <div class="stats-row">
             <div class="stat-item">
@@ -129,14 +129,14 @@
         </div>
     </div>
 
-    <!-- 账号详情卡片 -->
+    <!--账号详情卡片-->
     <div class="card" id="accountDetailCard">
         <div class="card-header">
             <i class="fas fa-id-card"></i>
             <h3>账号详情</h3>
         </div>
 
-        <!-- 查看面板 -->
+        <!--查看面板-->
         <div id="viewPanel" class="info-panel">
             <div class="info-grid">
                 <div class="info-item">
@@ -170,7 +170,7 @@
             </div>
         </div>
 
-        <!-- 编辑面板：仅 owner 显示 -->
+        <!--编辑面板:仅owner显示-->
         <div id="editPanel" class="info-panel" style="display:none;">
             <div class="edit-form">
                 <div class="form-group">
@@ -195,20 +195,20 @@
         </div>
     </div>
 
-    <!--  文章管理 -->
+    <!--文章管理-->
     <div class="card">
         <div class="card-header">
             <i class="fas fa-newspaper"></i>
             <h3 id="articleCardTitle">文章</h3>
         </div>
 
-        <!-- Tab 切换 -->
+        <!--Tab切换-->
         <div class="article-tabs" id="articleTabsBar">
             <button class="article-tab active" data-tab="published" onclick="switchTab('published')">
                 <i class="fas fa-check-circle"></i> 已发布
                 <span class="tab-count" id="publishedCount">0</span>
             </button>
-            <!-- 草稿 Tab 仅 owner 显示，由 JS 控制 -->
+            <!--草稿Tab仅owner显示,由JS控制-->
             <button class="article-tab" data-tab="drafts" id="draftsTabBtn"
                     onclick="switchTab('drafts')" style="display:none;">
                 <i class="fas fa-pencil-alt"></i> 草稿箱
@@ -216,7 +216,7 @@
             </button>
         </div>
 
-        <!-- 已发布文章列表 -->
+        <!--已发布文章列表-->
         <div class="articles-body" id="tabPublished">
             <div id="publishedList" class="article-list">
                 <div class="articles-loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>
@@ -224,7 +224,7 @@
             <div class="articles-pagination" id="publishedPagination"></div>
         </div>
 
-        <!-- 草稿列表（仅 owner） -->
+        <!--草稿列表(仅owner)-->
         <div class="articles-body" id="tabDrafts" style="display:none;">
             <div id="draftsList" class="article-list">
                 <div class="articles-loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>
@@ -233,7 +233,7 @@
         </div>
     </div>
 
-    <!-- 危险区域：仅 owner 显示 -->
+    <!--危险区域:仅owner显示-->
     <div class="card" id="dangerZoneCard" style="display:none;">
         <div class="card-header danger-header">
             <i class="fas fa-exclamation-triangle"></i>
@@ -250,7 +250,7 @@
         </div>
     </div>
 
-    <!-- 编辑文章 Modal（仅 owner 使用） -->
+    <!--编辑文章Modal(仅owner使用)-->
     <div id="editArticleModal" class="modal-overlay" onclick="handleOverlayClick(event, 'editArticleModal')">
         <div class="modal-box">
             <div class="modal-header">
@@ -304,10 +304,10 @@
         </div>
     </div>
 
-</div><!-- /profile-page -->
+</div><!--/profile-page-->
 
 
-<!-- 修改密码 Modal（仅 owner 使用） -->
+<!--修改密码Modal(仅owner使用)-->
 <div id="pwdModal" class="modal-overlay" onclick="handleOverlayClick(event, 'pwdModal')">
     <div class="modal-box">
         <div class="modal-header">
@@ -363,7 +363,7 @@
     </div>
 </div>
 
-<!-- 草稿发布 Modal -->
+<!--草稿发布Modal-->
 <div id="publishDraftModal" class="modal-overlay confirm-modal"
      onclick="handleOverlayClick(event, 'publishDraftModal')">
     <div class="modal-box">
@@ -387,7 +387,7 @@
     </div>
 </div>
 
-<!-- 注销账号 / 删除文章 确认 Modal（共用） -->
+<!--注销账号/删除文章确认Modal(共用)-->
 <div id="deleteModal" class="modal-overlay confirm-modal"
      onclick="handleOverlayClick(event, 'deleteModal')">
     <div class="modal-box">
@@ -417,10 +417,10 @@
     </div>
 </div>
 
-<!-- Toast 提示 -->
+<!--Toast提示-->
 <div id="toast" class="toast"></div>
 
-<!-- 用户已注销提示弹窗 -->
+<!--用户已注销提示弹窗-->
 <div id="userDeletedModal" class="modal-overlay confirm-modal">
     <div class="modal-box">
         <div class="confirm-body">
@@ -436,7 +436,7 @@
         </div>
     </div>
 </div>
-<!-- 页面底部 -->
+<!--页面底部-->
 <footer class="page-footer">
     <p>© 2026 NanoBlog. All rights reserved.</p>
 </footer>

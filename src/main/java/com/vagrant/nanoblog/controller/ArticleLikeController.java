@@ -72,7 +72,7 @@ public class ArticleLikeController {
     public ResponseResult isLiked(@PathVariable Long articleId, HttpSession session) {
         User loginUser = (User) session.getAttribute("LOGIN_USER");
 
-        // 未登录返回 false，不弹登录提示
+        //未登录返回false，不弹登录提示
         if (loginUser == null) {
             return ResponseResult.okResult(false);
         }

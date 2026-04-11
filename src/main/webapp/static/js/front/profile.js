@@ -1,10 +1,10 @@
-/* 全局状态*/
+/*全局状态*/
 var _profileUserId  = null;
 var _currentLoginId = null;
 var _isOwner        = false;
-var _isFollowing    = false; // 提取为全局变量，专门管理关注状态
+var _isFollowing    = false;//管理关注状态
 
-/* 工具函数 */
+/*工具函数*/
 function showToast(msg, type) {
     type = type || 'info';
     var t = document.getElementById('toast');
@@ -73,17 +73,17 @@ function getQueryParam(name) {
     return new URLSearchParams(window.location.search).get(name);
 }
 
-/* 打开用户已注销弹窗 */
+/*打开用户已注销弹窗*/
 function openUserDeletedModal() {
     var modal = document.getElementById('userDeletedModal');
     if (modal) modal.classList.add('active');
 }
 
-/* 页面初始化 */
+/*页面初始化*/
 window.onload = function () {
     var urlId = getQueryParam('id');
 
-    // 1. 获取当前登录用户
+    //1.获取当前登录用户
     fetch(API_BASE + '/user/getProfile', { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
         .then(function (res) {
@@ -93,7 +93,7 @@ window.onload = function () {
         })
         .catch(function (err) { console.warn("未登录或获取状态失败", err); })
         .finally(function () {
-            // 2. 确认被访问的主页属于谁
+            //2.确认被访问的主页属于谁
             if (urlId) {
                 _profileUserId = urlId;
                 _isOwner = (_currentLoginId !== null && _currentLoginId === String(urlId));
@@ -108,7 +108,7 @@ window.onload = function () {
                 }
             }
 
-            // 3. 根据是否是访客进行页面渲染
+            //3.根据是否是访客进行页面渲染
             if (!_isOwner && _profileUserId) {
                 checkUserDeletedThenInit(_profileUserId);
             } else {
@@ -189,7 +189,7 @@ function renderDeletedUserSkeleton() {
     if (publishedCount) publishedCount.innerText = 0;
 }
 
-/* 根据 owner/visitor 模式初始化页面 */
+/*根据owner/visitor模式初始化页面*/
 function initPageByMode() {
     if (_isOwner) {
         document.getElementById('ownerActions').style.display   = 'flex';
@@ -210,43 +210,43 @@ function initPageByMode() {
         document.getElementById('dangerZoneCard').style.display = 'none';
         document.getElementById('articleCardTitle').innerText   = 'TA 的文章';
 
-        //  visitor 模式：隐藏整个 Tab 栏
+        //visitor模式:隐藏整个Tab栏
         var tabsBar = document.getElementById('articleTabsBar');
         if (tabsBar) tabsBar.style.display = 'none';
-        // 直接显示已发布文章区域
+        //直接显示已发布文章区域
         var tabPublished = document.getElementById('tabPublished');
         if (tabPublished) tabPublished.style.display = 'block';
 
         fetchProfileVisitor(_profileUserId);
 
-        // 访客模式下同步检查关注状态
+        //访客模式下同步检查关注状态
         checkFollowingStatus(_profileUserId);
 
-        // 访客模式：查看目标用户的统计数据
+        //访客模式:查看目标用户的统计数据
         fetchStats(_profileUserId);
         loadPublishedArticles(1);
     }
 }
 
-/* ================= 核心：关注与统计模块 ================= */
+/*核心:关注与统计模块*/
 
-// 1. 独立抽离更新关注按钮UI的逻辑
+//更新关注按钮UI
 function updateFollowButtonUI() {
     var btn = document.getElementById('followBtn');
     if (!btn) return;
 
     if (_isFollowing) {
         btn.innerHTML = '<i class="fas fa-user-check"></i> 已关注';
-        btn.className = 'btn btn-primary'; // 确保加上实心样式
+        btn.className = 'btn btn-primary';//确保加上实心样式
     } else {
         btn.innerHTML = '<i class="fas fa-user-plus"></i> 关注';
-        btn.className = 'btn btn-ghost'; // 确保加上空心样式
+        btn.className = 'btn btn-ghost';//确保加上空心样式
     }
 }
 
-// 2. 检查初始关注状态
+//检查初始关注状态
 function checkFollowingStatus(userId) {
-    if (!_currentLoginId) return; // 未登录无需校验
+    if (!_currentLoginId) return;//未登录无需校验
 
     fetch(API_BASE + '/follow/check/' + userId, { credentials: 'same-origin' })
         .then(function(r) { return r.json(); })
@@ -259,9 +259,9 @@ function checkFollowingStatus(userId) {
         .catch(function(err) { console.error('获取关注状态失败:', err); });
 }
 
-// 3. 点击触发关注/取消关注
+//点击触发关注/取消关注
 function toggleFollow() {
-    // 拦截 1：未登录
+    //拦截1:未登录
     if (!_currentLoginId) {
         showToast('请先登录', 'error');
         setTimeout(function() {
@@ -270,7 +270,7 @@ function toggleFollow() {
         return;
     }
 
-    // 拦截 2：不能自己关注自己
+    //拦截2:不能自己关注自己
     if (String(_currentLoginId) === String(_profileUserId)) {
         showToast('无法关注自己', 'error');
         return;
@@ -288,11 +288,11 @@ function toggleFollow() {
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (res.code === 200) {
-                _isFollowing = !_isFollowing; // 翻转状态
-                updateFollowButtonUI();       // 刷新按钮
+                _isFollowing = !_isFollowing;//翻转状态
+                updateFollowButtonUI();//刷新按钮
                 showToast(_isFollowing ? '关注成功' : '已取消关注', 'success');
 
-                // 重新拉取统计数据，刷新关注数
+                //重新拉取统计数据,刷新关注数
                 fetchStats(_profileUserId);
             } else {
                 showToast(res.msg || '操作失败', 'error');
@@ -302,11 +302,11 @@ function toggleFollow() {
             showToast('网络异常，请稍后再试', 'error');
         })
         .finally(function() {
-            if(btn) btn.disabled = false; // 恢复按钮点击
+            if(btn) btn.disabled = false;//恢复按钮点击
         });
 }
 
-// 4. 获取用户统计信息
+//获取用户统计信息
 function fetchStats(userId) {
     var url = API_BASE + '/user/getStats';
     if (userId) {
@@ -322,7 +322,7 @@ function fetchStats(userId) {
                 var statLike    = document.getElementById('statLike');
                 var statComment = document.getElementById('statComment');
 
-                // followCount ：该用户的关注数，likeCount 包含文章+评论获赞
+                //followCount:该用户的关注数,likeCount包含文章+评论获赞
                 if (statFollow)  statFollow.innerText  = formatNumber(res.data.followCount);
                 if (statFans)    statFans.innerText    = formatNumber(res.data.fansCount);
                 if (statComment) statComment.innerText = formatNumber(res.data.commentCount);
@@ -336,7 +336,7 @@ function fetchStats(userId) {
 
 
 
-/* 加载个人资料 —— owner 模式 */
+/*加载个人资料——owner模式*/
 function fetchProfileOwner() {
     fetch(API_BASE + '/user/getProfile', { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
@@ -374,7 +374,7 @@ function fetchProfileOwner() {
                 badge.innerText = (u.status === 1) ? '正常' : '已封禁';
                 badge.className = (u.status === 1) ? 'status-badge status-ok' : 'status-badge status-error';
 
-                // 若是管理员，在 ownerActions 区域追加"进入后台"按钮
+                //若是管理员,在ownerActions区域追加"进入后台"按钮
                 if (rId == 2) {
                     injectAdminButton();
                 }
@@ -397,7 +397,7 @@ function injectAdminButton() {
     ownerActions.appendChild(btn);
 }
 
-/* 加载个人资料 —— visitor 模式 */
+/*加载个人资料——visitor模式*/
 function fetchProfileVisitor(userId) {
     fetch(API_BASE + '/user/publicProfile?id=' + userId, { credentials: 'same-origin' })
         .then(function (r) { return r.json(); })
@@ -444,7 +444,7 @@ function renderVisitorProfile(data) {
     badge.className = (u.status === 1) ? 'status-badge status-ok' : 'status-badge status-error';
 }
 
-/* 编辑资料（仅 owner） */
+/*编辑资料（仅owner）*/
 function enableEdit() {
     document.getElementById('viewPanel').style.display = 'none';
     document.getElementById('editPanel').style.display = 'block';
@@ -498,7 +498,7 @@ function uploadAvatar(input) {
         });
 }
 
-/* 文章 Tab 切换 */
+/*文章Tab切换*/
 function switchTab(tab) {
     document.querySelectorAll('.article-tab').forEach(function (b) { b.classList.remove('active'); });
     document.querySelector('.article-tab[data-tab="' + tab + '"]').classList.add('active');
@@ -506,7 +506,7 @@ function switchTab(tab) {
     document.getElementById('tabDrafts').style.display    = (tab === 'drafts')    ? 'block' : 'none';
 }
 
-/* 已发布文章列表 */
+/*已发布文章列表*/
 var publishedPage     = 1;
 var publishedPageSize = 5;
 
@@ -536,7 +536,7 @@ function loadPublishedArticles(page) {
         .catch(function () { renderEmpty(container, '加载失败，请刷新重试'); });
 }
 
-/* 草稿列表（仅 owner） */
+/*草稿列表（仅owner）*/
 var draftsPage     = 1;
 var draftsPageSize = 5;
 
@@ -563,7 +563,7 @@ function loadDraftArticles(page) {
         .catch(function () { renderEmpty(container, '加载失败，请刷新重试'); });
 }
 
-/* 渲染文章列表 */
+/*渲染文章列表*/
 function renderArticleItems(container, records, isDraft, isOwnerView) {
     if (!records || records.length === 0) {
         renderEmpty(container, isDraft ? '草稿箱是空的' : '暂无已发布文章');
@@ -661,7 +661,7 @@ function renderPagination(elId, total, currentPage, pageSize, callbackName) {
     el.innerHTML = html;
 }
 
-/* 文章操作 */
+/*文章操作*/
 function goToArticleDetail(id) {
     window.open(API_BASE + '/pages/front/post.html?id=' + id, '_blank');
 }
@@ -675,7 +675,7 @@ function closeEditArticle() {
     if (modal) modal.classList.remove('active');
 }
 
-/* 发布草稿弹窗 */
+/*发布草稿弹窗*/
 var _pendingPublishId = null;
 
 function openPublishDraftModal(id, title) {
@@ -729,7 +729,7 @@ function doPublishDraft() {
         });
 }
 
-/* 删除文章弹窗 */
+/*删除文章弹窗*/
 var _pendingDeleteId = null;
 var _deleteMode      = 'article';
 
@@ -789,7 +789,7 @@ function doDeleteArticle() {
         });
 }
 
-/* 修改密码 Modal */
+/*修改密码Modal*/
 function openChangePassword() {
     document.getElementById('oldPassword').value     = '';
     document.getElementById('newPassword').value     = '';
@@ -856,7 +856,7 @@ function resetPwdStrength() {
     document.getElementById('pLabel').innerText = '';
 }
 
-/* 注销账号 Modal */
+/*注销账号Modal*/
 function openDeleteConfirm() {
     _deleteMode = 'logout';
 

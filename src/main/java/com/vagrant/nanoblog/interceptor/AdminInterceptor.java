@@ -24,13 +24,13 @@ public class AdminInterceptor implements HandlerInterceptor {
 
         User loginUser = (User) request.getSession().getAttribute("LOGIN_USER");
 
-        // 未登录
+        //未登录
         if (loginUser == null) {
             handleUnauthorized(request, response, "请先登录");
             return false;
         }
 
-        // 查角色，roleId=2 才是管理员
+        //查角色，roleId=2是管理员
         UserRole userRole = userRoleMapper.selectOne(
                 new QueryWrapper<UserRole>().eq("user_id", loginUser.getId())
         );
@@ -47,7 +47,7 @@ public class AdminInterceptor implements HandlerInterceptor {
                                     HttpServletResponse response,
                                     String msg) throws Exception {
         String accept = request.getHeader("Accept");
-        // Ajax 请求返回 JSON
+        //Ajax 请求返回 JSON
         if (accept != null && accept.contains("application/json")
                 || request.getHeader("X-Requested-With") != null) {
             response.setContentType("application/json;charset=UTF-8");
@@ -56,7 +56,7 @@ public class AdminInterceptor implements HandlerInterceptor {
                     "{\"code\":401,\"msg\":\"" + msg + "\",\"data\":null}"
             );
         } else {
-            // 页面请求直接重定向到登录页
+            //页面请求直接重定向到登录页
             response.sendRedirect(request.getContextPath() + "/pages/front/login.html");
         }
     }

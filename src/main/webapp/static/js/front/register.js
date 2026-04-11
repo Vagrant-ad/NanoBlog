@@ -1,4 +1,4 @@
-// 粒子背景
+//粒子背景
 (function() {
     const canvas = document.getElementById('particleCanvas');
     const ctx = canvas.getContext('2d');
@@ -32,14 +32,14 @@
     draw();
 })();
 
-// 密码显示切换
+//密码显示切换
 document.getElementById('togglePwd').addEventListener('click', function() {
     const pwd = document.getElementById('passwordHash');
     pwd.type = pwd.type === 'password' ? 'text' : 'password';
     this.classList.toggle('active');
 });
 
-// 密码强度检测
+//密码强度检测
 document.getElementById('passwordHash').addEventListener('input', function() {
     const val = this.value;
     const bars = ['s1','s2','s3','s4'].map(id => document.getElementById(id));
@@ -55,7 +55,7 @@ document.getElementById('passwordHash').addEventListener('input', function() {
     label.textContent = val ? (lbs[score] || '强') : '';
 });
 
-// 字段聚焦动效
+//字段聚焦动效
 document.querySelectorAll('.field-input').forEach(input => {
     input.addEventListener('focus', () => input.closest('.field-wrap').classList.add('focused'));
     input.addEventListener('blur', () => {

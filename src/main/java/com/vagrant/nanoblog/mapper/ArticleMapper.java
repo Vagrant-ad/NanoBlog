@@ -26,17 +26,17 @@ public interface ArticleMapper extends BaseMapper<Article> {
 
     void updateViewCount(Long id);
 
-    // 首页文章分页
+    //首页文章分页
     List<ArticleHomeVO> getHomeArticlePage(Page<ArticleHomeVO> page,
                                            @Param("keyword") String keyword,
                                            @Param("sortBy") String sortBy,
                                            @Param("categoryIds") List<Long> categoryIds,
                                            @Param("tagId") Long tagId);
 
-    // 批量查文章标签，返回 articleId+tagName
+    //批量查文章标签，返回articleId+tagName
     List<Map<String, Object>> getTagsByArticleIds(@Param("articleIds") List<Long> articleIds);
 
-    // ===================== 【新增：按标签查询文章】 =====================
+    //按标签查询文章
     IPage<ArticleHomeVO> getArticlePageByTagId(IPage<ArticleHomeVO> page, @Param("tagId") Long tagId);
 
     /**

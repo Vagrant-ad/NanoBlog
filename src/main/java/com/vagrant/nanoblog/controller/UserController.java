@@ -53,7 +53,7 @@ public class UserController {
     @Autowired
     private UserRoleMapper userRoleMapper;
     @Autowired
-    private AttachmentController attachmentController; // 注入附件控制器
+    private AttachmentController attachmentController; //注入附件控制器
 
     @Autowired
     private IArticleService articleService;
@@ -67,53 +67,53 @@ public class UserController {
     @Autowired
     private ArticleMapper articleMapper;
 
-    // 跳转到注册页面
+    //跳转到注册页面
     @GetMapping("/register")
     public String toRegister() {
-        return "register"; // 对应register.html
+        return "register"; //对应register.html
     }
 
-    // 处理注册请求
+    //处理注册请求
     @PostMapping("/doRegister")
     @ResponseBody
     public ResponseResult doRegister(@RequestBody UserRegisterDTO dto) {
-        // 1. 手动将 DTO 里的值赋给 User 实体类
+        //1. 手动将DTO里的值赋给User实体类
         User user = new User();
         user.setUsername(dto.getUsername());
         user.setNickname(dto.getNickname());
         user.setEmail(dto.getEmail());
 
-        // 把 DTO 的 password 赋值给 User 的 passwordHash
+        //把DTO的password赋值给User的passwordHash
         user.setPasswordHash(dto.getPassword());
 
-        // 2. 调用 service
+        //2. 调用service
         return userService.register(user, dto.getRoleId());
     }
 
-    // 跳转登录页面
+    //跳转登录页面
     @GetMapping("/login")
     public String toLogin() {
-        return "pages/front/login"; // 对应 login.html
+        return "pages/front/login"; //对应login.html
     }
 
     //处理登录请求
     @PostMapping("/doLogin")
     @ResponseBody
     public ResponseResult doLogin(@RequestParam String username, @RequestParam String password,HttpSession session,String captcha, HttpServletRequest request) {
-        // 1. 从 session 获取正确的验证码
+        //1. 从 session 获取正确的验证码
         String sessionCaptcha = (String) request.getSession().getAttribute("captcha_key");
 
-        // 2. 校验（忽略大小写对比）
+        //2. 校验（忽略大小写对比）
         if (captcha == null || !captcha.equalsIgnoreCase(sessionCaptcha)) {
             return ResponseResult.errorResult(400, "验证码错误！");
         }
 
-        // 3. 校验通过后，立即删除 session 里的验证码
+        //3. 校验通过后，立即删除 session 里的验证码
         request.getSession().removeAttribute("captcha_key");
 
         ResponseResult result = userService.login(username, password);
         if (result.getCode() == 200) {
-            // 登录成功，将整个用户对象存入 Session
+            //登录成功，将整个用户对象存入Session
             session.setAttribute("LOGIN_USER", result.getData());
         }
         return result;
@@ -133,24 +133,24 @@ public class UserController {
             response.setContentType("image/jpeg");
             response.setHeader("Pragma", "No-cache");
 
-            // 生成4位随机验证码
+            //生成4位随机验证码
             String captchaText = java.util.UUID.randomUUID().toString().substring(0, 4);
             request.getSession().setAttribute("captcha_key", captchaText);
 
-            // 创建画布
+            //创建画布
             int width = 110, height = 44;
             java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_INT_RGB);
             java.awt.Graphics g = image.getGraphics();
 
-            // 画背景
+            //画背景
             g.setColor(new java.awt.Color(240, 245, 248));
             g.fillRect(0, 0, width, height);
 
-            // 画干扰线
+            //画干扰线
             g.setColor(new java.awt.Color(163, 216, 224));
             for(int i=0; i<5; i++) g.drawLine((int)(Math.random()*width), (int)(Math.random()*height), (int)(Math.random()*width), (int)(Math.random()*height));
 
-            // 画文字
+            //画文字
             g.setColor(new java.awt.Color(61, 115, 152));
             g.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 26));
             g.drawString(captchaText, 25, 32);
@@ -167,30 +167,30 @@ public class UserController {
     @GetMapping("/getProfile")
     @ResponseBody
     public ResponseResult getProfile(HttpSession session) {
-        // 1. 从 Session 获取当前登录用户
+        //1. 从Session获取当前登录用户
         User sessionUser = (User) session.getAttribute("LOGIN_USER");
         if (sessionUser == null) {
             return ResponseResult.errorResult(401, "请先登录");
         }
 
-        // 2. 查询完整的用户信息
+        //2. 查询完整的用户信息
         User user = userService.getById(sessionUser.getId());
 
-        // 3. 使用 UserRoleMapper 查询该用户的角色记录
+        //3. 使用UserRoleMapper查询该用户的角色记录
         UserRole userRole = userRoleMapper.selectOne(
                 new QueryWrapper<UserRole>().eq("user_id", user.getId())
         );
 
-        // 4. 将数据封装进 Map
+        //4. 将数据封装进Map
         Map<String, Object> result = new HashMap<>();
-        result.put("user", user); // 放入用户基本信息
-        result.put("roleId", userRole != null ? userRole.getRoleId() : 1); // 放入角色ID，默认1
+        result.put("user", user); //放入用户基本信息
+        result.put("roleId", userRole != null ? userRole.getRoleId() : 1); //放入角色ID，默认1
 
         return ResponseResult.okResult(result);
     }
 
 
-    // 更新/完善个人信息
+    //更新/完善个人信息
     @PostMapping("/updateProfile")
     @ResponseBody
     public ResponseResult updateProfile(@RequestBody UserUpdateDTO updateDTO) {
@@ -217,19 +217,19 @@ public class UserController {
     @PostMapping("/updatePassword")
     @ResponseBody
     public ResponseResult updatePassword(@RequestBody Map<String, String> params, HttpSession session) {
-        // 1. 从 Session 获取当前登录用户
+        //1. 从Session获取当前登录用户
         User loginUser = (User) session.getAttribute("LOGIN_USER");
         if (loginUser == null) return ResponseResult.errorResult(401, "请先登录");
 
         String oldPwd = params.get("oldPassword");
         String newPwd = params.get("newPassword");
 
-        // 2. 基础校验
+        //2. 基础校验
         if (oldPwd == null || newPwd == null || newPwd.length() < 6) {
             return ResponseResult.errorResult(400, "密码长度不符合要求");
         }
 
-        // 3. 调用 Service
+        //3. 调用Service
         return userService.updatePassword(loginUser.getId(), oldPwd, newPwd);
     }
 
@@ -247,7 +247,7 @@ public class UserController {
 
         ResponseResult result = userService.deleteAccount(loginUser.getId(), password);
         if (result.getCode() == 200) {
-            // 注销成功后清除 Session
+            //注销成功后清除Session
             session.removeAttribute("LOGIN_USER");
             session.invalidate();
         }
@@ -265,7 +265,7 @@ public class UserController {
         if (user == null || user.getIsDeleted() == 1) {
             return ResponseResult.errorResult(404, "用户不存在");
         }
-        // 脱敏：清除密码哈希
+        //脱敏：清除密码哈希
         user.setPasswordHash(null);
 
         UserRole userRole = userRoleMapper.selectOne(
@@ -293,7 +293,7 @@ public class UserController {
             targetId = loginUser.getId();
         }
 
-        // 总浏览量：查该用户所有文章的 view_count 之和
+        //总浏览量：查该用户所有文章的view_count之和
         Long totalView = articleService.lambdaQuery()
                 .eq(com.vagrant.nanoblog.pojo.Article::getAuthorId, targetId)
                 .eq(com.vagrant.nanoblog.pojo.Article::getIsDeleted, 0)
@@ -302,27 +302,27 @@ public class UserController {
                 .mapToLong(a -> a.getViewCount() == null ? 0L : a.getViewCount())
                 .sum();
 
-        // 评论数：查该用户发出的评论总数
+        //评论数：查该用户发出的评论总数
         long commentCount = commentService.lambdaQuery()
                 .eq(com.vagrant.nanoblog.pojo.Comment::getUserId, targetId)
                 .eq(com.vagrant.nanoblog.pojo.Comment::getIsDeleted, 0)
                 .count();
 
-        // 关注数：我关注了多少人
+        //关注数：我关注了多少人
         long followingCount = userFollowMapper.selectCount(
                 new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<UserFollow>()
                         .eq("follower_id", targetId));
 
-        // 粉丝数：多少人关注了我
+        //粉丝数：多少人关注了我
         long fansCount = userFollowMapper.selectCount(
                 new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<UserFollow>()
                         .eq("following_id", targetId));
 
-        // 文章获赞：该用户所有文章的 like_count 求和
+        //文章获赞：该用户所有文章的like_count求和
         Long articleLike = articleMapper.sumLikeCountByAuthor(targetId);
         long totalArticleLike = articleLike != null ? articleLike : 0L;
 
-        // 评论获赞：查该用户所有发出的评论被点赞的数量总和
+        //评论获赞：查该用户所有发出的评论被点赞的数量总和
         long totalCommentLike = commentService.lambdaQuery()
                 .eq(com.vagrant.nanoblog.pojo.Comment::getUserId, targetId)
                 .eq(com.vagrant.nanoblog.pojo.Comment::getIsDeleted, 0)
@@ -330,7 +330,7 @@ public class UserController {
                 .stream()
                 .mapToLong(c -> c.getLikeCount() == null ? 0L : c.getLikeCount())
                 .sum();
-        // 最终总获赞数
+        //最终总获赞数
         long totalLike = totalArticleLike + totalCommentLike;
 
         Map<String, Object> stats = new HashMap<>();

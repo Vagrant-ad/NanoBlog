@@ -1,4 +1,4 @@
-/*个人主页专属样式 */
+/*个人主页专属样式*/
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -12,7 +12,7 @@ body {
     padding: 0 16px 64px;
 }
 
-/* ── 页面主容器 ── */
+/*页面主容器*/
 .profile-page {
     max-width: 860px;
     margin: 24px auto 0;
@@ -21,7 +21,7 @@ body {
     gap: 24px;
 }
 
-/* ── 卡片通用 ── */
+/*卡片通用*/
 .card {
     background: #fff;
     border-radius: 20px;
@@ -57,7 +57,7 @@ body {
     letter-spacing: 0.3px;
 }
 
-/* 头像 基本信息卡片 */
+/*头像和基本信息卡片*/
 .profile-hero {
     position: relative;
 }
@@ -94,7 +94,7 @@ body {
     position: relative;
 }
 
-/* 头像 */
+/*头像*/
 .avatar-wrapper {
     position: relative;
     flex-shrink: 0;
@@ -125,7 +125,7 @@ body {
 .avatar-wrapper:hover .avatar-mask { opacity: 1; }
 .avatar-mask input { display: none; }
 
-/* 用户名区 */
+/*用户名区*/
 .hero-info {
     flex: 1;
     padding-bottom: 4px;
@@ -160,7 +160,7 @@ body {
 .status-ok    { background: #d1fae5; color: #065f46; }
 .status-error { background: #fee2e2; color: #991b1b; }
 
-/* 操作按钮区 */
+/*操作按钮区*/
 .hero-actions {
     display: flex;
     gap: 10px;
@@ -169,7 +169,7 @@ body {
     flex-shrink: 0;
 }
 
-/* ── 通用按钮 ── */
+/*通用按钮*/
 .btn {
     display: inline-flex;
     align-items: center;
@@ -209,7 +209,7 @@ body {
 }
 .btn-danger-ghost:hover { background: #fef2f2; border-color: #fca5a5; }
 
-/* 统计数据栏 */
+/*统计数据栏*/
 .stats-row {
     display: flex;
     align-items: stretch;
@@ -263,11 +263,10 @@ body {
     text-transform: uppercase;
 }
 
-/*  信息面板（查看 & 编辑）
- */
+/*信息面板(查看&编辑)*/
 .info-panel { padding: 20px 24px 24px; }
 
-/* 查看模式 */
+/*查看模式*/
 .user-main-info { margin-bottom: 20px; }
 
 .info-grid {
@@ -320,7 +319,7 @@ body {
     border: 1px solid #edf2f7;
 }
 
-/* 编辑模式 */
+/*编辑模式*/
 .edit-form { display: flex; flex-direction: column; gap: 16px; }
 .form-group label {
     display: block;
@@ -359,8 +358,7 @@ body {
     margin-top: 4px;
 }
 
-/*  我的文章
-  */
+/*我的文章*/
 .articles-body { padding: 0 24px 20px; }
 
 .article-list { display: flex; flex-direction: column; gap: 0; }
@@ -437,8 +435,7 @@ body {
     justify-content: center;
 }
 
-/* 危险区 / 注销账号
-*/
+/*危险区/注销账号*/
 .danger-zone-body {
     padding: 20px 24px;
     display: flex;
@@ -451,8 +448,7 @@ body {
 .card-header.danger-header i { color: #dc2626; }
 .card-header.danger-header h3 { color: #dc2626; }
 
-/* 修改密码弹窗 Modal
- */
+/*修改密码弹窗Modal*/
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -572,7 +568,7 @@ body {
     border-top: 1px solid #f0f4f8;
 }
 
-/* ── 注销确认弹窗 ── */
+/*注销确认弹窗*/
 .confirm-modal .modal-box { width: 380px; }
 .confirm-body { padding: 24px; text-align: center; }
 .confirm-icon {
@@ -599,7 +595,7 @@ body {
 }
 .btn-danger:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(220,38,38,0.35); }
 
-/* ── 提示 Toast ── */
+/*提示Toast*/
 .toast {
     position: fixed;
     top: 24px; right: 24px;
@@ -622,7 +618,7 @@ body {
 .toast.error   { background: #fff; border-left: 4px solid #ef4444; color: #991b1b; }
 .toast.info    { background: #fff; border-left: 4px solid var(--brand-blue); color: var(--brand-blue); }
 
-/* ── 响应式 ── */
+/*响应式*/
 @media (max-width: 600px) {
     .hero-body { flex-wrap: wrap; }
     .hero-actions { padding-top: 0; width: 100%; }
@@ -633,7 +629,7 @@ body {
     .danger-zone-body { flex-direction: column; align-items: flex-start; }
 }
 
-/* ── 文章管理 Tab ── */
+/*文章管理Tab*/
 .article-tabs {
     display: flex;
     gap: 0;
@@ -679,7 +675,7 @@ body {
     color: var(--brand-blue);
 }
 
-/* ── 文章列表项 ── */
+/*文章列表项*/
 .articles-loading {
     padding: 36px 0;
     text-align: center;
@@ -812,7 +808,7 @@ body {
 }
 .btn-publish-draft:hover { background: #dcfce7; border-color: #86efac; }
 
-/* ── 分页 ── */
+/*分页*/
 .articles-pagination {
     padding: 12px 24px 16px;
     display: flex;
@@ -839,7 +835,7 @@ body {
 .page-btn.active { background: var(--brand-blue); border-color: var(--brand-blue); color: #fff; }
 .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── 编辑文章弹窗 ──       若后续改为跳转到写文章则此可删除*/
+/*编辑文章弹窗(若后续改为跳转写文章可删除)*/
 #editArticleModal .modal-box { width: 680px; max-width: 96vw; }
 .edit-article-form {
     max-height: 65vh;
@@ -885,7 +881,7 @@ body {
 .edit-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 @media (max-width: 600px) { .edit-form-row { grid-template-columns: 1fr; } }
 
-/* ── 弹窗图标变体 ── */
+/*弹窗图标变体*/
 .confirm-icon--delete {
     background: #fef2f2;
     color: #dc2626;

@@ -123,7 +123,7 @@ public class CommentController {
     public ResponseResult<Boolean> isLiked(@PathVariable Long commentId, HttpSession session) {
         User loginUser = (User) session.getAttribute("LOGIN_USER");
 
-        // 未登录返回 false，不弹登录提示
+        //未登录返回false，不弹登录提示
         if (loginUser == null) {
             return ResponseResult.okResult(false);
         }

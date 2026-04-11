@@ -27,7 +27,7 @@ public class ArticleController {
     private final IUserService userService;
     private final ICommentService commentService;
 
-    // 获取登录用户id
+    //获取登录用户id
     private Long getCurrentUserId(HttpSession session) {
         User loginUser = (User) session.getAttribute("LOGIN_USER");
         if (loginUser == null) {
@@ -69,7 +69,7 @@ public class ArticleController {
         return ResponseResult.okResult(articleService.getHomeArticleList(page, size, keyword, sortBy, categoryId, tagId));
     }
 
-    // 首页公开统计（不需要管理员权限）
+    //首页公开统计（不需要管理员权限）
     @GetMapping("/stats")
     public ResponseResult<Map<String, Object>> homeStats() {
         Map<String, Object> stats = new HashMap<>();
@@ -82,7 +82,7 @@ public class ArticleController {
         return ResponseResult.okResult(stats);
     }
 
-    // 按分类查询文章
+    //按分类查询文章
     @GetMapping("/list/category/{categoryId}")
     public ResponseResult<IPage<ArticleListVO>> listByCategory(
             @PathVariable Long categoryId,
@@ -91,7 +91,7 @@ public class ArticleController {
         return ResponseResult.okResult(articleService.listByCategory(categoryId, pageNum, pageSize));
     }
 
-    // 按标签查询文章
+    //按标签查询文章
     @GetMapping("/list/tag/{tagId}")
     public ResponseResult<IPage<ArticleHomeVO>> listByTag(
             @PathVariable Long tagId,
@@ -109,7 +109,7 @@ public class ArticleController {
             HttpSession session) {
         Long targetUserId = userId;
         if (targetUserId == null) {
-            // 未传 userId，使用当前登录用户
+            //未传userId，使用当前登录用户
             targetUserId = getCurrentUserId(session);
         }
         return ResponseResult.okResult(articleService.getMyPublished(targetUserId, page, size));

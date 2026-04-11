@@ -19,7 +19,7 @@ public class TagController {
 
     private final ITagService tagService;
 
-    // 改用构造器注入，解决 "Field injection is not recommended" 警告
+    //改用构造器注入，解决"Field injection is not recommended"警告
     public TagController(ITagService tagService) {
         this.tagService = tagService;
     }

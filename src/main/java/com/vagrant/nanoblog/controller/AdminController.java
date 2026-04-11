@@ -33,8 +33,8 @@ public class AdminController {
     private final ICategoryService categoryService;
     private final ITagService tagService;
 
-    // ===================== 【仪表盘统计接口】 =====================
-    
+    //仪表盘统计接口
+
     /**
      * 获取统计数据
      * GET /admin/stats
@@ -42,32 +42,32 @@ public class AdminController {
     @GetMapping("/stats")
     public ResponseResult<Map<String, Object>> getStats() {
         Map<String, Object> stats = new HashMap<>();
-        
-        // 用户总数
+
+        //用户总数
         long userCount = userService.lambdaQuery().eq(User::getIsDeleted, 0).count();
         stats.put("userCount", userCount);
-        
-        // 文章总数
+
+        //文章总数
         long articleCount = articleService.lambdaQuery().eq(com.vagrant.nanoblog.pojo.Article::getIsDeleted, 0).count();
         stats.put("articleCount", articleCount);
-        
-        // 评论总数
+
+        //评论总数
         long commentCount = commentService.lambdaQuery().eq(com.vagrant.nanoblog.pojo.Comment::getIsDeleted, 0).count();
         stats.put("commentCount", commentCount);
-        
-        // 今日新增文章
+
+        //今日新增文章
         LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
         long todayArticleCount = articleService.lambdaQuery()
                 .eq(com.vagrant.nanoblog.pojo.Article::getIsDeleted, 0)
                 .ge(com.vagrant.nanoblog.pojo.Article::getCreateTime, todayStart)
                 .count();
         stats.put("todayArticleCount", todayArticleCount);
-        
+
         return ResponseResult.okResult(stats);
     }
 
-    // ===================== 【用户管理接口】 =====================
-    
+    //用户管理接口
+
     /**
      * 分页查询用户列表
      * GET /admin/user/list?page=1&size=10&username=xxx
@@ -79,7 +79,7 @@ public class AdminController {
             @RequestParam(required = false) String username) {
         return ResponseResult.okResult(userService.getUserList(page, size, username));
     }
-    
+
     /**
      * 切换用户状态
      * PUT /admin/user/{id}/status?status=0
@@ -89,7 +89,7 @@ public class AdminController {
         userService.toggleUserStatus(id, status);
         return ResponseResult.okResult();
     }
-    
+
     /**
      * 删除用户
      * DELETE /admin/user/{id}
@@ -100,8 +100,8 @@ public class AdminController {
         return ResponseResult.okResult();
     }
 
-    // ===================== 【文章管理接口】 =====================
-    
+    //文章管理接口
+
     /**
      * 管理员视角的文章列表
      * GET /admin/article/list?page=1&size=10&status=1&title=xxx
@@ -114,7 +114,7 @@ public class AdminController {
             @RequestParam(required = false) String title) {
         return ResponseResult.okResult(articleService.getAdminArticleList(page, size, status, title));
     }
-    
+
     /**
      * 修改文章状态
      * PUT /admin/article/{id}/status?status=2
@@ -124,7 +124,7 @@ public class AdminController {
         articleService.updateArticleStatusByAdmin(id, status);
         return ResponseResult.okResult();
     }
-    
+
     /**
      * 删除文章
      * DELETE /admin/article/{id}
@@ -135,8 +135,8 @@ public class AdminController {
         return ResponseResult.okResult();
     }
 
-    // ===================== 【评论管理接口】 =====================
-    
+    //评论管理接口
+
     /**
      * 管理员视角的评论列表
      * GET /admin/comment/list?page=1&size=10&articleId=xxx
@@ -148,7 +148,7 @@ public class AdminController {
             @RequestParam(required = false) Long articleId) {
         return ResponseResult.okResult(commentService.getAdminCommentList(page, size, articleId));
     }
-    
+
     /**
      * 删除评论
      * DELETE /admin/comment/{id}
@@ -159,8 +159,8 @@ public class AdminController {
         return ResponseResult.okResult();
     }
 
-    // ===================== 【分类管理接口】 =====================
-    
+    //分类管理接口
+
     /**
      * 新增分类
      * POST /admin/category/add
@@ -170,7 +170,7 @@ public class AdminController {
         categoryService.addCategory(category);
         return ResponseResult.okResult();
     }
-    
+
     /**
      * 修改分类
      * PUT /admin/category/{id}
@@ -181,7 +181,7 @@ public class AdminController {
         categoryService.updateCategory(category);
         return ResponseResult.okResult();
     }
-    
+
     /**
      * 删除分类
      * DELETE /admin/category/{id}
@@ -192,8 +192,8 @@ public class AdminController {
         return ResponseResult.okResult();
     }
 
-    // ===================== 【标签管理接口】 =====================
-    
+    //标签管理接口
+
     /**
      * 新增标签
      * POST /admin/tag/add
@@ -203,7 +203,7 @@ public class AdminController {
         tagService.addTag(tag);
         return ResponseResult.okResult();
     }
-    
+
     /**
      * 删除标签
      * DELETE /admin/tag/{id}

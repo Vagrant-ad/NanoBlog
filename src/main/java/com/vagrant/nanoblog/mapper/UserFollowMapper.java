@@ -17,10 +17,10 @@ import java.util.List;
  */
 public interface UserFollowMapper extends BaseMapper<UserFollow> {
 
-    // 查询粉丝列表（关注我的人）
+    //查询粉丝列表
     List<UserFollowVO> getFansList(@Param("userId") Long userId);
 
-    // 查询关注列表（我关注的人）
+    //查询关注列表
     List<UserFollowVO> getFollowingList(@Param("userId") Long userId);
 
 }

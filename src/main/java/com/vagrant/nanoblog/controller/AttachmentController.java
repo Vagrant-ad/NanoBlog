@@ -62,7 +62,7 @@ public class AttachmentController {
             @RequestParam("file") MultipartFile file,
             HttpServletRequest request, HttpSession session) {
 
-        // 1. 基本校验
+        //1. 基本校验
         if (file == null || file.isEmpty()) {
             return ResponseResult.errorResult(400, "文件不能为空");
         }
@@ -72,22 +72,22 @@ public class AttachmentController {
             return ResponseResult.errorResult(400, "文件名异常");
         }
 
-        // 2. 只允许图片类型
+        //2. 只允许图片类型
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
             return ResponseResult.errorResult(400, "只允许上传图片文件");
         }
 
-        // 3. 构建存储路径：webapp/static/uploads/2026/03/
+        //3. 构建存储路径：webapp/static/uploads/2026/03/
         String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
         String uploadDir = uploadRoot  + datePath + "/";
 
         File dir = new File(uploadDir);
         if (!dir.exists()) {
-            dir.mkdirs(); // 目录不存在则创建
+            dir.mkdirs(); //目录不存在则创建
         }
 
-        // 4. 生成唯一文件名，保留原始扩展名
+        //4. 生成唯一文件名，保留原始扩展名
         String ext = originalName.substring(originalName.lastIndexOf("."));
         String newFileName = UUID.randomUUID().toString().replace("-", "") + ext;
         File destFile = new File(uploadDir + newFileName);
@@ -98,10 +98,10 @@ public class AttachmentController {
             return ResponseResult.errorResult(500, "文件保存失败：" + e.getMessage());
         }
 
-        // 5. 拼接可访问的 URL
+        //5. 拼接可访问的URL
         String fileUrl = uploadUrlPrefix + datePath + "/" + newFileName;
 
-        // 6. 写 attachment 表记录（userId 暂时硬编码，后续替换）
+        //6. 写attachment表记录（userId暂时硬编码，后续替换）
         Attachment attachment = new Attachment();
         attachment.setUploaderId(getCurrentUserId(session)); //获取当前用户id
         attachment.setFileName(originalName);
@@ -110,7 +110,7 @@ public class AttachmentController {
         attachment.setFileSize(file.getSize());
         attachmentService.save(attachment);
 
-        // 7. 返回 URL 给前端，前端存入 coverUrlInput
+        //7. 返回URL给前端，前端存入coverUrlInput
         return ResponseResult.okResult(fileUrl);
     }
 }

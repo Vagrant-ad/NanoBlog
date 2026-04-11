@@ -583,7 +583,7 @@ layui.use(['layer', 'element'], function () {
     window.toggleArticleLike = function() {
         var articleId = state.articleId;
         if (!articleId) return;
-        // 未登录提示
+        //未登录提示
         fetch(NanoBlog.apiBase + '/user/getProfile', { credentials: 'same-origin' })
             .then(function(r) { return r.json(); })
             .then(function(res) {
@@ -604,7 +604,7 @@ layui.use(['layer', 'element'], function () {
                 if (res.code === 200) {
                     _articleLiked = !_articleLiked;
                     updateArticleLikeBtn(_articleLiked);
-                    // 更新点赞数显示
+                    //更新点赞数显示
                     var countEl = document.getElementById('articleLikeCount');
                     if (countEl) {
                         var current = parseInt(countEl.textContent) || 0;

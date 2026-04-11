@@ -19,4 +19,3 @@ public class CommentVO {
     private String replyToNickname;
     private List<CommentVO> replies;
 }
-

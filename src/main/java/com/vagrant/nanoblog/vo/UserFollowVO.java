@@ -5,7 +5,7 @@ public class UserFollowVO {
     private String nickname;
     private String avatarUrl;
     private String bio;
-    private Boolean isFollowing; // 当前登录用户是否也关注了此人
+    private Boolean isFollowing;//当前登录用户是否也关注了此人
 
     public Long getUserId() {
         return userId;
