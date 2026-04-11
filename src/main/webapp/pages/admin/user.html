@@ -6,19 +6,239 @@
     <title>用户管理 - NanoBlog后台管理</title>
     <link rel="stylesheet" href="/static/lib/layui/css/layui.css">
     <style>
-        body { background-color: #f2f2f2; }
-        .layui-layout-admin .layui-body { padding: 20px; }
-        .search-box { background: #fff; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+
+        .layui-layout-admin .layui-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .layui-logo {
+            color: #fff !important;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            background: transparent !important;
+        }
+
+        .layui-nav .layui-nav-item a {
+            color: #fff !important;
+            transition: all 0.3s ease;
+        }
+
+        .layui-nav .layui-nav-item a:hover {
+            color: #ffd700 !important;
+            transform: translateY(-2px);
+        }
+
+        .layui-side {
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%) !important;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .layui-nav-tree .layui-nav-item a {
+            color: #ecf0f1;
+            transition: all 0.3s ease;
+        }
+
+        .layui-nav-tree .layui-nav-item a:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+
+        .layui-nav-tree .layui-this {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+
+        .layui-nav-tree .layui-this a {
+            color: #fff !important;
+        }
+
+        .layui-body {
+            padding: 30px;
+            background: #f5f7fa;
+        }
+
+        .page-header {
+            background: #fff;
+            padding: 25px 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        .page-header h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-header h1::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .search-box {
+            background: #fff;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        .search-box .layui-form-item {
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .search-box .layui-input {
+            border-radius: 8px;
+            border: 2px solid #e8ecef;
+            transition: all 0.3s ease;
+            height: 40px;
+        }
+
+        .search-box .layui-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-box .layui-btn {
+            border-radius: 8px;
+            height: 40px;
+            padding: 0 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .search-box .layui-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-box .layui-btn-primary {
+            background: #fff;
+            color: #666;
+            border: 2px solid #e8ecef;
+            box-shadow: none;
+        }
+
+        .search-box .layui-btn-primary:hover {
+            border-color: #667eea;
+            color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .table-container {
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        .layui-table {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .layui-table thead tr {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .layui-table thead tr th {
+            color: #fff !important;
+            font-weight: 600;
+            border: none;
+        }
+
+        .layui-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .layui-table tbody tr:hover {
+            background: #f8f9ff;
+            transform: scale(1.005);
+        }
+
+        .layui-table td {
+            border-color: #f0f0f0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-normal {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+
+        .status-disabled {
+            background: #ffebee;
+            color: #f44336;
+        }
+
+        .action-btn {
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            margin: 0 3px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .layui-footer {
+            background: #fff;
+            color: #7f8c8d;
+            text-align: center;
+            padding: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+
+        .username-text {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .email-text {
+            color: #666;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body class="layui-layout-body">
 <div class="layui-layout layui-layout-admin">
     <!-- 头部 -->
     <div class="layui-header">
-        <div class="layui-logo">NanoBlog 后台管理</div>
+        <div class="layui-logo">📝 NanoBlog 后台管理</div>
         <ul class="layui-nav layui-layout-right">
-            <li class="layui-nav-item"><a href="javascript:;" id="adminName">管理员</a></li>
-            <li class="layui-nav-item"><a href="javascript:;" id="logout">退出</a></li>
+            <li class="layui-nav-item"><a href="javascript:;" id="adminName">👤 管理员</a></li>
+            <li class="layui-nav-item"><a href="javascript:;" id="logout">🚪 退出</a></li>
         </ul>
     </div>
 
@@ -26,44 +246,55 @@
     <div class="layui-side layui-bg-black">
         <div class="layui-side-scroll">
             <ul class="layui-nav layui-nav-tree" lay-filter="test">
-                <li class="layui-nav-item"><a href="dashboard.html">仪表盘</a></li>
-                <li class="layui-nav-item layui-this"><a href="user.html">用户管理</a></li>
-                <li class="layui-nav-item"><a href="post.html">文章管理</a></li>
-                <li class="layui-nav-item"><a href="comment.html">评论管理</a></li>
-                <li class="layui-nav-item"><a href="category.html">分类标签管理</a></li>
+                <li class="layui-nav-item"><a href="dashboard.html">📊 仪表盘</a></li>
+                <li class="layui-nav-item layui-this"><a href="user.html">👥 用户管理</a></li>
+                <li class="layui-nav-item"><a href="post.html">📄 文章管理</a></li>
+                <li class="layui-nav-item"><a href="comment.html">💬 评论管理</a></li>
+                <li class="layui-nav-item"><a href="category.html">🏷️ 分类标签管理</a></li>
             </ul>
         </div>
     </div>
 
     <!-- 内容主体区域 -->
     <div class="layui-body">
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <h1>用户管理</h1>
+        </div>
+
+        <!-- 搜索框 -->
         <div class="search-box">
             <form class="layui-form" lay-filter="searchForm">
-                <div class="layui-inline">
-                    <input type="text" name="username" placeholder="请输入用户名" class="layui-input">
+                <div class="layui-form-item">
+                    <div class="layui-inline" style="flex: 1;">
+                        <input type="text" name="username" placeholder="🔍 输入用户名搜索" class="layui-input" autocomplete="off">
+                    </div>
+                    <button type="button" class="layui-btn" id="searchBtn">🔎 搜索</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">🔄 重置</button>
                 </div>
-                <button type="button" class="layui-btn" id="searchBtn">搜索</button>
-                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
             </form>
         </div>
 
-        <table class="layui-hide" id="userTable" lay-filter="userTable"></table>
+        <!-- 表格区域 -->
+        <div class="table-container">
+            <table class="layui-hide" id="userTable" lay-filter="userTable"></table>
+        </div>
     </div>
 
     <!-- 底部 -->
-    <div class="layui-footer">© 2026 NanoBlog - 后台管理系统</div>
+    <div class="layui-footer">© 2026 NanoBlog - 后台管理系统 | Made with ❤️</div>
 </div>
 
 <!-- 操作列模板 -->
 <script type="text/html" id="actionTpl">
-    <a class="layui-btn layui-btn-xs" lay-event="toggleStatus">
+    <a class="layui-btn layui-btn-xs action-btn" lay-event="toggleStatus" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
         {{# if(d.status === 1){ }}
-            禁用
+            🚫 禁用
         {{# } else { }}
-            启用
+            ✅ 启用
         {{# } }}
     </a>
-    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs action-btn" lay-event="delete">🗑️ 删除</a>
 </script>
 
 <script src="/static/lib/layui/layui.js"></script>
@@ -79,21 +310,32 @@
             elem: '#userTable',
             url: '/admin/user/list',
             page: true,
+            limit: 15,
+            limits: [10, 15, 20, 30, 50],
             cols: [[
-                {field: 'id', title: 'ID', width: 80},
-                {field: 'username', title: '用户名', width: 150},
-                {field: 'nickname', title: '昵称', width: 150},
-                {field: 'email', title: '邮箱', width: 200},
+                {field: 'id', title: 'ID', width: 80, align: 'center'},
+                {field: 'username', title: '用户名', width: 150, align: 'center', templet: function(d) {
+                    return '<span class="username-text">' + d.username + '</span>';
+                }},
+                {field: 'nickname', title: '昵称', width: 150, align: 'center'},
+                {field: 'email', title: '邮箱', width: 200, templet: function(d) {
+                    return '<span class="email-text">' + d.email + '</span>';
+                }},
                 {
                     field: 'status', 
                     title: '状态', 
                     width: 100,
+                    align: 'center',
                     templet: function(d) {
-                        return d.status === 1 ? '<span style="color: #5FB878;">正常</span>' : '<span style="color: #FF5722;">禁用</span>';
+                        if (d.status === 1) {
+                            return '<span class="status-badge status-normal">✓ 正常</span>';
+                        } else {
+                            return '<span class="status-badge status-disabled">✕ 禁用</span>';
+                        }
                     }
                 },
-                {field: 'createTime', title: '注册时间', width: 180},
-                {title: '操作', width: 180, toolbar: '#actionTpl'}
+                {field: 'createTime', title: '注册时间', width: 180, align: 'center'},
+                {title: '操作', width: 200, toolbar: '#actionTpl', align: 'center'}
             ]],
             request: {
                 pageName: 'page',
@@ -129,40 +371,48 @@
             if(layEvent === 'toggleStatus'){
                 var newStatus = data.status === 1 ? 0 : 1;
                 var statusText = newStatus === 1 ? '启用' : '禁用';
-                layer.confirm('确定要' + statusText + '该用户吗？', function(index){
+                layer.confirm('⚠️ 确定要' + statusText + '该用户吗？', {
+                    icon: 3,
+                    title: '操作确认',
+                    btn: ['确定', '取消']
+                }, function(index){
                     $.ajax({
                         url: '/admin/user/' + data.id + '/status',
                         type: 'PUT',
                         data: { status: newStatus },
                         success: function(res) {
                             if (res.code === 200) {
-                                layer.msg(statusText + '成功');
+                                layer.msg('✅ ' + statusText + '成功', {icon: 1});
                                 obj.update({ status: newStatus });
                             } else {
-                                layer.msg(res.msg || '操作失败');
+                                layer.msg('❌ ' + (res.msg || '操作失败'), {icon: 2});
                             }
                         },
                         error: function() {
-                            layer.msg('网络错误');
+                            layer.msg('❌ 网络错误', {icon: 2});
                         }
                     });
                     layer.close(index);
                 });
             } else if(layEvent === 'delete'){
-                layer.confirm('确定要删除该用户吗？', function(index){
+                layer.confirm('⚠️ 确定要删除该用户吗？此操作不可恢复！', {
+                    icon: 3,
+                    title: '删除确认',
+                    btn: ['确定删除', '取消']
+                }, function(index){
                     $.ajax({
                         url: '/admin/user/' + data.id,
                         type: 'DELETE',
                         success: function(res) {
                             if (res.code === 200) {
-                                layer.msg('删除成功');
+                                layer.msg('✅ 删除成功', {icon: 1});
                                 obj.del();
                             } else {
-                                layer.msg(res.msg || '删除失败');
+                                layer.msg('❌ ' + (res.msg || '删除失败'), {icon: 2});
                             }
                         },
                         error: function() {
-                            layer.msg('网络错误');
+                            layer.msg('❌ 网络错误', {icon: 2});
                         }
                     });
                     layer.close(index);
@@ -172,7 +422,11 @@
 
         // 退出登录
         $('#logout').click(function() {
-            layer.confirm('确定要退出吗？', function(index){
+            layer.confirm('🚪 确定要退出登录吗？', {
+                icon: 3,
+                title: '提示',
+                btn: ['确定', '取消']
+            }, function(index){
                 $.post('/user/logout', function(res) {
                     if (res.code === 200) {
                         window.location.href = '/pages/front/login.html';

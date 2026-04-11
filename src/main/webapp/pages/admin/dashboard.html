@@ -6,28 +6,232 @@
     <title>仪表盘 - NanoBlog后台管理</title>
     <link rel="stylesheet" href="/static/lib/layui/css/layui.css">
     <style>
-        body {
-            background-color: #f2f2f2;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+
+        .layui-layout-admin .layui-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .layui-logo {
+            color: #fff !important;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            background: transparent !important;
+        }
+
+        .layui-nav .layui-nav-item a {
+            color: #fff !important;
+            transition: all 0.3s ease;
+        }
+
+        .layui-nav .layui-nav-item a:hover {
+            color: #ffd700 !important;
+            transform: translateY(-2px);
+        }
+
+        .layui-side {
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%) !important;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .layui-nav-tree .layui-nav-item a {
+            color: #ecf0f1;
+            transition: all 0.3s ease;
+        }
+
+        .layui-nav-tree .layui-nav-item a:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+
+        .layui-nav-tree .layui-this {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+
+        .layui-nav-tree .layui-this a {
+            color: #fff !important;
+        }
+
+        .layui-body {
+            padding: 30px;
+            background: #f5f7fa;
+        }
+
+        .page-title {
+            color: #2c3e50;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            padding-left: 10px;
+            border-left: 4px solid #667eea;
+        }
+
         .stat-card {
             background: #fff;
-            padding: 20px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             margin-bottom: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
         }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .stat-card:nth-child(2)::before {
+            background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .stat-card:nth-child(3)::before {
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .stat-card:nth-child(4)::before {
+            background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .stat-card .icon-wrapper {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 28px;
+            color: #fff;
+        }
+
+        .stat-card:nth-child(1) .icon-wrapper {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .stat-card:nth-child(2) .icon-wrapper {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .stat-card:nth-child(3) .icon-wrapper {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .stat-card:nth-child(4) .icon-wrapper {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
         .stat-card h3 {
-            color: #666;
+            color: #7f8c8d;
             font-size: 14px;
+            margin-bottom: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+            animation: countUp 1s ease-out;
+        }
+
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .quick-actions {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-top: 20px;
+        }
+
+        .quick-actions h3 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .action-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 8px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .layui-footer {
+            background: #fff;
+            color: #7f8c8d;
+            text-align: center;
+            padding: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .welcome-banner h2 {
+            font-size: 24px;
             margin-bottom: 10px;
         }
-        .stat-card .number {
-            font-size: 32px;
-            font-weight: bold;
-            color: #1E9FFF;
-        }
-        .layui-layout-admin .layui-body {
-            padding: 20px;
+
+        .welcome-banner p {
+            font-size: 14px;
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -35,13 +239,13 @@
 <div class="layui-layout layui-layout-admin">
     <!-- 头部 -->
     <div class="layui-header">
-        <div class="layui-logo">NanoBlog 后台管理</div>
+        <div class="layui-logo">📝 NanoBlog 后台管理</div>
         <ul class="layui-nav layui-layout-right">
             <li class="layui-nav-item">
-                <a href="javascript:;" id="adminName">管理员</a>
+                <a href="javascript:;" id="adminName">👤 管理员</a>
             </li>
             <li class="layui-nav-item">
-                <a href="javascript:;" id="logout">退出</a>
+                <a href="javascript:;" id="logout">🚪 退出</a>
             </li>
         </ul>
     </div>
@@ -51,19 +255,19 @@
         <div class="layui-side-scroll">
             <ul class="layui-nav layui-nav-tree" lay-filter="test">
                 <li class="layui-nav-item layui-this">
-                    <a href="dashboard.html">仪表盘</a>
+                    <a href="dashboard.html">📊 仪表盘</a>
                 </li>
                 <li class="layui-nav-item">
-                    <a href="user.html">用户管理</a>
+                    <a href="user.html">👥 用户管理</a>
                 </li>
                 <li class="layui-nav-item">
-                    <a href="post.html">文章管理</a>
+                    <a href="post.html">📄 文章管理</a>
                 </li>
                 <li class="layui-nav-item">
-                    <a href="comment.html">评论管理</a>
+                    <a href="comment.html">💬 评论管理</a>
                 </li>
                 <li class="layui-nav-item">
-                    <a href="category.html">分类标签管理</a>
+                    <a href="category.html">🏷️ 分类标签管理</a>
                 </li>
             </ul>
         </div>
@@ -71,37 +275,58 @@
 
     <!-- 内容主体区域 -->
     <div class="layui-body">
-        <div class="layui-row layui-col-space15">
+        <!-- 欢迎横幅 -->
+        <div class="welcome-banner">
+            <h2>👋 欢迎回来，管理员！</h2>
+            <p>今天是 <span id="currentDate"></span>，祝您工作愉快！</p>
+        </div>
+
+        <h1 class="page-title">数据概览</h1>
+
+        <div class="layui-row layui-col-space20">
             <div class="layui-col-md3">
                 <div class="stat-card">
+                    <div class="icon-wrapper">👥</div>
                     <h3>用户总数</h3>
                     <div class="number" id="userCount">0</div>
                 </div>
             </div>
             <div class="layui-col-md3">
                 <div class="stat-card">
+                    <div class="icon-wrapper">📄</div>
                     <h3>文章总数</h3>
                     <div class="number" id="articleCount">0</div>
                 </div>
             </div>
             <div class="layui-col-md3">
                 <div class="stat-card">
+                    <div class="icon-wrapper">💬</div>
                     <h3>评论总数</h3>
                     <div class="number" id="commentCount">0</div>
                 </div>
             </div>
             <div class="layui-col-md3">
                 <div class="stat-card">
+                    <div class="icon-wrapper">✨</div>
                     <h3>今日新增文章</h3>
                     <div class="number" id="todayArticleCount">0</div>
                 </div>
             </div>
         </div>
+
+        <!-- 快捷操作 -->
+        <div class="quick-actions">
+            <h3>⚡ 快捷操作</h3>
+            <a href="post.html" class="action-btn">📝 发布文章</a>
+            <a href="user.html" class="action-btn">👤 添加用户</a>
+            <a href="category.html" class="action-btn">🏷️ 管理分类</a>
+            <a href="comment.html" class="action-btn">💬 审核评论</a>
+        </div>
     </div>
 
     <!-- 底部 -->
     <div class="layui-footer">
-        © 2026 NanoBlog - 后台管理系统
+        © 2026 NanoBlog - 后台管理系统 | Made with ❤️
     </div>
 </div>
 
@@ -112,6 +337,14 @@
         var layer = layui.layer;
         var $ = layui.$;
 
+        // 显示当前日期
+        var now = new Date();
+        var dateStr = now.getFullYear() + '年' +
+                     (now.getMonth() + 1) + '月' +
+                     now.getDate() + '日 ' +
+                     ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'][now.getDay()];
+        $('#currentDate').text(dateStr);
+
         // 加载统计数据
         loadStats();
 
@@ -121,10 +354,10 @@
                 type: 'GET',
                 success: function(res) {
                     if (res.code === 200) {
-                        $('#userCount').text(res.data.userCount);
-                        $('#articleCount').text(res.data.articleCount);
-                        $('#commentCount').text(res.data.commentCount);
-                        $('#todayArticleCount').text(res.data.todayArticleCount);
+                        animateNumber('userCount', res.data.userCount);
+                        animateNumber('articleCount', res.data.articleCount);
+                        animateNumber('commentCount', res.data.commentCount);
+                        animateNumber('todayArticleCount', res.data.todayArticleCount);
                     } else {
                         layer.msg(res.msg || '加载失败');
                     }
@@ -135,14 +368,32 @@
             });
         }
 
+        // 数字动画
+        function animateNumber(elementId, targetNumber) {
+            var element = $('#' + elementId);
+            var duration = 1000;
+            var start = 0;
+            var increment = targetNumber / (duration / 16);
+            var current = start;
+
+            var timer = setInterval(function() {
+                current += increment;
+                if (current >= targetNumber) {
+                    current = targetNumber;
+                    clearInterval(timer);
+                }
+                element.text(Math.floor(current));
+            }, 16);
+        }
+
         // 退出登录
         $('#logout').click(function() {
-            layer.confirm('确定要退出吗？', function(index){
-                $.post('/user/logout', function(res) {
-                    if (res.code === 200) {
-                        window.location.href = '/pages/front/login.html';
-                    }
-                });
+            layer.confirm('🚪 确定要返回前台首页吗？', {
+                icon: 3,
+                title: '提示',
+                btn: ['确定', '取消']
+            }, function(index){
+                window.location.href = '/index.jsp';
                 layer.close(index);
             });
         });
