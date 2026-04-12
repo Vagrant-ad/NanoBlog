@@ -152,7 +152,7 @@ nanoblog/
 **1. 克隆项目**
 
 ```bash
-git clone https://github.com/your-username/nanoblog.git
+git clone https://github.com/vagrant-ad/nanoblog.git
 cd nanoblog
 ```
 
