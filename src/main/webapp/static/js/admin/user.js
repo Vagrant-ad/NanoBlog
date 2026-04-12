@@ -4,7 +4,7 @@ layui.use(['table', 'layer', 'form'], function(){
     var form = layui.form;
     var $ = layui.$;
 
-    // 渲染表格
+    //渲染表格
     var tableIns = table.render({
         elem: '#userTable',
         url: '/admin/user/list',
@@ -53,7 +53,7 @@ layui.use(['table', 'layer', 'form'], function(){
         }
     });
 
-    // 搜索
+    //搜索
     $('#searchBtn').click(function() {
         var username = $('input[name="username"]').val();
         tableIns.reload({
@@ -62,7 +62,7 @@ layui.use(['table', 'layer', 'form'], function(){
         });
     });
 
-    // 监听工具条
+    //监听工具条
     table.on('tool(userTable)', function(obj){
         var data = obj.data;
         var layEvent = obj.event;
@@ -119,7 +119,7 @@ layui.use(['table', 'layer', 'form'], function(){
         }
     });
 
-    // 退出登录
+    //退出登录
     $('#logout').click(function() {
         layer.confirm('🚪 确定要退出登录吗？', {
             icon: 3,

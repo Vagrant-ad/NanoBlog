@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>用户管理 - NanoBlog后台管理</title>
     <link rel="stylesheet" href="/static/lib/layui/css/layui.css">
+    <link rel="stylesheet" href="/static/css/admin/user.css">
 </head>
 <body class="layui-layout-body">
 <div class="layui-layout layui-layout-admin">
-    <!-- 头部 -->
+    <!--头部-->
     <div class="layui-header">
         <div class="layui-logo">📝 NanoBlog 后台管理</div>
         <ul class="layui-nav layui-layout-right">
@@ -17,7 +18,7 @@
         </ul>
     </div>
 
-    <!-- 左侧导航 -->
+    <!--左侧导航-->
     <div class="layui-side layui-bg-black">
         <div class="layui-side-scroll">
             <ul class="layui-nav layui-nav-tree" lay-filter="test">
@@ -30,48 +31,49 @@
         </div>
     </div>
 
-    <!-- 内容主体区域 -->
+    <!--内容主体区域-->
     <div class="layui-body">
-        <!-- 页面标题 -->
+        <!--页面标题-->
         <div class="page-header">
             <h1>用户管理</h1>
         </div>
 
-        <!-- 搜索框 -->
+        <!--搜索框-->
         <div class="search-box">
             <form class="layui-form" lay-filter="searchForm">
                 <div class="layui-form-item">
                     <div class="layui-inline" style="flex: 1;">
-                        <input type="text" name="username" placeholder="🔍 输入用户名搜索" class="layui-input" autocomplete="off">
+                        <input type="text" name="username" placeholder="输入用户名搜索" class="layui-input" autocomplete="off">
                     </div>
-                    <button type="button" class="layui-btn" id="searchBtn">🔎 搜索</button>
-                    <button type="reset" class="layui-btn layui-btn-primary">🔄 重置</button>
+                    <button type="button" class="layui-btn" id="searchBtn">搜索</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
                 </div>
             </form>
         </div>
 
-        <!-- 表格区域 -->
+        <!--表格区域-->
         <div class="table-container">
             <table class="layui-hide" id="userTable" lay-filter="userTable"></table>
         </div>
     </div>
 
-    <!-- 底部 -->
-    <div class="layui-footer">© 2026 NanoBlog - 后台管理系统 | Made with ❤️</div>
+    <!--底部-->
+    <div class="layui-footer">© 2026 NanoBlog - 后台管理系统</div>
 </div>
 
-<!-- 操作列模板 -->
+<!--操作列模板-->
 <script type="text/html" id="actionTpl">
     <a class="layui-btn layui-btn-xs action-btn" lay-event="toggleStatus" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
         {{# if(d.status === 1){ }}
-            🚫 禁用
+            禁用
         {{# } else { }}
-            ✅ 启用
+            启用
         {{# } }}
     </a>
-    <a class="layui-btn layui-btn-danger layui-btn-xs action-btn" lay-event="delete">🗑️ 删除</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs action-btn" lay-event="delete">🗑删除</a>
 </script>
 
 <script src="/static/lib/layui/layui.js"></script>
+<script src="/static/js/admin/user.js"></script>
 </body>
 </html>

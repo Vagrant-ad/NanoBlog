@@ -4,7 +4,7 @@ layui.use(['table', 'layer', 'form'], function(){
     var form = layui.form;
     var $ = layui.$;
 
-    // 渲染表格
+    //渲染表格
     var tableIns = table.render({
         elem: '#articleTable',
         url: '/admin/article/list',
@@ -23,22 +23,22 @@ layui.use(['table', 'layer', 'form'], function(){
                 align: 'center',
                 templet: function(d) {
                     if (d.status === 0) {
-                        return '<span class="status-badge status-draft">📝 草稿</span>';
+                        return '<span class="status-badge status-draft">草稿</span>';
                     } else if (d.status === 1) {
-                        return '<span class="status-badge status-published">✅ 已发布</span>';
+                        return '<span class="status-badge status-published">已发布</span>';
                     } else {
-                        return '<span class="status-badge status-archived">📦 已归档</span>';
+                        return '<span class="status-badge status-archived">已归档</span>';
                     }
                 }
             },
             {field: 'viewCount', title: '浏览量', width: 100, align: 'center', templet: function(d) {
-                return '<span class="stat-number">👁️ ' + d.viewCount + '</span>';
+                return  d.viewCount + '</span>';
             }},
             {field: 'likeCount', title: '点赞数', width: 100, align: 'center', templet: function(d) {
-                return '<span class="stat-number">❤️ ' + d.likeCount + '</span>';
+                return  d.likeCount + '</span>';
             }},
             {field: 'commentCount', title: '评论数', width: 100, align: 'center', templet: function(d) {
-                return '<span class="stat-number">💬 ' + d.commentCount + '</span>';
+                return  + d.commentCount + '</span>';
             }},
             {field: 'createTime', title: '创建时间', width: 180, align: 'center'},
             {field: 'publishTime', title: '发布时间', width: 180, align: 'center'},
@@ -61,7 +61,7 @@ layui.use(['table', 'layer', 'form'], function(){
         }
     });
 
-    // 搜索
+    //搜索
     $('#searchBtn').click(function() {
         var status = $('select[name="status"]').val();
         var title = $('input[name="title"]').val();
@@ -71,13 +71,13 @@ layui.use(['table', 'layer', 'form'], function(){
         });
     });
 
-    // 监听工具条
+    //监听工具条
     table.on('tool(articleTable)', function(obj){
         var data = obj.data;
         var layEvent = obj.event;
 
         if(layEvent === 'archive'){
-            layer.confirm('📦 确定要归档该文章吗？', {
+            layer.confirm('确定要归档该文章吗？', {
                 icon: 3,
                 title: '归档确认',
                 btn: ['确定', '取消']
@@ -101,7 +101,7 @@ layui.use(['table', 'layer', 'form'], function(){
                 layer.close(index);
             });
         } else if(layEvent === 'delete'){
-            layer.confirm('⚠️ 确定要删除该文章吗？此操作不可恢复！', {
+            layer.confirm('⚠确定要删除该文章吗？此操作不可恢复！', {
                 icon: 3,
                 title: '删除确认',
                 btn: ['确定删除', '取消']
@@ -126,7 +126,7 @@ layui.use(['table', 'layer', 'form'], function(){
         }
     });
 
-    // 退出登录
+    //退出登录
     $('#logout').click(function() {
         layer.confirm('🚪 确定要退出登录吗？', {
             icon: 3,

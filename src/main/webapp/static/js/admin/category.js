@@ -5,12 +5,12 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
     var table = layui.table;
     var $ = layui.$;
 
-    // ===================== 分类管理 =====================
+    //分类管理
 
     var allCategories = [];
     var expandedNodes = new Set();
 
-    // 加载分类数据
+    //加载分类数据
     function loadCategories() {
         $.get('/category/list', function(res) {
             if (res.code === 200) {
@@ -25,12 +25,12 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
         });
     }
 
-    // 渲染分类树
+    //渲染分类树
     function renderCategoryTree() {
         var tbody = $('#categoryTableBody');
         tbody.empty();
 
-        // 构建父子关系映射
+        //构建父子关系映射
         var parentMap = {};
         allCategories.forEach(function(cat) {
             var pid = cat.parentId || 0;
@@ -42,31 +42,31 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
 
         console.log('父子关系映射:', parentMap);
 
-        // 获取顶级分类（parentId为0或null）
+        //获取顶级分类（parentId为0或null）
         var parents = parentMap[0] || [];
         parents.sort(function(a, b) { return a.sortOrder - b.sortOrder; });
 
         console.log('顶级分类:', parents);
 
-        // 渲染每个父分类及其子分类
+        //渲染每个父分类及其子分类
         parents.forEach(function(parent) {
             renderCategoryRow(tbody, parent, parentMap, 0);
         });
     }
 
-    // 渲染单行
+    //渲染单行
     function renderCategoryRow(tbody, category, parentMap, level) {
         var children = parentMap[category.id] || [];
         var hasChildren = children.length > 0;
         var isExpanded = expandedNodes.has(category.id);
 
-        // 构建缩进
+        //构建缩进
         var indent = '';
         for (var i = 0; i < level; i++) {
             indent += '<span class="tree-indent"></span>';
         }
 
-        // 构建图标
+        //构建图标
         var icon = '';
         if (hasChildren) {
             if (isExpanded) {
@@ -78,12 +78,12 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
             icon = '<i class="layui-icon layui-icon-file" style="margin-right: 8px; color: #ccc;"></i>';
         }
 
-        // 状态显示
+        //状态显示
         var statusHtml = category.status === 1 ?
             '<span class="status-badge status-enabled">✓ 启用</span>' :
             '<span class="status-badge status-disabled">✕ 禁用</span>';
 
-        // 构建行
+        //构建行
         var rowClass = level === 0 ? 'parent-row' : 'child-row';
         var row = '<tr class="' + rowClass + '" data-id="' + category.id + '" data-level="' + level + '">';
         row += '<td style="text-align: center;">' + category.sortOrder + '</td>';
@@ -99,7 +99,7 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
 
         tbody.append(row);
 
-        // 如果有子分类且已展开，递归渲染子分类
+        //如果有子分类且已展开，递归渲染子分类
         if (hasChildren && isExpanded) {
             children.sort(function(a, b) { return a.sortOrder - b.sortOrder; });
             children.forEach(function(child) {
@@ -108,7 +108,7 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
         }
     }
 
-    // 点击展开/折叠图标
+    //点击展开/折叠图标
     $(document).on('click', '.tree-icon', function(e) {
         e.stopPropagation();
         var id = parseInt($(this).data('id'));
@@ -126,7 +126,7 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
         renderCategoryTree();
     });
 
-    // 展开全部
+    //展开全部
     $('#expandAllBtn').click(function() {
         allCategories.forEach(function(cat) {
             var children = allCategories.filter(function(c) { return c.parentId === cat.id; });
@@ -138,14 +138,14 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
         layer.msg('✅ 已展开所有分类');
     });
 
-    // 折叠全部
+    //折叠全部
     $('#collapseAllBtn').click(function() {
         expandedNodes.clear();
         renderCategoryTree();
         layer.msg('✅ 已折叠所有分类');
     });
 
-    // 获取分类列表用于父分类选择
+    //获取分类列表用于父分类选择
     function getCategoryList(callback) {
         $.get('/category/list', function(res) {
             if (res.code === 200) {
@@ -158,7 +158,7 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
         });
     }
 
-    // 新增分类
+    //新增分类
     $('#addCategoryBtn').click(function() {
         getCategoryList(function(categoryList) {
             var parentOptions = '<option value="0">无（作为顶级分类）</option>';
@@ -205,8 +205,8 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
                     '</div>' +
                     '<div class="layui-form-item">' +
                     '<div class="layui-input-block">' +
-                    '<button class="layui-btn" lay-submit lay-filter="submitCategory">✅ 提交</button>' +
-                    '<button type="reset" class="layui-btn layui-btn-primary">🔄 重置</button>' +
+                    '<button class="layui-btn" lay-submit lay-filter="submitCategory">提交</button>' +
+                    '<button type="reset" class="layui-btn layui-btn-primary">重置</button>' +
                     '</div>' +
                     '</div>' +
                     '</form>' +
@@ -243,7 +243,7 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
         });
     });
 
-    // 编辑分类
+    //编辑分类
     $(document).on('click', '.edit-category', function() {
         var id = parseInt($(this).data('id'));
         var category = allCategories.find(function(c) { return c.id === id; });
@@ -265,7 +265,7 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
 
             layer.open({
                 type: 1,
-                title: '✏️ 编辑分类',
+                title: '✏编辑分类',
                 area: ['550px', '420px'],
                 content: '<div class="form-container">' +
                     '<form class="layui-form" lay-filter="editCategoryForm">' +
@@ -296,7 +296,7 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
                     '</div>' +
                     '<div class="layui-form-item">' +
                     '<div class="layui-input-block">' +
-                    '<button class="layui-btn" lay-submit lay-filter="submitEditCategory">✅ 提交</button>' +
+                    '<button class="layui-btn" lay-submit lay-filter="submitEditCategory">提交</button>' +
                     '</div>' +
                     '</div>' +
                     '</form>' +
@@ -333,7 +333,7 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
         });
     });
 
-    // 删除分类
+    //删除分类
     $(document).on('click', '.delete-category', function() {
         var id = parseInt($(this).data('id'));
         layer.confirm('⚠️ 确定要删除该分类吗？如果该分类下还有文章或子分类将无法删除。', {
@@ -360,12 +360,12 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
         });
     });
 
-    // 初始加载
+    //初始加载
     loadCategories();
 
-    // ===================== 标签管理 =====================
+    //标签管理
 
-    // 渲染标签表格
+    //渲染标签表格
     var tagTableIns = table.render({
         elem: '#tagTable',
         url: '/tag/list',
@@ -388,7 +388,7 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
         }
     });
 
-    // 新增标签
+    //新增标签
     $('#addTagBtn').click(function() {
         layer.open({
             type: 1,
@@ -410,8 +410,8 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
                 '</div>' +
                 '<div class="layui-form-item">' +
                 '<div class="layui-input-block">' +
-                '<button class="layui-btn" lay-submit lay-filter="submitTag">✅ 提交</button>' +
-                '<button type="reset" class="layui-btn layui-btn-primary">🔄 重置</button>' +
+                '<button class="layui-btn" lay-submit lay-filter="submitTag">提交</button>' +
+                '<button type="reset" class="layui-btn layui-btn-primary">重置</button>' +
                 '</div>' +
                 '</div>' +
                 '</form>' +
@@ -444,7 +444,7 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
         });
     });
 
-    // 监听标签工具条
+    //监听标签工具条
     table.on('tool(tagTable)', function(obj){
         var data = obj.data;
         var layEvent = obj.event;
@@ -475,9 +475,9 @@ layui.use(['element', 'layer', 'form', 'table'], function(){
         }
     });
 
-    // 退出登录
+    //退出登录
     $('#logout').click(function() {
-        layer.confirm('🚪 确定要退出登录吗？', {
+        layer.confirm('确定要退出登录吗？', {
             icon: 3,
             title: '提示',
             btn: ['确定', '取消']

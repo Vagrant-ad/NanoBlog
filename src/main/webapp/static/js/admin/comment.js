@@ -4,7 +4,7 @@ layui.use(['table', 'layer', 'form'], function(){
     var form = layui.form;
     var $ = layui.$;
 
-    // 渲染表格
+    //渲染表格
     var tableIns = table.render({
         elem: '#commentTable',
         url: '/admin/comment/list',
@@ -49,7 +49,7 @@ layui.use(['table', 'layer', 'form'], function(){
         }
     });
 
-    // 搜索
+    //搜索
     $('#searchBtn').click(function() {
         var articleId = $('input[name="articleId"]').val();
         tableIns.reload({
@@ -58,7 +58,7 @@ layui.use(['table', 'layer', 'form'], function(){
         });
     });
 
-    // 监听工具条
+    //监听工具条
     table.on('tool(commentTable)', function(obj){
         var data = obj.data;
         var layEvent = obj.event;
@@ -89,7 +89,7 @@ layui.use(['table', 'layer', 'form'], function(){
         } else if(layEvent === 'viewContent') {
             layer.open({
                 type: 1,
-                title: '📝 评论详情',
+                title: '评论详情',
                 area: ['600px', '400px'],
                 content: '<div style="padding: 20px; line-height: 1.8;">' + data.commentContent + '</div>',
                 shadeClose: true
@@ -97,7 +97,7 @@ layui.use(['table', 'layer', 'form'], function(){
         }
     });
 
-    // 退出登录
+    //退出登录
     $('#logout').click(function() {
         layer.confirm('🚪 确定要退出登录吗？', {
             icon: 3,
