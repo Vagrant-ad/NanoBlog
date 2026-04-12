@@ -5,43 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>仪表盘 - NanoBlog后台管理</title>
     <link rel="stylesheet" href="/static/lib/layui/css/layui.css">
-    <style>
-        body {
-            background-color: #f2f2f2;
-        }
-        .stat-card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .stat-card h3 {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-        .stat-card .number {
-            font-size: 32px;
-            font-weight: bold;
-            color: #1E9FFF;
-        }
-        .layui-layout-admin .layui-body {
-            padding: 20px;
-        }
-    </style>
 </head>
 <body class="layui-layout-body">
 <div class="layui-layout layui-layout-admin">
     <!-- 头部 -->
     <div class="layui-header">
-        <div class="layui-logo">NanoBlog 后台管理</div>
+        <div class="layui-logo">📝 NanoBlog 后台管理</div>
         <ul class="layui-nav layui-layout-right">
             <li class="layui-nav-item">
-                <a href="javascript:;" id="adminName">管理员</a>
+                <a href="javascript:;" id="adminName">👤 管理员</a>
             </li>
             <li class="layui-nav-item">
-                <a href="javascript:;" id="logout">退出</a>
+                <a href="javascript:;" id="logout">🚪 退出</a>
             </li>
         </ul>
     </div>
@@ -51,19 +26,19 @@
         <div class="layui-side-scroll">
             <ul class="layui-nav layui-nav-tree" lay-filter="test">
                 <li class="layui-nav-item layui-this">
-                    <a href="dashboard.html">仪表盘</a>
+                    <a href="dashboard.html">📊 仪表盘</a>
                 </li>
                 <li class="layui-nav-item">
-                    <a href="user.html">用户管理</a>
+                    <a href="user.html">👥 用户管理</a>
                 </li>
                 <li class="layui-nav-item">
-                    <a href="post.html">文章管理</a>
+                    <a href="post.html">📄 文章管理</a>
                 </li>
                 <li class="layui-nav-item">
-                    <a href="comment.html">评论管理</a>
+                    <a href="comment.html">💬 评论管理</a>
                 </li>
                 <li class="layui-nav-item">
-                    <a href="category.html">分类标签管理</a>
+                    <a href="category.html">🏷️ 分类标签管理</a>
                 </li>
             </ul>
         </div>
@@ -71,82 +46,62 @@
 
     <!-- 内容主体区域 -->
     <div class="layui-body">
-        <div class="layui-row layui-col-space15">
+        <!-- 欢迎横幅 -->
+        <div class="welcome-banner">
+            <h2>👋 欢迎回来，管理员！</h2>
+            <p>今天是 <span id="currentDate"></span>，祝您工作愉快！</p>
+        </div>
+
+        <h1 class="page-title">数据概览</h1>
+
+        <div class="layui-row layui-col-space20">
             <div class="layui-col-md3">
                 <div class="stat-card">
+                    <div class="icon-wrapper">👥</div>
                     <h3>用户总数</h3>
                     <div class="number" id="userCount">0</div>
                 </div>
             </div>
             <div class="layui-col-md3">
                 <div class="stat-card">
+                    <div class="icon-wrapper">📄</div>
                     <h3>文章总数</h3>
                     <div class="number" id="articleCount">0</div>
                 </div>
             </div>
             <div class="layui-col-md3">
                 <div class="stat-card">
+                    <div class="icon-wrapper">💬</div>
                     <h3>评论总数</h3>
                     <div class="number" id="commentCount">0</div>
                 </div>
             </div>
             <div class="layui-col-md3">
                 <div class="stat-card">
+                    <div class="icon-wrapper">✨</div>
                     <h3>今日新增文章</h3>
                     <div class="number" id="todayArticleCount">0</div>
                 </div>
             </div>
         </div>
+
+        <!-- 快捷操作 -->
+        <div class="quick-actions">
+            <h3>⚡ 快捷操作</h3>
+            <a href="post.html" class="action-btn">📝 发布文章</a>
+            <a href="user.html" class="action-btn">👤 添加用户</a>
+            <a href="category.html" class="action-btn">🏷️ 管理分类</a>
+            <a href="comment.html" class="action-btn">💬 审核评论</a>
+        </div>
     </div>
 
     <!-- 底部 -->
     <div class="layui-footer">
-        © 2026 NanoBlog - 后台管理系统
+        © 2026 NanoBlog - 后台管理系统 | Made with ❤️
     </div>
 </div>
 
 <script src="/static/lib/layui/layui.js"></script>
-<script>
-    layui.use(['element', 'layer'], function(){
-        var element = layui.element;
-        var layer = layui.layer;
-        var $ = layui.$;
-
-        // 加载统计数据
-        loadStats();
-
-        function loadStats() {
-            $.ajax({
-                url: '/admin/stats',
-                type: 'GET',
-                success: function(res) {
-                    if (res.code === 200) {
-                        $('#userCount').text(res.data.userCount);
-                        $('#articleCount').text(res.data.articleCount);
-                        $('#commentCount').text(res.data.commentCount);
-                        $('#todayArticleCount').text(res.data.todayArticleCount);
-                    } else {
-                        layer.msg(res.msg || '加载失败');
-                    }
-                },
-                error: function() {
-                    layer.msg('网络错误');
-                }
-            });
-        }
-
-        // 退出登录
-        $('#logout').click(function() {
-            layer.confirm('确定要退出吗？', function(index){
-                $.post('/user/logout', function(res) {
-                    if (res.code === 200) {
-                        window.location.href = '/pages/front/login.html';
-                    }
-                });
-                layer.close(index);
-            });
-        });
-    });
-</script>
+<script src="/static/js/admin/dashboard.js"></script>
 </body>
 </html>

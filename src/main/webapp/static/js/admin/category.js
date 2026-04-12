@@ -1,0 +1,493 @@
+layui.use(['element', 'layer', 'form', 'table'], function(){
+    var element = layui.element;
+    var layer = layui.layer;
+    var form = layui.form;
+    var table = layui.table;
+    var $ = layui.$;
+
+    // ===================== 分类管理 =====================
+
+    var allCategories = [];
+    var expandedNodes = new Set();
+
+    // 加载分类数据
+    function loadCategories() {
+        $.get('/category/list', function(res) {
+            if (res.code === 200) {
+                allCategories = res.data;
+                console.log('加载的分类数据:', allCategories);
+                renderCategoryTree();
+            } else {
+                layer.msg('❌ 加载分类失败');
+            }
+        }).fail(function() {
+            layer.msg('❌ 网络错误');
+        });
+    }
+
+    // 渲染分类树
+    function renderCategoryTree() {
+        var tbody = $('#categoryTableBody');
+        tbody.empty();
+
+        // 构建父子关系映射
+        var parentMap = {};
+        allCategories.forEach(function(cat) {
+            var pid = cat.parentId || 0;
+            if (!parentMap[pid]) {
+                parentMap[pid] = [];
+            }
+            parentMap[pid].push(cat);
+        });
+
+        console.log('父子关系映射:', parentMap);
+
+        // 获取顶级分类（parentId为0或null）
+        var parents = parentMap[0] || [];
+        parents.sort(function(a, b) { return a.sortOrder - b.sortOrder; });
+
+        console.log('顶级分类:', parents);
+
+        // 渲染每个父分类及其子分类
+        parents.forEach(function(parent) {
+            renderCategoryRow(tbody, parent, parentMap, 0);
+        });
+    }
+
+    // 渲染单行
+    function renderCategoryRow(tbody, category, parentMap, level) {
+        var children = parentMap[category.id] || [];
+        var hasChildren = children.length > 0;
+        var isExpanded = expandedNodes.has(category.id);
+
+        // 构建缩进
+        var indent = '';
+        for (var i = 0; i < level; i++) {
+            indent += '<span class="tree-indent"></span>';
+        }
+
+        // 构建图标
+        var icon = '';
+        if (hasChildren) {
+            if (isExpanded) {
+                icon = '<i class="layui-icon layui-icon-down tree-icon" data-id="' + category.id + '" style="color: #667eea;"></i>';
+            } else {
+                icon = '<i class="layui-icon layui-icon-right tree-icon" data-id="' + category.id + '" style="color: #FFB800;"></i>';
+            }
+        } else {
+            icon = '<i class="layui-icon layui-icon-file" style="margin-right: 8px; color: #ccc;"></i>';
+        }
+
+        // 状态显示
+        var statusHtml = category.status === 1 ?
+            '<span class="status-badge status-enabled">✓ 启用</span>' :
+            '<span class="status-badge status-disabled">✕ 禁用</span>';
+
+        // 构建行
+        var rowClass = level === 0 ? 'parent-row' : 'child-row';
+        var row = '<tr class="' + rowClass + '" data-id="' + category.id + '" data-level="' + level + '">';
+        row += '<td style="text-align: center;">' + category.sortOrder + '</td>';
+        row += '<td style="text-align: center;">' + category.id + '</td>';
+        row += '<td>' + indent + icon + ' <span class="category-name">' + category.categoryName + '</span></td>';
+        row += '<td>' + (category.categorySlug || '-') + '</td>';
+        row += '<td style="text-align: center;">' + statusHtml + '</td>';
+        row += '<td style="text-align: center;">';
+        row += '<button class="layui-btn layui-btn-xs edit-category action-btn" data-id="' + category.id + '" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">✏️ 编辑</button> ';
+        row += '<button class="layui-btn layui-btn-danger layui-btn-xs delete-category action-btn" data-id="' + category.id + '">🗑️ 删除</button>';
+        row += '</td>';
+        row += '</tr>';
+
+        tbody.append(row);
+
+        // 如果有子分类且已展开，递归渲染子分类
+        if (hasChildren && isExpanded) {
+            children.sort(function(a, b) { return a.sortOrder - b.sortOrder; });
+            children.forEach(function(child) {
+                renderCategoryRow(tbody, child, parentMap, level + 1);
+            });
+        }
+    }
+
+    // 点击展开/折叠图标
+    $(document).on('click', '.tree-icon', function(e) {
+        e.stopPropagation();
+        var id = parseInt($(this).data('id'));
+
+        console.log('点击分类ID:', id, '当前展开状态:', expandedNodes.has(id));
+
+        if (expandedNodes.has(id)) {
+            expandedNodes.delete(id);
+            console.log('折叠分类:', id);
+        } else {
+            expandedNodes.add(id);
+            console.log('展开分类:', id);
+        }
+
+        renderCategoryTree();
+    });
+
+    // 展开全部
+    $('#expandAllBtn').click(function() {
+        allCategories.forEach(function(cat) {
+            var children = allCategories.filter(function(c) { return c.parentId === cat.id; });
+            if (children.length > 0) {
+                expandedNodes.add(cat.id);
+            }
+        });
+        renderCategoryTree();
+        layer.msg('✅ 已展开所有分类');
+    });
+
+    // 折叠全部
+    $('#collapseAllBtn').click(function() {
+        expandedNodes.clear();
+        renderCategoryTree();
+        layer.msg('✅ 已折叠所有分类');
+    });
+
+    // 获取分类列表用于父分类选择
+    function getCategoryList(callback) {
+        $.get('/category/list', function(res) {
+            if (res.code === 200) {
+                callback(res.data);
+            } else {
+                layer.msg('❌ 获取分类列表失败');
+            }
+        }).fail(function() {
+            layer.msg('❌ 网络错误');
+        });
+    }
+
+    // 新增分类
+    $('#addCategoryBtn').click(function() {
+        getCategoryList(function(categoryList) {
+            var parentOptions = '<option value="0">无（作为顶级分类）</option>';
+            categoryList.forEach(function(cat) {
+                parentOptions += '<option value="' + cat.id + '">' + cat.categoryName + '</option>';
+            });
+
+            layer.open({
+                type: 1,
+                title: '➕ 新增分类',
+                area: ['550px', '420px'],
+                content: '<div class="form-container">' +
+                    '<form class="layui-form" lay-filter="categoryForm">' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">父分类</label>' +
+                    '<div class="layui-input-block">' +
+                    '<select name="parentId">' + parentOptions + '</select>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">分类名称</label>' +
+                    '<div class="layui-input-block">' +
+                    '<input type="text" name="categoryName" required lay-verify="required" placeholder="请输入分类名称" class="layui-input">' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">Slug</label>' +
+                    '<div class="layui-input-block">' +
+                    '<input type="text" name="categorySlug" placeholder="请输入slug（可选）" class="layui-input">' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">排序</label>' +
+                    '<div class="layui-input-block">' +
+                    '<input type="number" name="sortOrder" value="0" class="layui-input">' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">状态</label>' +
+                    '<div class="layui-input-block">' +
+                    '<input type="radio" name="status" value="1" title="启用" checked>' +
+                    '<input type="radio" name="status" value="0" title="禁用">' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<div class="layui-input-block">' +
+                    '<button class="layui-btn" lay-submit lay-filter="submitCategory">✅ 提交</button>' +
+                    '<button type="reset" class="layui-btn layui-btn-primary">🔄 重置</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</form>' +
+                    '</div>',
+                success: function(layero, index) {
+                    form.render();
+
+                    form.on('submit(submitCategory)', function(data) {
+                        data.field.parentId = parseInt(data.field.parentId) || 0;
+                        data.field.sortOrder = parseInt(data.field.sortOrder) || 0;
+                        data.field.status = parseInt(data.field.status);
+                        $.ajax({
+                            url: '/admin/category/add',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(data.field),
+                            success: function(res) {
+                                if (res.code === 200) {
+                                    layer.msg('✅ 添加成功');
+                                    layer.close(index);
+                                    loadCategories();
+                                } else {
+                                    layer.msg(res.msg || '❌ 添加失败');
+                                }
+                            },
+                            error: function() {
+                                layer.msg('❌ 网络错误');
+                            }
+                        });
+                        return false;
+                    });
+                }
+            });
+        });
+    });
+
+    // 编辑分类
+    $(document).on('click', '.edit-category', function() {
+        var id = parseInt($(this).data('id'));
+        var category = allCategories.find(function(c) { return c.id === id; });
+        if (!category) {
+            layer.msg('❌ 找不到分类信息');
+            return;
+        }
+
+        console.log('编辑分类:', category);
+
+        getCategoryList(function(categoryList) {
+            var parentOptions = '<option value="0">无（作为顶级分类）</option>';
+            categoryList.forEach(function(cat) {
+                if (cat.id !== category.id) {
+                    var selected = (category.parentId && cat.id == category.parentId) ? 'selected' : '';
+                    parentOptions += '<option value="' + cat.id + '" ' + selected + '>' + cat.categoryName + '</option>';
+                }
+            });
+
+            layer.open({
+                type: 1,
+                title: '✏️ 编辑分类',
+                area: ['550px', '420px'],
+                content: '<div class="form-container">' +
+                    '<form class="layui-form" lay-filter="editCategoryForm">' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">父分类</label>' +
+                    '<div class="layui-input-block">' +
+                    '<select name="parentId">' + parentOptions + '</select>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">分类名称</label>' +
+                    '<div class="layui-input-block">' +
+                    '<input type="text" name="categoryName" value="' + category.categoryName + '" required lay-verify="required" class="layui-input">' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">排序</label>' +
+                    '<div class="layui-input-block">' +
+                    '<input type="number" name="sortOrder" value="' + category.sortOrder + '" class="layui-input">' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<label class="layui-form-label">状态</label>' +
+                    '<div class="layui-input-block">' +
+                    '<input type="radio" name="status" value="1" title="启用"' + (category.status === 1 ? ' checked' : '') + '>' +
+                    '<input type="radio" name="status" value="0" title="禁用"' + (category.status === 0 ? ' checked' : '') + '>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="layui-form-item">' +
+                    '<div class="layui-input-block">' +
+                    '<button class="layui-btn" lay-submit lay-filter="submitEditCategory">✅ 提交</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</form>' +
+                    '</div>',
+                success: function(layero, index) {
+                    form.render();
+
+                    form.on('submit(submitEditCategory)', function(formData) {
+                        formData.field.parentId = parseInt(formData.field.parentId) || 0;
+                        formData.field.sortOrder = parseInt(formData.field.sortOrder) || 0;
+                        formData.field.status = parseInt(formData.field.status);
+                        $.ajax({
+                            url: '/admin/category/' + category.id,
+                            type: 'PUT',
+                            contentType: 'application/json',
+                            data: JSON.stringify(formData.field),
+                            success: function(res) {
+                                if (res.code === 200) {
+                                    layer.msg('✅ 修改成功');
+                                    layer.close(index);
+                                    loadCategories();
+                                } else {
+                                    layer.msg(res.msg || '❌ 修改失败');
+                                }
+                            },
+                            error: function() {
+                                layer.msg('❌ 网络错误');
+                            }
+                        });
+                        return false;
+                    });
+                }
+            });
+        });
+    });
+
+    // 删除分类
+    $(document).on('click', '.delete-category', function() {
+        var id = parseInt($(this).data('id'));
+        layer.confirm('⚠️ 确定要删除该分类吗？如果该分类下还有文章或子分类将无法删除。', {
+            icon: 3,
+            title: '删除确认',
+            btn: ['确定删除', '取消']
+        }, function(index){
+            $.ajax({
+                url: '/admin/category/' + id,
+                type: 'DELETE',
+                success: function(res) {
+                    if (res.code === 200) {
+                        layer.msg('✅ 删除成功');
+                        loadCategories();
+                    } else {
+                        layer.msg(res.msg || '❌ 删除失败');
+                    }
+                },
+                error: function() {
+                    layer.msg('❌ 网络错误');
+                }
+            });
+            layer.close(index);
+        });
+    });
+
+    // 初始加载
+    loadCategories();
+
+    // ===================== 标签管理 =====================
+
+    // 渲染标签表格
+    var tagTableIns = table.render({
+        elem: '#tagTable',
+        url: '/tag/list',
+        page: false,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80, align: 'center'},
+            {field: 'tagName', title: '标签名称', width: 200},
+            {field: 'tagSlug', title: 'Slug', width: 200},
+            {title: '操作', width: 120, toolbar: '#tagActionTpl', align: 'center'}
+        ]],
+        response: {
+            statusCode: 200
+        },
+        parseData: function(res) {
+            return {
+                "code": res.code,
+                "msg": res.msg,
+                "data": res.data
+            };
+        }
+    });
+
+    // 新增标签
+    $('#addTagBtn').click(function() {
+        layer.open({
+            type: 1,
+            title: '➕ 新增标签',
+            area: ['550px', '280px'],
+            content: '<div class="form-container">' +
+                '<form class="layui-form" lay-filter="tagForm">' +
+                '<div class="layui-form-item">' +
+                '<label class="layui-form-label">标签名称</label>' +
+                '<div class="layui-input-block">' +
+                '<input type="text" name="tagName" required lay-verify="required" placeholder="请输入标签名称" class="layui-input">' +
+                '</div>' +
+                '</div>' +
+                '<div class="layui-form-item">' +
+                '<label class="layui-form-label">Slug</label>' +
+                '<div class="layui-input-block">' +
+                '<input type="text" name="tagSlug" placeholder="请输入slug（可选）" class="layui-input">' +
+                '</div>' +
+                '</div>' +
+                '<div class="layui-form-item">' +
+                '<div class="layui-input-block">' +
+                '<button class="layui-btn" lay-submit lay-filter="submitTag">✅ 提交</button>' +
+                '<button type="reset" class="layui-btn layui-btn-primary">🔄 重置</button>' +
+                '</div>' +
+                '</div>' +
+                '</form>' +
+                '</div>',
+            success: function(layero, index) {
+                form.render();
+
+                form.on('submit(submitTag)', function(data) {
+                    $.ajax({
+                        url: '/admin/tag/add',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(data.field),
+                        success: function(res) {
+                            if (res.code === 200) {
+                                layer.msg('✅ 添加成功');
+                                layer.close(index);
+                                tagTableIns.reload();
+                            } else {
+                                layer.msg(res.msg || '❌ 添加失败');
+                            }
+                        },
+                        error: function() {
+                            layer.msg('❌ 网络错误');
+                        }
+                    });
+                    return false;
+                });
+            }
+        });
+    });
+
+    // 监听标签工具条
+    table.on('tool(tagTable)', function(obj){
+        var data = obj.data;
+        var layEvent = obj.event;
+
+        if(layEvent === 'delete'){
+            layer.confirm('⚠️ 确定要删除该标签吗？', {
+                icon: 3,
+                title: '删除确认',
+                btn: ['确定删除', '取消']
+            }, function(index){
+                $.ajax({
+                    url: '/admin/tag/' + data.id,
+                    type: 'DELETE',
+                    success: function(res) {
+                        if (res.code === 200) {
+                            layer.msg('✅ 删除成功');
+                            obj.del();
+                        } else {
+                            layer.msg(res.msg || '❌ 删除失败');
+                        }
+                    },
+                    error: function() {
+                        layer.msg('❌ 网络错误');
+                    }
+                });
+                layer.close(index);
+            });
+        }
+    });
+
+    // 退出登录
+    $('#logout').click(function() {
+        layer.confirm('🚪 确定要退出登录吗？', {
+            icon: 3,
+            title: '提示',
+            btn: ['确定', '取消']
+        }, function(index){
+            $.post('/user/logout', function(res) {
+                if (res.code === 200) {
+                    window.location.href = '/pages/front/login.html';
+                }
+            });
+            layer.close(index);
+        });
+    });
+});

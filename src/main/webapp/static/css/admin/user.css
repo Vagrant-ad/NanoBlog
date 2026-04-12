@@ -1,0 +1,223 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Microsoft YaHei', Arial, sans-serif;
+}
+
+.layui-layout-admin .layui-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.layui-logo {
+    color: #fff !important;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    background: transparent !important;
+}
+
+.layui-nav .layui-nav-item a {
+    color: #fff !important;
+    transition: all 0.3s ease;
+}
+
+.layui-nav .layui-nav-item a:hover {
+    color: #ffd700 !important;
+    transform: translateY(-2px);
+}
+
+.layui-side {
+    background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%) !important;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+.layui-nav-tree .layui-nav-item a {
+    color: #ecf0f1;
+    transition: all 0.3s ease;
+}
+
+.layui-nav-tree .layui-nav-item a:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateX(5px);
+}
+
+.layui-nav-tree .layui-this {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.layui-nav-tree .layui-this a {
+    color: #fff !important;
+}
+
+.layui-body {
+    padding: 30px;
+    background: #f5f7fa;
+}
+
+.page-header {
+    background: #fff;
+    padding: 25px 30px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.page-header h1 {
+    color: #2c3e50;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.page-header h1::before {
+    content: '';
+    width: 4px;
+    height: 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 2px;
+}
+
+.search-box {
+    background: #fff;
+    padding: 25px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.search-box .layui-form-item {
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.search-box .layui-input {
+    border-radius: 8px;
+    border: 2px solid #e8ecef;
+    transition: all 0.3s ease;
+    height: 40px;
+}
+
+.search-box .layui-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-box .layui-btn {
+    border-radius: 8px;
+    height: 40px;
+    padding: 0 25px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+}
+
+.search-box .layui-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+}
+
+.search-box .layui-btn-primary {
+    background: #fff;
+    color: #666;
+    border: 2px solid #e8ecef;
+    box-shadow: none;
+}
+
+.search-box .layui-btn-primary:hover {
+    border-color: #667eea;
+    color: #667eea;
+    background: #f8f9ff;
+}
+
+.table-container {
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.layui-table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.layui-table thead tr {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.layui-table thead tr th {
+    color: #fff !important;
+    font-weight: 600;
+    border: none;
+}
+
+.layui-table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.layui-table tbody tr:hover {
+    background: #f8f9ff;
+    transform: scale(1.005);
+}
+
+.layui-table td {
+    border-color: #f0f0f0;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-normal {
+    background: #e8f5e9;
+    color: #4caf50;
+}
+
+.status-disabled {
+    background: #ffebee;
+    color: #f44336;
+}
+
+.action-btn {
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    margin: 0 3px;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.layui-footer {
+    background: #fff;
+    color: #7f8c8d;
+    text-align: center;
+    padding: 15px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.username-text {
+    color: #667eea;
+    font-weight: 500;
+}
+
+.email-text {
+    color: #666;
+    font-size: 13px;
+}

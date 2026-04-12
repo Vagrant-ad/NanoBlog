@@ -5,20 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>评论管理 - NanoBlog后台管理</title>
     <link rel="stylesheet" href="/static/lib/layui/css/layui.css">
-    <style>
-        body { background-color: #f2f2f2; }
-        .layui-layout-admin .layui-body { padding: 20px; }
-        .search-box { background: #fff; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
-    </style>
+    <link rel="stylesheet" href="/static/css/admin/comment.css">
 </head>
 <body class="layui-layout-body">
 <div class="layui-layout layui-layout-admin">
     <!-- 头部 -->
     <div class="layui-header">
-        <div class="layui-logo">NanoBlog 后台管理</div>
+        <div class="layui-logo">📝 NanoBlog 后台管理</div>
         <ul class="layui-nav layui-layout-right">
-            <li class="layui-nav-item"><a href="javascript:;" id="adminName">管理员</a></li>
-            <li class="layui-nav-item"><a href="javascript:;" id="logout">退出</a></li>
+            <li class="layui-nav-item"><a href="javascript:;" id="adminName">👤 管理员</a></li>
+            <li class="layui-nav-item"><a href="javascript:;" id="logout">🚪 退出</a></li>
         </ul>
     </div>
 
@@ -26,133 +22,61 @@
     <div class="layui-side layui-bg-black">
         <div class="layui-side-scroll">
             <ul class="layui-nav layui-nav-tree" lay-filter="test">
-                <li class="layui-nav-item"><a href="dashboard.html">仪表盘</a></li>
-                <li class="layui-nav-item"><a href="user.html">用户管理</a></li>
-                <li class="layui-nav-item"><a href="post.html">文章管理</a></li>
-                <li class="layui-nav-item layui-this"><a href="comment.html">评论管理</a></li>
-                <li class="layui-nav-item"><a href="category.html">分类标签管理</a></li>
+                <li class="layui-nav-item"><a href="dashboard.html">📊 仪表盘</a></li>
+                <li class="layui-nav-item"><a href="user.html">👥 用户管理</a></li>
+                <li class="layui-nav-item"><a href="post.html">📄 文章管理</a></li>
+                <li class="layui-nav-item layui-this"><a href="comment.html">💬 评论管理</a></li>
+                <li class="layui-nav-item"><a href="category.html">🏷️ 分类标签管理</a></li>
             </ul>
         </div>
     </div>
 
     <!-- 内容主体区域 -->
     <div class="layui-body">
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <h1>评论管理</h1>
+        </div>
+
+        <!-- 搜索框 -->
         <div class="search-box">
             <form class="layui-form" lay-filter="searchForm">
-                <div class="layui-inline">
-                    <input type="text" name="articleId" placeholder="请输入文章ID筛选" class="layui-input">
+                <div class="layui-form-item">
+                    <div class="layui-inline" style="flex: 1;">
+                        <input type="text" name="articleId" placeholder="🔍 输入文章ID筛选评论" class="layui-input" autocomplete="off">
+                    </div>
+                    <button type="button" class="layui-btn" id="searchBtn">🔎 搜索</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">🔄 重置</button>
                 </div>
-                <button type="button" class="layui-btn" id="searchBtn">搜索</button>
-                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
             </form>
         </div>
 
-        <table class="layui-hide" id="commentTable" lay-filter="commentTable"></table>
+        <!-- 表格区域 -->
+        <div class="table-container">
+            <table class="layui-hide" id="commentTable" lay-filter="commentTable"></table>
+        </div>
     </div>
 
     <!-- 底部 -->
-    <div class="layui-footer">© 2026 NanoBlog - 后台管理系统</div>
+    <div class="layui-footer">© 2026 NanoBlog - 后台管理系统 | Made with ❤️</div>
 </div>
 
 <!-- 操作列模板 -->
 <script type="text/html" id="actionTpl">
-    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs action-btn" lay-event="delete">🗑️ 删除</a>
+</script>
+
+<!-- 评论内容详情模板 -->
+<script type="text/html" id="contentTpl">
+    <div class="comment-content" title="{{ d.commentContent }}" lay-event="viewContent">{{ d.commentContent }}</div>
+</script>
+
+<!-- 文章标题模板 -->
+<script type="text/html" id="articleTpl">
+    <span class="article-title" title="{{ d.articleTitle }}">{{ d.articleTitle }}</span>
 </script>
 
 <script src="/static/lib/layui/layui.js"></script>
-<script>
-    layui.use(['table', 'layer', 'form'], function(){
-        var table = layui.table;
-        var layer = layui.layer;
-        var form = layui.form;
-        var $ = layui.$;
-
-        // 渲染表格
-        var tableIns = table.render({
-            elem: '#commentTable',
-            url: '/admin/comment/list',
-            page: true,
-            cols: [[
-                {field: 'id', title: 'ID', width: 80},
-                {field: 'authorNickname', title: '评论者', width: 120},
-                {field: 'articleTitle', title: '所属文章', minWidth: 200},
-                {field: 'commentContent', title: '评论内容', minWidth: 250},
-                {field: 'createTime', title: '评论时间', width: 180},
-                {
-                    field: 'status', 
-                    title: '状态', 
-                    width: 100,
-                    templet: function(d) {
-                        return d.status === 1 ? '<span style="color: #5FB878;">正常</span>' : '<span style="color: #FF5722;\">禁用</span>';
-                    }
-                },
-                {title: '操作', width: 100, toolbar: '#actionTpl'}
-            ]],
-            request: {
-                pageName: 'page',
-                limitName: 'size'
-            },
-            response: {
-                statusCode: 200
-            },
-            parseData: function(res) {
-                return {
-                    "code": res.code,
-                    "msg": res.msg,
-                    "count": res.data.total,
-                    "data": res.data.records
-                };
-            }
-        });
-
-        // 搜索
-        $('#searchBtn').click(function() {
-            var articleId = $('input[name="articleId"]').val();
-            tableIns.reload({
-                where: { articleId: articleId },
-                page: { curr: 1 }
-            });
-        });
-
-        // 监听工具条
-        table.on('tool(commentTable)', function(obj){
-            var data = obj.data;
-            var layEvent = obj.event;
-
-            if(layEvent === 'delete'){
-                layer.confirm('确定要删除该评论吗？', function(index){
-                    $.ajax({
-                        url: '/admin/comment/' + data.id,
-                        type: 'DELETE',
-                        success: function(res) {
-                            if (res.code === 200) {
-                                layer.msg('删除成功');
-                                obj.del();
-                            } else {
-                                layer.msg(res.msg || '删除失败');
-                            }
-                        },
-                        error: function() {
-                            layer.msg('网络错误');
-                        }
-                    });
-                    layer.close(index);
-                });
-            }
-        });
-
-        // 退出登录
-        $('#logout').click(function() {
-            layer.confirm('确定要退出吗？', function(index){
-                $.post('/user/logout', function(res) {
-                    if (res.code === 200) {
-                        window.location.href = '/pages/front/login.html';
-                    }
-                });
-                layer.close(index);
-            });
-        });
-    });
-</script>
+<script src="/static/js/admin/comment.js"></script>
 </body>
 </html>

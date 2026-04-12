@@ -5,20 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文章管理 - NanoBlog后台管理</title>
     <link rel="stylesheet" href="/static/lib/layui/css/layui.css">
-    <style>
-        body { background-color: #f2f2f2; }
-        .layui-layout-admin .layui-body { padding: 20px; }
-        .search-box { background: #fff; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
-    </style>
 </head>
 <body class="layui-layout-body">
 <div class="layui-layout layui-layout-admin">
     <!-- 头部 -->
     <div class="layui-header">
-        <div class="layui-logo">NanoBlog 后台管理</div>
+        <div class="layui-logo">📝 NanoBlog 后台管理</div>
         <ul class="layui-nav layui-layout-right">
-            <li class="layui-nav-item"><a href="javascript:;" id="adminName">管理员</a></li>
-            <li class="layui-nav-item"><a href="javascript:;" id="logout">退出</a></li>
+            <li class="layui-nav-item"><a href="javascript:;" id="adminName">👤 管理员</a></li>
+            <li class="layui-nav-item"><a href="javascript:;" id="logout">🚪 退出</a></li>
         </ul>
     </div>
 
@@ -26,167 +21,60 @@
     <div class="layui-side layui-bg-black">
         <div class="layui-side-scroll">
             <ul class="layui-nav layui-nav-tree" lay-filter="test">
-                <li class="layui-nav-item"><a href="dashboard.html">仪表盘</a></li>
-                <li class="layui-nav-item"><a href="user.html">用户管理</a></li>
-                <li class="layui-nav-item layui-this"><a href="post.html">文章管理</a></li>
-                <li class="layui-nav-item"><a href="comment.html">评论管理</a></li>
-                <li class="layui-nav-item"><a href="category.html">分类标签管理</a></li>
+                <li class="layui-nav-item"><a href="dashboard.html">📊 仪表盘</a></li>
+                <li class="layui-nav-item"><a href="user.html">👥 用户管理</a></li>
+                <li class="layui-nav-item layui-this"><a href="post.html">📄 文章管理</a></li>
+                <li class="layui-nav-item"><a href="comment.html">💬 评论管理</a></li>
+                <li class="layui-nav-item"><a href="category.html">🏷️ 分类标签管理</a></li>
             </ul>
         </div>
     </div>
 
     <!-- 内容主体区域 -->
     <div class="layui-body">
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <h1>文章管理</h1>
+        </div>
+
+        <!-- 搜索框 -->
         <div class="search-box">
             <form class="layui-form" lay-filter="searchForm">
-                <div class="layui-inline">
-                    <select name="status">
-                        <option value="">全部状态</option>
-                        <option value="0">草稿</option>
-                        <option value="1">已发布</option>
-                        <option value="2">已归档</option>
-                    </select>
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <select name="status" lay-search>
+                            <option value="">全部状态</option>
+                            <option value="0">📝 草稿</option>
+                            <option value="1">✅ 已发布</option>
+                            <option value="2">📦 已归档</option>
+                        </select>
+                    </div>
+                    <div class="layui-inline" style="flex: 1;">
+                        <input type="text" name="title" placeholder="🔍 输入文章标题搜索" class="layui-input" autocomplete="off">
+                    </div>
+                    <button type="button" class="layui-btn" id="searchBtn">🔎 搜索</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">🔄 重置</button>
                 </div>
-                <div class="layui-inline">
-                    <input type="text" name="title" placeholder="请输入文章标题" class="layui-input">
-                </div>
-                <button type="button" class="layui-btn" id="searchBtn">搜索</button>
-                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
             </form>
         </div>
 
-        <table class="layui-hide" id="articleTable" lay-filter="articleTable"></table>
+        <!-- 表格区域 -->
+        <div class="table-container">
+            <table class="layui-hide" id="articleTable" lay-filter="articleTable"></table>
+        </div>
     </div>
 
     <!-- 底部 -->
-    <div class="layui-footer">© 2026 NanoBlog - 后台管理系统</div>
+    <div class="layui-footer">© 2026 NanoBlog - 后台管理系统 | Made with ❤️</div>
 </div>
 
 <!-- 操作列模板 -->
 <script type="text/html" id="actionTpl">
-    <a class="layui-btn layui-btn-xs" lay-event="archive">归档</a>
-    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">删除</a>
+    <a class="layui-btn layui-btn-xs action-btn" lay-event="archive" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">📦 归档</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs action-btn" lay-event="delete">🗑️ 删除</a>
 </script>
 
 <script src="/static/lib/layui/layui.js"></script>
-<script>
-    layui.use(['table', 'layer', 'form'], function(){
-        var table = layui.table;
-        var layer = layui.layer;
-        var form = layui.form;
-        var $ = layui.$;
-
-        // 渲染表格
-        var tableIns = table.render({
-            elem: '#articleTable',
-            url: '/admin/article/list',
-            page: true,
-            cols: [[
-                {field: 'id', title: 'ID', width: 80},
-                {field: 'articleTitle', title: '标题', minWidth: 200},
-                {
-                    field: 'status', 
-                    title: '状态', 
-                    width: 100,
-                    templet: function(d) {
-                        if (d.status === 0) return '<span style="color: #FFB800;">草稿</span>';
-                        if (d.status === 1) return '<span style="color: #5FB878;">已发布</span>';
-                        return '<span style="color: #999;">已归档</span>';
-                    }
-                },
-                {field: 'viewCount', title: '浏览量', width: 100},
-                {field: 'likeCount', title: '点赞数', width: 100},
-                {field: 'commentCount', title: '评论数', width: 100},
-                {field: 'createTime', title: '创建时间', width: 180},
-                {field: 'publishTime', title: '发布时间', width: 180},
-                {title: '操作', width: 150, toolbar: '#actionTpl'}
-            ]],
-            request: {
-                pageName: 'page',
-                limitName: 'size'
-            },
-            response: {
-                statusCode: 200
-            },
-            parseData: function(res) {
-                return {
-                    "code": res.code,
-                    "msg": res.msg,
-                    "count": res.data.total,
-                    "data": res.data.records
-                };
-            }
-        });
-
-        // 搜索
-        $('#searchBtn').click(function() {
-            var status = $('select[name="status"]').val();
-            var title = $('input[name="title"]').val();
-            tableIns.reload({
-                where: { status: status, title: title },
-                page: { curr: 1 }
-            });
-        });
-
-        // 监听工具条
-        table.on('tool(articleTable)', function(obj){
-            var data = obj.data;
-            var layEvent = obj.event;
-
-            if(layEvent === 'archive'){
-                layer.confirm('确定要归档该文章吗？', function(index){
-                    $.ajax({
-                        url: '/admin/article/' + data.id + '/status',
-                        type: 'PUT',
-                        data: { status: 2 },
-                        success: function(res) {
-                            if (res.code === 200) {
-                                layer.msg('归档成功');
-                                obj.update({ status: 2 });
-                            } else {
-                                layer.msg(res.msg || '操作失败');
-                            }
-                        },
-                        error: function() {
-                            layer.msg('网络错误');
-                        }
-                    });
-                    layer.close(index);
-                });
-            } else if(layEvent === 'delete'){
-                layer.confirm('确定要删除该文章吗？', function(index){
-                    $.ajax({
-                        url: '/admin/article/' + data.id,
-                        type: 'DELETE',
-                        success: function(res) {
-                            if (res.code === 200) {
-                                layer.msg('删除成功');
-                                obj.del();
-                            } else {
-                                layer.msg(res.msg || '删除失败');
-                            }
-                        },
-                        error: function() {
-                            layer.msg('网络错误');
-                        }
-                    });
-                    layer.close(index);
-                });
-            }
-        });
-
-        // 退出登录
-        $('#logout').click(function() {
-            layer.confirm('确定要退出吗？', function(index){
-                $.post('/user/logout', function(res) {
-                    if (res.code === 200) {
-                        window.location.href = '/pages/front/login.html';
-                    }
-                });
-                layer.close(index);
-            });
-        });
-    });
-</script>
+<script src="/static/js/admin/post.js"></script>
 </body>
 </html>
